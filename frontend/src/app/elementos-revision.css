@@ -1,0 +1,113 @@
+.elementos-revision-page { display: grid; min-width: 0; gap: 16px; }
+.elementos-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+.elementos-card { min-width: 0; padding: 20px; }
+.elementos-hint { margin: 0 0 12px; color: #818b81; font-size: 10px; line-height: 1.5; }
+.elementos-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-bottom: 12px; }
+.elementos-search { display: flex; width: min(100%, 360px); min-height: 38px; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #e1e7e1; border-radius: 8px; color: #879087; }
+.elementos-search:focus-within { border-color: #80d880; box-shadow: 0 0 0 3px rgb(0 210 0 / 10%); }
+.elementos-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: #343d34; font-size: 11px; }
+.elementos-filter { display: flex; align-items: center; gap: 7px; color: #7e887e; font-size: 10px; }
+.elementos-filter select, .elementos-form select { min-height: 36px; padding: 6px 9px; border: 1px solid #e1e7e1; border-radius: 7px; background: #fff; color: #374037; }
+.elementos-table { width: 100%; min-width: 850px; }
+.elementos-table td { vertical-align: middle; }
+.elementos-table td:first-child strong, .elementos-table td:first-child small { display: block; }
+.elementos-table td:first-child strong { color: #344034; font-size: 11px; }
+.elementos-table td:first-child small { max-width: 260px; margin-top: 4px; overflow: hidden; color: #879087; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.elementos-state { display: inline-flex; padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: 700; }
+.elementos-state--activo { background: #effaf0; color: #43834a; }
+.elementos-state--inactivo { background: #f1f2f1; color: #747c74; }
+.elementos-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.elementos-actions .button { min-height: 32px; padding: 0 9px; font-size: 10px; }
+.elementos-message { margin: 0; padding: 24px 8px; color: #7e887e; font-size: 12px; text-align: center; }
+.elementos-feedback { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0; padding: 11px 13px; border-radius: 9px; font-size: 12px; line-height: 1.5; }
+.elementos-feedback--success { border: 1px solid #d5efd5; background: #f1fff1; color: #286c31; }
+.elementos-feedback--error { border: 1px solid #f1d5d5; background: #fff5f5; color: #9b3434; }
+.elementos-uncertain { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid #f0d9a5; border-radius: 10px; background: #fffaf0; color: #74551d; font-size: 11px; line-height: 1.5; }
+.elementos-uncertain p { margin: 5px 0 0; }
+.elementos-uncertain-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.elementos-backdrop { position: fixed; z-index: 80; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 18px; background: rgb(15 20 15 / 48%); }
+.elementos-dialog { position: relative; width: min(100%, 540px); max-height: min(90vh, 820px); overflow-y: auto; padding: 22px; border: 1px solid #e4e9e4; border-radius: 15px; background: #fff; box-shadow: 0 18px 60px rgb(0 0 0 / 20%); }
+.elementos-dialog h2 { margin: 0 35px 15px 0; color: #202720; font-size: 17px; }
+.elementos-dialog > p { color: #626d62; font-size: 12px; line-height: 1.55; }
+.elementos-close { position: absolute; top: 14px; right: 14px; display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 7px; background: transparent; color: #657065; cursor: pointer; }
+.elementos-close:hover { background: #f2f5f2; }
+.elementos-form { display: grid; gap: 13px; }
+.elementos-form label { display: grid; gap: 6px; color: #566056; font-size: 11px; font-weight: 650; }
+.elementos-form label b { color: #b64242; }
+.elementos-form input, .elementos-form textarea { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid #dfe5df; border-radius: 8px; background: #fff; color: #303930; font: inherit; outline: none; }
+.elementos-form textarea { min-height: 80px; resize: vertical; }
+.elementos-form input:focus, .elementos-form textarea:focus, .elementos-form select:focus { border-color: #80d880; box-shadow: 0 0 0 3px rgb(0 210 0 / 10%); }
+.elementos-form small { justify-self: end; color: #879087; font-size: 9px; font-weight: 400; }
+.elementos-form .elementos-hint { margin: 0; }
+.elementos-inline-error { margin: 0; color: #a33232 !important; font-size: 11px !important; }
+.elementos-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.elementos-detail > div { min-width: 0; padding: 10px; border: 1px solid #e7ece7; border-radius: 8px; }
+.elementos-detail dt { color: #747e74; font-size: 10px; }
+.elementos-detail dd { margin: 5px 0 0; overflow-wrap: anywhere; color: #303930; font-size: 12px; font-weight: 600; }
+.elementos-dialog > .elementos-actions { margin-top: 18px; }
+@media (max-width: 680px) {
+  .elementos-card { padding: 15px; }
+  .elementos-toolbar { align-items: stretch; flex-direction: column; }
+  .elementos-search { width: 100%; }
+  .elementos-filter { justify-content: space-between; }
+  .elementos-uncertain { align-items: stretch; flex-direction: column; }
+  .elementos-uncertain-actions { justify-content: stretch; }
+  .elementos-uncertain-actions .button { flex: 1; }
+  .elementos-dialog { padding: 18px; }
+  .elementos-detail { grid-template-columns: minmax(0, 1fr); }
+  .elementos-dialog .elementos-actions { justify-content: stretch; }
+  .elementos-dialog .elementos-actions .button { flex: 1; }
+}
+
+/* Consistencia con controles compartidos; la lista mantiene filtros locales del contrato. */
+.elementos-revision-page { gap: var(--space-5, 20px); }
+.elementos-card { padding: clamp(16px, 2vw, 22px); }
+.elementos-hint { color: #526052; font-size: var(--type-help, 12px); line-height: 1.55; }
+.elementos-toolbar { gap: 10px; }
+.elementos-search { min-height: var(--field-height, 42px); border-color: #bdc9be; color: #526052; }
+.elementos-search:focus-within { border-color: var(--color-focus, #087d20); outline: 3px solid rgb(8 125 32 / 22%); outline-offset: 2px; box-shadow: none; }
+.elementos-search input { color: #202720; font-size: var(--type-body, 14px); }
+.elementos-filter { color: #435044; font-size: var(--type-label, 13px); font-weight: 600; }
+.elementos-filter select, .elementos-form select { min-height: var(--field-height, 42px); border-color: #bdc9be; border-radius: var(--radius-control, 8px); color: #202720; font-size: var(--type-body, 14px); }
+.elementos-table-wrap { border: 1px solid #dce4dc; border-radius: 10px; }
+.elementos-table { min-width: 860px; }
+.elementos-table th { height: 44px; padding: 10px 12px; color: #435044; font-size: var(--type-table-heading, 12px); }
+.elementos-table td { padding: 12px; color: #344035; font-size: var(--type-label, 13px); line-height: 1.45; }
+.elementos-table td:first-child strong { color: #202720; font-size: var(--type-label, 13px); }
+.elementos-table td:first-child small { max-width: 280px; color: #526052; font-size: var(--type-help, 12px); }
+.elementos-state { min-height: 27px; align-items: center; padding: 5px 9px; border: 1px solid transparent; border-radius: 999px; font-size: var(--type-help, 12px); }
+.elementos-state--activo { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.elementos-state--inactivo { border-color: #dce1dc; background: #f1f2f1; color: #465146; }
+.elementos-actions .button { min-height: 38px; padding-inline: 11px; font-size: var(--type-label, 13px); }
+.elementos-revision-page :is(button, input, select, textarea):focus-visible, .elementos-dialog :is(button, input, select, textarea):focus-visible { outline: 3px solid rgb(8 125 32 / 30%); outline-offset: 2px; }
+.elementos-dialog { max-height: min(90dvh, 820px); border-color: #dce4dc; border-radius: 14px; }
+.elementos-dialog h2 { font-size: var(--type-dialog-title, 20px); }
+.elementos-dialog > p, .elementos-detail dd { color: #344035; font-size: var(--type-body, 14px); line-height: 1.55; }
+.elementos-detail dt { color: #526052; font-size: var(--type-help, 12px); }
+.elementos-form label { color: #435044; font-size: var(--type-label, 13px); }
+.elementos-form :is(input, textarea) { min-height: var(--field-height, 42px); border-color: #bdc9be; border-radius: var(--radius-control, 8px); font-size: var(--type-body, 14px); }
+.elementos-form textarea { min-height: 90px; }
+.elementos-form small { color: #526052; font-size: var(--type-help, 12px); }
+.elementos-feedback, .elementos-uncertain { font-size: var(--type-label, 13px); line-height: 1.55; }
+.elementos-message { color: #435044; font-size: var(--type-body, 14px); }
+@media (max-width: 680px) {
+  .elementos-table-wrap { overflow: visible; border: 0; }
+  .elementos-table { display: block; min-width: 0; }
+  .elementos-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+  .elementos-table tbody { display: grid; gap: 10px; }
+  .elementos-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 9px; border: 1px solid #dce4dc; border-radius: 10px; background: #fff; }
+  .elementos-table td { display: grid; min-width: 0; align-content: start; gap: 5px; padding: 8px; border: 0; overflow-wrap: anywhere; }
+  .elementos-table td::before { content: attr(data-label); color: #526052; font-size: var(--type-help, 12px); font-weight: 600; }
+  .elementos-table td:first-child small { max-width: 100%; overflow: visible; text-overflow: clip; white-space: normal; }
+  .elementos-table td:last-child { grid-column: 1 / -1; border-top: 1px solid #e8ede8; }
+  .elementos-actions { justify-content: flex-start; }
+}
+@media (max-width: 420px) {
+  .elementos-card { padding: 14px; }
+  .elementos-table tbody tr { grid-template-columns: minmax(0, 1fr); }
+  .elementos-table td:last-child { grid-column: auto; }
+  .elementos-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .elementos-actions .button:last-child { grid-column: 1 / -1; }
+  .elementos-dialog .elementos-actions { display: flex; flex-direction: column-reverse; }
+  .elementos-dialog .elementos-actions .button { width: 100%; min-height: 42px; }
+}

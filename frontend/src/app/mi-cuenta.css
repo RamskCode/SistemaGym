@@ -1,0 +1,77 @@
+.mi-cuenta-page { width: 100%; max-width: 1000px; gap: var(--space-4, 16px); }
+.mi-cuenta-card { min-width: 0; padding: 18px 20px; border-color: #e5eae5; box-shadow: 0 2px 8px rgb(25 40 26 / 4%); }
+.mi-cuenta-card .card__header { min-height: 24px; margin-bottom: 14px; }
+.mi-cuenta-card .card__title { color: #263027; font-size: var(--type-section-title, 15px); font-weight: var(--weight-semibold, 600); letter-spacing: 0; }
+.mi-cuenta-summary-card { padding: 16px 20px; border-color: #dfe8df; }
+.mi-cuenta-summary { display: flex; min-width: 0; align-items: center; gap: 16px; }
+.mi-cuenta-avatar { display: grid; width: 54px; height: 54px; flex: 0 0 auto; place-items: center; border: 1px solid #d5e4d5; border-radius: 50%; background: #edf6ed; color: #285f31; font-size: 17px; font-weight: var(--weight-bold, 700); }
+.mi-cuenta-summary__text { display: grid; min-width: 0; gap: 3px; }
+.mi-cuenta-summary__text h2 { margin: 0; overflow-wrap: anywhere; color: var(--color-ink, #171b18); font-size: var(--type-dialog-title, 20px); font-weight: var(--weight-semibold, 600); letter-spacing: -.025em; }
+.mi-cuenta-eyebrow { color: #526052; font-size: 10px; font-weight: var(--weight-semibold, 600); letter-spacing: .1em; }
+.mi-cuenta-role { display: inline-flex; width: fit-content; align-items: center; padding: 3px 8px; border: 1px solid #dce9dc; border-radius: 999px; background: #f3f8f3; color: #355c3a; font-size: var(--type-help, 12px); font-weight: var(--weight-medium, 500); }
+.mi-cuenta-edit-button { min-height: 40px; white-space: nowrap; }
+.mi-cuenta-form, .mi-cuenta-password { display: grid; gap: var(--space-4, 16px); }
+.mi-cuenta-section-intro { margin: 0; color: #526052; font-size: var(--type-body, 14px); line-height: 1.5; }
+.mi-cuenta-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+.mi-cuenta-field { display: grid; min-width: 0; align-content: start; gap: 7px; color: #344035; font-size: var(--type-label, 13px); font-weight: var(--weight-semibold, 600); }
+.mi-cuenta-field > label { color: inherit; font: inherit; }
+.mi-cuenta-field input, .mi-cuenta-field select { width: 100%; min-width: 0; min-height: var(--field-height, 42px); padding: 8px 11px; border: 1px solid #bdc9be; border-radius: var(--radius-control, 8px); background: #fff; color: #202720; font: inherit; font-size: var(--type-body, 14px); }
+.mi-cuenta-field input[readonly] { background: #f4f6f4; color: #526052; }
+.mi-cuenta-field input:disabled { background: #f4f6f4; color: #737e73; cursor: not-allowed; }
+.mi-cuenta-field input[aria-invalid="true"], .mi-cuenta-field select[aria-invalid="true"] { border-color: var(--color-danger, #a33232); }
+.mi-cuenta-field small { color: #526052; font-size: var(--type-help, 12px); font-weight: var(--weight-regular, 400); line-height: 1.45; }
+.mi-cuenta-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; }
+.mi-cuenta-detail { display: grid; min-width: 0; align-content: start; gap: 6px; }
+.mi-cuenta-detail > span { color: #526052; font-size: var(--type-label, 13px); }
+.mi-cuenta-detail > strong { overflow-wrap: anywhere; color: var(--color-ink, #171b18); font-size: var(--type-body, 14px); font-weight: var(--weight-semibold, 600); }
+.mi-cuenta-detail > small { color: #526052; font-size: var(--type-help, 12px); line-height: 1.45; }
+.mi-cuenta-detail-label { display: inline-flex; align-items: center; gap: 7px; color: #526052; }
+.mi-cuenta-detail-label svg { flex: 0 0 auto; color: #48704c; }
+.mi-cuenta-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4, 16px); align-items: stretch; }
+.mi-cuenta-info-card { min-height: 132px; }
+.mi-cuenta-info-card .mi-cuenta-detail { gap: 8px; }
+.mi-cuenta-info-card .mi-cuenta-detail > strong { margin-top: 1px; }
+.mi-cuenta-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding-top: 2px; }
+.mi-cuenta-actions .button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 7px; padding-inline: 16px; }
+.mi-cuenta-security-card { border-color: #dfe8df; }
+.mi-cuenta-security-intro { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid #dce6dc; border-radius: 9px; background: #f7faf7; }
+.mi-cuenta-security-intro > span { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #eaf3ea; color: #32653a; }
+.mi-cuenta-security-intro > div { display: grid; gap: 3px; }
+.mi-cuenta-security-intro strong { color: #344035; font-size: var(--type-label, 13px); font-weight: var(--weight-semibold, 600); }
+.mi-cuenta-security-intro p { margin: 0; color: #435044; font-size: var(--type-label, 13px); line-height: 1.5; }
+.mi-cuenta-password { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; padding-top: 16px; }
+.mi-cuenta-password .mi-cuenta-feedback { grid-column: 1 / -1; }
+.mi-cuenta-password .mi-cuenta-actions { grid-column: 1 / -1; padding-top: 0; }
+.mi-cuenta-password > .password-entry { display: grid; min-width: 0; align-content: start; gap: 7px; }
+.mi-cuenta-feedback { margin: 0; padding: 10px 12px; border: 1px solid; border-radius: 8px; font-size: var(--type-label, 13px); line-height: 1.5; }
+.mi-cuenta-feedback--error { border-color: #ebcaca; background: #fff5f5; color: #8c2929; }
+.mi-cuenta-feedback--success { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.mi-cuenta-feedback .button { margin-left: 12px; }
+.mi-cuenta-state { margin: 0; padding: 16px; color: #435044; font-size: var(--type-body, 14px); }
+.mi-cuenta-page :is(input, select, button):focus-visible { outline: 3px solid rgb(8 125 32 / 30%); outline-offset: 2px; }
+.mi-cuenta-page .password-field__control button:focus-visible { outline: 0; }
+@media (max-width: 800px) {
+  .mi-cuenta-password { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mi-cuenta-password .mi-cuenta-field:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .mi-cuenta-info-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mi-cuenta-info-card { min-height: 0; }
+}
+@media (max-width: 520px) {
+  .mi-cuenta-page { gap: 12px; }
+  .mi-cuenta-card { padding: 16px; }
+  .mi-cuenta-card .card__header { align-items: flex-start; }
+  .mi-cuenta-fields, .mi-cuenta-details, .mi-cuenta-password { grid-template-columns: minmax(0, 1fr); }
+  .mi-cuenta-password .mi-cuenta-field:first-child, .mi-cuenta-password .mi-cuenta-feedback, .mi-cuenta-password .mi-cuenta-actions { grid-column: auto; }
+  .mi-cuenta-summary { gap: 13px; }
+  .mi-cuenta-avatar { width: 50px; height: 50px; }
+  .mi-cuenta-edit-button { min-height: 38px; padding-inline: 10px; font-size: 12px; }
+}
+@media (max-width: 390px) {
+  .mi-cuenta-card { padding: 14px; }
+  .mi-cuenta-card .card__header { flex-wrap: wrap; }
+  .mi-cuenta-actions { flex-direction: column-reverse; }
+  .mi-cuenta-actions .button { width: 100%; min-height: 44px; }
+  .mi-cuenta-feedback .button { display: block; margin: 10px 0 0; }
+}

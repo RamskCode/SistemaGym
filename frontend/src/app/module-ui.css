@@ -1,0 +1,204 @@
+/* Scoped presentation layer for functional modules that predate the approved
+   Socios/Usuarios patterns. It intentionally leaves the shared shell and the
+   two reference modules untouched. */
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page, .dashboard-demo) {
+  min-width: 0;
+  gap: var(--space-5, 20px);
+  color: var(--color-ink, #171b18);
+}
+
+.dashboard-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page, .dashboard-demo) .page-title h1 {
+  color: var(--color-ink, #171b18);
+  font-size: var(--type-page-title, 29px);
+  font-weight: var(--weight-title, 720);
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page, .dashboard-demo) .page-title__description {
+  max-width: 720px;
+  color: #526052;
+  font-size: var(--type-body, 14px);
+  line-height: 1.55;
+}
+
+:is(.planes-card, .elementos-card, .inc-admin-card, .check-admin-card, .asistencia-card, .nutricion-search-card, .nutricion-selection, .nutricion-evaluation, .nutricion-history, .nutricion-history-detail, .revision-card, .config-admin-card) {
+  padding: clamp(16px, 2vw, 22px);
+}
+:is(.planes-card, .elementos-card, .inc-admin-card, .check-admin-card, .asistencia-card, .nutricion-search-card, .nutricion-selection, .nutricion-evaluation, .nutricion-history, .nutricion-history-detail, .revision-card, .config-admin-card) > .card__header { margin-bottom: 16px; }
+:is(.planes-card, .elementos-card, .inc-admin-card, .check-admin-card, .asistencia-card, .nutricion-search-card, .nutricion-selection, .nutricion-evaluation, .nutricion-history, .nutricion-history-detail, .revision-card, .config-admin-card) .card__title { color: #242a24; font-size: var(--type-section-title, 15px); font-weight: var(--weight-semibold, 600); letter-spacing: -.01em; }
+
+:is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search, .nutricion-search) {
+  min-height: var(--field-height, 42px);
+  gap: 10px;
+  padding-inline: 12px;
+  border-color: #bdc9be;
+  border-radius: var(--radius-control, 8px);
+  background: var(--color-surface, #fff);
+  color: #536453;
+}
+:is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search, .nutricion-search):focus-within {
+  border-color: var(--color-focus, #087d20);
+  outline: 2px solid var(--color-focus, #087d20);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+:is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search, .nutricion-search) input {
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--color-ink, #171b18);
+  font-family: inherit;
+  font-size: var(--type-body, 14px);
+}
+:is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search, .nutricion-search) input::placeholder { color: #647165; opacity: 1; }
+:is(.planes-filter, .elementos-filter, .inc-admin-filter, .check-admin-filter, .asistencia-date-field, .nutricion-filter, .planes-form label, .elementos-form label, .inc-admin-form label, .report-field, .nutri-form-field, .revision-field, .config-admin-edit > label:not(.config-admin-confirm)) {
+  color: #465146;
+  font-size: var(--type-label, 13px);
+  font-weight: var(--weight-label, 600);
+}
+:is(.planes-filter select, .elementos-filter select, .inc-admin-filter select, .check-admin-filter input, .check-admin-filter select, .asistencia-controls select, .asistencia-date-field input, .asistencia-date-field select, .nutricion-filter select, .planes-form input, .planes-form textarea, .elementos-form input, .elementos-form textarea, .elementos-form select, .inc-admin-form select, .inc-admin-form textarea, .report-field textarea, .report-field select, .nutri-form-field input, .nutri-form-field textarea, .revision-field textarea, .revision-field select, .config-admin-edit input:not([type="checkbox"])) {
+  min-height: var(--field-height, 42px);
+  border: 1px solid #bdc9be;
+  border-radius: var(--radius-control, 8px);
+  background: var(--color-surface, #fff);
+  color: var(--color-ink, #171b18);
+  font-family: inherit;
+  font-size: var(--type-body, 14px);
+  line-height: 1.45;
+}
+:is(.planes-form textarea, .elementos-form textarea, .inc-admin-form textarea, .report-field textarea, .nutri-form-field textarea, .revision-field textarea) { min-height: 90px; resize: vertical; }
+:is(.planes-filter select, .elementos-filter select, .inc-admin-filter select, .check-admin-filter input, .check-admin-filter select, .asistencia-controls select, .asistencia-date-field input, .asistencia-date-field select, .nutricion-filter select) { padding: 7px 11px; }
+:is(.planes-form input, .planes-form textarea, .elementos-form input, .elementos-form textarea, .elementos-form select, .inc-admin-form select, .inc-admin-form textarea, .report-field textarea, .report-field select, .nutri-form-field input, .nutri-form-field textarea, .revision-field textarea, .revision-field select, .config-admin-edit input:not([type="checkbox"])) { padding: 8px 11px; }
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page) :is(input, select, textarea, button):focus-visible { outline: 3px solid rgb(8 125 32 / 32%); outline-offset: 2px; }
+:is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search, .nutricion-search) input:focus-visible { outline: 0; }
+:is(.planes-form, .elementos-form, .inc-admin-form, .report-field, .nutri-form-field, .revision-field, .asistencia-admin-write) :is(input, textarea, select):focus-visible { border-color: var(--color-focus, #087d20); }
+
+:is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) {
+  table-layout: auto;
+  white-space: normal;
+}
+:is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) th {
+  height: 44px;
+  padding: 8px 12px;
+  border-bottom-color: #dce4dc;
+  background: #f7f9f7;
+  color: #435044;
+  font-size: var(--type-table-heading, 12px);
+  letter-spacing: .01em;
+}
+:is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) td {
+  height: 62px;
+  padding: 10px 12px;
+  color: #344035;
+  font-size: var(--type-label, 13px);
+  line-height: 1.45;
+  white-space: normal;
+}
+:is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) td strong { color: #202720; font-size: var(--type-user-name, 14px); font-weight: var(--weight-semibold, 600); }
+:is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) td small { color: #526052; font-size: var(--type-help, 12px); }
+:is(.planes-actions, .elementos-actions, .inc-admin-actions) .button { min-height: 38px; padding-inline: 10px; font-size: var(--type-help, 12px); }
+:is(.planes-state, .elementos-state, .inc-admin-state, .check-admin-result, .asistencia-state, .nutricion-state, .report-state, .checklist-result) { min-height: 27px; align-items: center; padding: 4px 9px; border-radius: 999px; font-size: var(--type-help, 12px); line-height: 1.35; }
+
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page) [role="dialog"] {
+  width: min(100%, 680px);
+  max-height: min(90dvh, 860px);
+  overflow: auto;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid #dce4dc;
+  border-radius: 14px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 20px 55px rgb(19 31 20 / 22%);
+  overscroll-behavior: contain;
+}
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page) [role="dialog"] h2 {
+  color: #202720;
+  font-size: var(--type-dialog-title, 20px);
+  font-weight: var(--weight-bold, 700);
+  line-height: 1.3;
+}
+:is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page) [role="dialog"] > p { color: #465146; font-size: var(--type-body, 14px); line-height: 1.55; }
+:is(.planes-close, .elementos-close, .inc-admin-close, .asistencia-close) { width: 38px; height: 38px; border-radius: var(--radius-control, 8px); }
+:is(.planes-close, .elementos-close, .inc-admin-close, .asistencia-close):focus-visible { outline: 3px solid rgb(8 125 32 / 32%); outline-offset: 2px; }
+:is(.planes-detail, .elementos-detail, .inc-admin-detail, .check-admin-summary, .report-main-data, .report-confirm-summary, .checklist-summary-grid, .checklist-record__counts, .asistencia-report, .config-admin-detail dl, .config-admin-success dl) > div { padding: 12px; border-color: #dfe6df; border-radius: var(--radius-control, 8px); background: #fbfcfb; }
+:is(.planes-detail, .elementos-detail, .inc-admin-detail, .check-admin-summary, .report-main-data, .report-confirm-summary, .checklist-summary-grid, .checklist-record__counts, .asistencia-report, .config-admin-detail dl, .config-admin-success dl) dt { color: #526052; font-size: var(--type-help, 12px); }
+:is(.planes-detail, .elementos-detail, .inc-admin-detail, .check-admin-summary, .report-main-data, .report-confirm-summary, .checklist-summary-grid, .checklist-record__counts, .asistencia-report, .config-admin-detail dl, .config-admin-success dl) dd { color: #202720; font-size: var(--type-secondary, 13px); line-height: 1.45; }
+:is(.planes-inline-error, .elementos-inline-error, .nutri-submit-error) { color: var(--color-danger, #a33232); font-size: var(--type-error, 12px); line-height: 1.5; }
+
+.dashboard-demo .metric-card__label { color: #526052; font-size: var(--type-label, 13px); }
+.dashboard-demo .activity-card, .dashboard-demo .week-card, .dashboard-demo .membership-card, .dashboard-demo .welcome-tip { padding-top: 20px; }
+.dashboard-demo .activity-card .card__title, .dashboard-demo .week-card .card__title, .dashboard-demo .membership-card .card__title, .dashboard-demo .welcome-tip .card__title { font-size: var(--type-section-title, 15px); }
+.dashboard-demo .person-cell { min-width: 0; }
+.dashboard-demo .person-cell strong { color: #344035; font-size: var(--type-label, 13px); }
+.dashboard-demo .person-cell small, .dashboard-demo .type-label, .dashboard-demo .time-cell { color: #526052; font-size: var(--type-help, 12px); }
+.dashboard-demo .state-pill { font-size: var(--type-help, 12px); }
+.dashboard-demo .week-card__note, .dashboard-demo .membership-card__disclaimer, .dashboard-demo .welcome-tip > p { color: #526052; font-size: var(--type-label, 13px); line-height: 1.55; }
+.dashboard-demo .week-chart__day, .dashboard-demo .week-card__legend, .dashboard-demo .membership-legend p { color: #526052; font-size: var(--type-help, 12px); }
+.dashboard-demo .workspace__footer { color: #526052; font-size: var(--type-help, 12px); }
+.route-placeholder { padding: 24px; }
+.route-placeholder > p { color: #465146; font-size: var(--type-body, 14px); line-height: 1.6; }
+:is(.planes-hint, .elementos-hint, .inc-admin-hint, .check-admin-hint, .check-admin-readonly, .asistencia-description, .revision-item__description, .config-admin-note, .report-readonly-note, .report-form-note, .check-admin-general p, .check-admin-item > header p, .check-admin-note p, .check-admin-incidence > p, .checklist-record__observations, .checklist-detail-note p, .checklist-incidence p, .report-record__description, .report-description p, .report-history__note, .config-admin-detail > p) { color: #465146; font-size: var(--type-label, 13px); line-height: 1.5; }
+:is(.planes-feedback, .elementos-feedback, .inc-admin-feedback, .check-admin-feedback, .asistencia-feedback, .revision-feedback, .report-feedback, .nutricion-error, .config-admin-error) { font-size: var(--type-label, 13px); line-height: 1.5; }
+:is(.planes-message, .elementos-message, .inc-admin-message, .check-admin-empty, .asistencia-message, .checklist-empty, .report-empty, .nutricion-message, .revision-empty, .config-admin-empty) { color: #526052; font-size: var(--type-body, 14px); line-height: 1.55; }
+:is(.checklist-record__eyebrow, .report-record__eyebrow) { color: #526052; font-size: var(--type-help, 12px); }
+:is(.checklist-record__heading h2, .report-record__top h2, .check-admin-general h2, .check-admin-item h2, .check-admin-note h3, .check-admin-incidence h3, .checklist-detail-item__header h2, .checklist-general-observations h2, .checklist-detail-note h3, .checklist-incidence h3, .report-description h2) { color: #202720; font-size: var(--type-body, 14px); font-weight: var(--weight-semibold, 600); }
+:is(.check-admin-table td, .checklist-record__eyebrow, .report-record__eyebrow, .checklist-detail-item__header p, .check-admin-summary dd small, .check-admin-incidence dt, .report-record__meta dt, .report-main-data dt, .report-confirm-summary dt, .report-history__meta, .report-dialog .report-field small, .config-admin-item strong, .config-admin-item span, .config-admin-item small, .config-admin-detail dt, .config-admin-success dt, .config-admin-success dd, .config-admin-error) { font-size: var(--type-label, 13px); }
+
+@media (max-width: 700px) {
+  :is(.planes-card, .elementos-card, .inc-admin-card, .check-admin-card, .asistencia-card, .nutricion-search-card, .nutricion-selection, .nutricion-evaluation, .nutricion-history, .nutricion-history-detail, .revision-card, .config-admin-card) { padding: 15px; }
+  :is(.planes-page, .elementos-revision-page, .incidencias-admin-page, .checklists-admin-page, .asistencia-page, .mis-checklists-page, .mis-reportes-page, .nutricion-page, .revision-page, .configuracion-admin-page) [role="dialog"] { width: 100%; max-height: min(92dvh, 900px); padding: 22px 18px; border-radius: 14px 14px 10px 10px; }
+  :is(.planes-toolbar, .elementos-toolbar, .inc-admin-toolbar, .check-admin-toolbar) { align-items: stretch; flex-direction: column; }
+  :is(.planes-search, .elementos-search, .inc-admin-search, .check-admin-search) { width: 100%; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) { display: block; min-width: 0; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) tbody { display: grid; gap: 10px; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 10px; border: 1px solid #dfe6df; border-radius: 9px; background: #fff; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) td { display: grid; min-width: 0; height: auto; align-content: start; gap: 4px; padding: 8px; border: 0; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-table, .dashboard-demo .activity-table) td::before { color: #526052; font-size: var(--type-help, 12px); font-weight: 600; }
+  .planes-table td:nth-child(1)::before { content: 'Plan'; }
+  .planes-table td:nth-child(2)::before { content: 'Precio'; }
+  .planes-table td:nth-child(3)::before { content: 'Duración'; }
+  .planes-table td:nth-child(4)::before { content: 'Estado'; }
+  .elementos-table td:nth-child(1)::before { content: 'Elemento'; }
+  .elementos-table td:nth-child(2)::before { content: 'Tipo'; }
+  .elementos-table td:nth-child(3)::before { content: 'Ubicación'; }
+  .elementos-table td:nth-child(4)::before { content: 'Estado'; }
+  .inc-admin-table td:nth-child(1)::before { content: 'Elemento'; }
+  .inc-admin-table td:nth-child(2)::before { content: 'Prioridad'; }
+  .inc-admin-table td:nth-child(3)::before { content: 'Estado'; }
+  .inc-admin-table td:nth-child(4)::before { content: 'Fecha'; }
+  .check-admin-table td:nth-child(1)::before { content: 'Fecha'; }
+  .check-admin-table td:nth-child(2)::before { content: 'Entrenador responsable'; }
+  .check-admin-table td:nth-child(3)::before { content: 'Elementos'; }
+  .check-admin-table td:nth-child(4)::before { content: 'Resultado'; }
+  .asistencia-admin-table td:nth-child(1)::before { content: 'Fecha laboral'; }
+  .asistencia-admin-table td:nth-child(2)::before { content: 'Empleado'; }
+  .asistencia-admin-table td:nth-child(3)::before { content: 'Entrada (Lima)'; }
+  .asistencia-admin-table td:nth-child(4)::before { content: 'Salida (Lima)'; }
+  .asistencia-admin-table td:nth-child(5)::before { content: 'Estado'; }
+  .asistencia-admin-table td:nth-child(6)::before { content: 'Detalle'; }
+  .asistencia-self-table td:nth-child(1)::before { content: 'Fecha laboral'; }
+  .asistencia-self-table td:nth-child(2)::before { content: 'Entrada (Lima)'; }
+  .asistencia-self-table td:nth-child(3)::before { content: 'Salida (Lima)'; }
+  .asistencia-self-table td:nth-child(4)::before { content: 'Estado'; }
+  .dashboard-demo .activity-table td:nth-child(1)::before { content: 'Persona'; }
+  .dashboard-demo .activity-table td:nth-child(2)::before { content: 'Tipo'; }
+  .dashboard-demo .activity-table td:nth-child(3)::before { content: 'Fecha y hora'; }
+  :is(.planes-table, .elementos-table, .inc-admin-table, .check-admin-table, .asistencia-admin-table) td:last-child { grid-column: 1 / -1; border-top: 1px solid #e8ede8; }
+  .planes-table td:last-child::before { content: 'Acciones'; }
+  .elementos-table td:last-child::before, .inc-admin-table td:last-child::before, .check-admin-table td:last-child::before { content: 'Acciones'; }
+  .asistencia-admin-table td:last-child::before { content: 'Detalle'; }
+  .dashboard-demo .activity-table tbody tr { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-demo .activity-table td { grid-column: auto; }
+  .dashboard-demo .person-cell { flex-wrap: wrap; }
+  :is(.planes-actions, .elementos-actions, .inc-admin-actions) { justify-content: flex-start; }
+  :is(.planes-actions, .elementos-actions, .inc-admin-actions) .button { min-height: 40px; }
+  .dashboard-demo .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 430px) {
+  .dashboard-demo .metrics-grid { grid-template-columns: minmax(0, 1fr); }
+}

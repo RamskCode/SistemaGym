@@ -1,0 +1,60 @@
+.setup-card {
+  width: min(100%, 530px);
+  padding: clamp(1.15rem, 2.4vw, 1.8rem);
+  border: 1px solid var(--color-line, #e9ece9);
+  border-radius: var(--radius-card, 16px);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.setup-card__icon {
+  display: grid;
+  width: 3.2rem;
+  height: 3.2rem;
+  margin-bottom: .65rem;
+  place-items: center;
+  border-radius: 1rem;
+  color: #111811;
+  background: var(--color-green, #00ff00);
+}
+
+.setup-card h1 { margin: 0; color: var(--color-ink, #171b18); font-size: clamp(1.6rem, 4vw, 2rem); }
+.setup-card__intro { margin: .45rem 0 .85rem; color: #526052; line-height: 1.5; }
+.setup-form { display: grid; gap: .42rem; }
+.setup-form label { color: var(--color-ink, #171b18); font-size: var(--type-label, 13px); font-weight: var(--weight-label, 600); }
+.setup-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.55rem;
+  padding: .55rem .75rem;
+  min-height: var(--field-height, 42px);
+  border: 1px solid #bdc9be;
+  border-radius: var(--radius-control, 8px);
+  color: var(--color-ink, #171b18);
+  background: #fff;
+  font: inherit;
+}
+.setup-form input:focus-visible { outline: 3px solid rgb(8 125 32 / 28%); outline-offset: 2px; border-color: var(--color-focus, #087d20); }
+.setup-input { position: relative; }
+.setup-input svg { position: absolute; top: 50%; left: .8rem; color: #526052; transform: translateY(-50%); }
+.setup-input input { padding-left: 2.5rem; }
+.setup-form__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.setup-form__row > div { display: grid; gap: .42rem; min-width: 0; }
+.setup-security { margin: .65rem 0 0; color: #526052; font-size: var(--type-help, 12px); line-height: 1.5; text-align: center; }
+
+@media (min-width: 641px) and (max-height: 900px) {
+  .setup-panel { justify-content: flex-start; padding-top: 18px; padding-bottom: 18px; }
+  .setup-card__icon { width: 2.7rem; height: 2.7rem; }
+  .setup-card h1 { font-size: 1.7rem; }
+  .setup-card__intro { margin: .35rem 0 .65rem; font-size: .9rem; }
+  .setup-form input { min-height: 2.35rem; padding-top: .45rem; padding-bottom: .45rem; }
+  .setup-form__row > div, .setup-form { gap: .35rem; }
+  .setup-security { margin-top: .45rem; }
+  .setup-panel .login-panel__footer { margin-top: 12px; }
+}
+
+@media (max-width: 560px) {
+  .setup-card { padding: 1.25rem; }
+  .setup-form__row { grid-template-columns: 1fr; }
+}

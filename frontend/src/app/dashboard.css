@@ -1,0 +1,64 @@
+.dashboard-demo { gap: var(--space-5, 20px); }
+.dashboard-demo .page-title { min-height: 68px; }
+.dashboard-demo .page-title__eyebrow { letter-spacing: 0; font-size: var(--type-help, 12px); }
+.dashboard-demo .metrics-grid { gap: var(--space-4, 16px); }
+.dashboard-demo .metric-card { min-height: 145px; padding: 17px 18px; }
+.dashboard-demo .metric-card__label { margin-top: 12px; color: #465146; font-size: var(--type-label, 13px); }
+.dashboard-demo .metric-card__value-row strong { font-size: clamp(22px, 1.8vw, 27px); }
+.dashboard-demo .metric-card__detail { margin: 5px 0 0; color: #526052; font-size: var(--type-help, 12px); }
+.dashboard-demo .dashboard-grid { grid-template-columns: minmax(0, 1.6fr) minmax(290px, 1fr); gap: var(--space-4, 16px); }
+.dashboard-demo .activity-card,
+.dashboard-demo .week-card,
+.dashboard-demo .membership-card { min-height: 0; padding: 19px 20px; }
+.dashboard-demo .card__header { margin-bottom: 14px; }
+.dashboard-demo .card__title { font-size: var(--type-section-title, 15px); }
+.dashboard-demo .week-card__note { margin: 0; color: #526052; font-size: var(--type-help, 12px); }
+.dashboard-demo .week-chart { height: 173px; align-items: flex-end; gap: 12px; margin-top: 16px; padding: 0; }
+.dashboard-demo .week-chart__column { height: 100%; justify-content: flex-end; gap: 7px; }
+.dashboard-demo .week-chart__value { min-height: 15px; color: #344035; font-size: 12px; font-weight: 600; }
+.dashboard-demo .week-chart__track { height: 125px; align-items: flex-end; border-radius: 6px; background: #f1f4f1; }
+.dashboard-demo .week-chart__track > span { min-height: 0; border-radius: 5px 5px 2px 2px; background: #62a965; }
+.dashboard-demo .week-chart__day { color: #526052; font-size: 12px; text-transform: capitalize; white-space: nowrap; }
+.dashboard-demo .dashboard-empty { padding: 32px 12px; color: #526052; font-size: var(--type-label, 13px); }
+.dashboard-demo .membership-summary { gap: clamp(16px, 2vw, 28px); padding: 8px 2px; }
+.dashboard-demo .membership-ring { width: 116px; height: 116px; background: conic-gradient(#27832a 0 50%, #8abc72 50% 70%, #d39a3b 70% 85%, #aab3aa 85% 100%); }
+.dashboard-demo .membership-ring::before { width: 86px; height: 86px; }
+.dashboard-demo .membership-ring > span { color: #202720; font-size: 22px; }
+.dashboard-demo .membership-ring small { color: #526052; font-size: var(--type-help, 12px); font-weight: 500; }
+.dashboard-demo .membership-legend { gap: 12px; }
+.dashboard-demo .membership-legend p { grid-template-columns: 9px minmax(0, 1fr) auto; gap: 9px; color: #465146; font-size: var(--type-help, 12px); }
+.dashboard-demo .membership-legend strong { color: #202720; font-size: var(--type-label, 13px); }
+.dashboard-demo .legend-dot { width: 9px; height: 9px; }
+.dashboard-demo .legend-dot--0 { background: #27832a; }
+.dashboard-demo .legend-dot--1 { background: #8abc72; }
+.dashboard-demo .legend-dot--2 { background: #d39a3b; }
+.dashboard-demo .legend-dot--3 { background: #aab3aa; }
+.dashboard-demo .dashboard-recent .activity-card { padding-bottom: 8px; }
+.dashboard-demo .activity-table { min-width: 0; }
+.dashboard-demo .activity-table th { height: 42px; padding-inline: 14px; }
+.dashboard-demo .activity-table td { height: 58px; padding: 9px 14px; }
+.dashboard-demo .person-cell { gap: 11px; }
+.dashboard-demo .person-avatar { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #eef5ee; color: #315b33; font-size: 13px; font-weight: 650; }
+.dashboard-demo .person-cell strong { font-size: var(--type-label, 13px); }
+.dashboard-demo .type-label,
+.dashboard-demo .time-cell { color: #465146; font-size: var(--type-label, 13px); }
+
+@media (max-width: 1000px) {
+  .dashboard-demo .dashboard-grid { grid-template-columns: minmax(0, 1.2fr) minmax(270px, 1fr); }
+  .dashboard-demo .membership-summary { flex-direction: column; align-items: flex-start; }
+  .dashboard-demo .membership-legend { gap: 9px; }
+}
+@media (max-width: 700px) {
+  .dashboard-demo .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-demo .membership-summary { flex-direction: row; align-items: center; }
+  .dashboard-demo .week-chart { gap: 7px; }
+  .dashboard-demo .week-chart__day { font-size: 11px; }
+}
+@media (max-width: 430px) {
+  .dashboard-demo .metric-card { min-height: 0; }
+  .dashboard-demo .week-chart { gap: 5px; }
+  .dashboard-demo .week-chart__day { font-size: 10px; }
+  .dashboard-demo .membership-summary { gap: 16px; }
+  .dashboard-demo .membership-ring { width: 102px; height: 102px; }
+  .dashboard-demo .membership-ring::before { width: 76px; height: 76px; }
+}

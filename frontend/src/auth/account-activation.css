@@ -1,0 +1,9 @@
+.activation-form { gap: var(--space-5, 20px); }
+.activation-field { width: 100%; gap: var(--space-control, 8px); }
+.activation-field > label { color: var(--color-ink, #171b18); font-size: var(--type-label, 13px); font-weight: var(--weight-label, 600); }
+.activation-link { text-decoration: none; }
+.activation-link:focus-visible { outline: 3px solid var(--color-focus, #087d20); outline-offset: 3px; }
+
+@media (max-width: 640px) {
+  .activation-form { gap: var(--space-4, 16px); }
+}

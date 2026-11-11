@@ -1,0 +1,88 @@
+.revision-page { display: grid; min-width: 0; gap: 16px; }
+.revision-page > form { display: grid; gap: 15px; }
+.revision-card { min-width: 0; padding: 19px; }
+.revision-count { color: #748074; font-size: 10px; font-weight: 600; }
+.revision-list { display: grid; gap: 10px; }
+.revision-item { min-width: 0; margin: 0; padding: 13px; border: 1px solid #e7ebe7; border-radius: 11px; }
+.revision-item--selected { border-color: #bfe7bf; background: #fcfffc; }
+.revision-item__legend { display: contents; }
+.revision-item__select { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; }
+.revision-item__select input { width: 17px; height: 17px; margin: 2px 0 0; accent-color: #20b920; }
+.revision-item__select span { display: grid; gap: 4px; }
+.revision-item__select strong { color: #283128; font-size: 13px; }
+.revision-item__select small, .revision-item__description { color: #788278; font-size: 10px; line-height: 1.5; }
+.revision-item__description { margin: 9px 0 0 28px; }
+.revision-item__fields { display: grid; grid-template-columns: minmax(180px, .6fr) minmax(0, 1fr); gap: 12px; padding: 14px 0 0 28px; }
+.revision-problem-fields { display: grid; grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(170px, .45fr); gap: 12px; }
+.revision-field { display: grid; min-width: 0; align-content: start; gap: 6px; color: #566056; font-size: 11px; font-weight: 650; }
+.revision-field > span { color: #b64242; }
+.revision-field textarea, .revision-field select { width: 100%; min-height: 39px; padding: 9px 10px; border: 1px solid #dfe5df; border-radius: 8px; background: #fff; color: #303930; font: inherit; font-size: 12px; outline: none; }
+.revision-field textarea { min-height: 76px; resize: vertical; }
+.revision-field textarea:focus, .revision-field select:focus { border-color: #80d880; box-shadow: 0 0 0 3px rgb(0 210 0 / 10%); }
+.revision-field small { justify-self: end; color: #8b948b; font-size: 9px; font-weight: 500; }
+.revision-general-card > .revision-field { max-width: 760px; }
+.revision-submit { display: flex; justify-content: flex-end; margin-top: 14px; }
+.revision-empty { margin: 0; padding: 24px 8px; color: #7e887e; font-size: 12px; text-align: center; }
+.revision-feedback { padding: 12px 14px; border-radius: 9px; font-size: 12px; line-height: 1.5; }
+.revision-feedback h2 { margin: 0 0 6px; font-size: 14px; }
+.revision-feedback p { margin: 4px 0; }
+.revision-feedback ul { margin: 7px 0 0; padding-left: 20px; }
+.revision-feedback--success { border: 1px solid #d5efd5; background: #f1fff1; color: #286c31; }
+.revision-feedback--error { margin: 0; border: 1px solid #f1d5d5; background: #fff5f5; color: #9b3434; }
+.revision-backdrop { position: fixed; z-index: 70; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 18px; background: rgb(15 20 15 / 48%); }
+.revision-dialog { width: min(100%, 490px); max-height: min(90vh, 720px); overflow-y: auto; padding: 21px; border: 1px solid #e4e9e4; border-radius: 15px; background: #fff; box-shadow: 0 18px 60px rgb(0 0 0 / 20%); }
+.revision-dialog h2 { margin: 0; color: #202720; font-size: 17px; }
+.revision-dialog p, .revision-dialog li { color: #626d62; font-size: 12px; line-height: 1.55; }
+.revision-dialog ul { display: grid; gap: 5px; padding-left: 20px; }
+.revision-dialog__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+@media (max-width: 680px) {
+  .revision-card { padding: 15px; }
+  .revision-item__fields { grid-template-columns: minmax(0, 1fr); padding-left: 0; }
+  .revision-problem-fields { grid-template-columns: minmax(0, 1fr); }
+  .revision-submit, .revision-dialog__actions { justify-content: stretch; }
+  .revision-submit > button, .revision-dialog__actions > button { flex: 1 1 100%; }
+}
+
+.revision-page { gap: var(--space-5, 20px); }
+.revision-page > form { gap: 16px; }
+.revision-card { padding: clamp(16px, 2vw, 22px); }
+.revision-count { color: #435044; font-size: var(--type-label, 13px); }
+.revision-item { border-color: #dce4dc; border-radius: 10px; }
+.revision-item--selected { border-color: #79a97d; background: #f7fbf7; }
+.revision-item__select input { width: 20px; height: 20px; accent-color: var(--color-focus, #087d20); }
+.revision-item__select strong { color: #202720; font-size: var(--type-body, 14px); line-height: 1.4; }
+.revision-item__select small, .revision-item__description { color: #526052; font-size: var(--type-label, 13px); line-height: 1.5; }
+.revision-field { color: #435044; font-size: var(--type-label, 13px); }
+.revision-field textarea, .revision-field select { min-height: var(--field-height, 42px); border-color: #bdc9be; border-radius: var(--radius-control, 8px); color: #202720; font-size: var(--type-body, 14px); }
+.revision-field textarea { min-height: 88px; }
+.revision-field textarea:focus-visible, .revision-field select:focus-visible, .revision-item__select input:focus-visible { border-color: var(--color-focus, #087d20); outline: 3px solid rgb(8 125 32 / 25%); outline-offset: 2px; box-shadow: none; }
+.revision-field small { color: #526052; font-size: var(--type-help, 12px); }
+.revision-empty { color: #435044; font-size: var(--type-body, 14px); }
+.revision-feedback { padding: 14px 16px; border-radius: 10px; font-size: var(--type-label, 13px); line-height: 1.55; }
+.revision-feedback h2 { font-size: var(--type-section-title, 16px); }
+.revision-feedback--success { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.revision-feedback--error { border-color: #ebcaca; background: #fff5f5; color: #8c2929; }
+.revision-submit > button { min-height: 44px; padding-inline: 18px; }
+.revision-backdrop { padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); overscroll-behavior: contain; }
+.revision-dialog { max-height: min(90dvh, 820px); padding: clamp(21px, 3vw, 28px); border-color: #dce4dc; border-radius: 14px; overscroll-behavior: contain; }
+.revision-dialog:focus { outline: 0; }
+.revision-dialog h2 { color: #202720; font-size: var(--type-dialog-title, 20px); }
+.revision-dialog p, .revision-dialog li { color: #344035; font-size: var(--type-body, 14px); line-height: 1.55; }
+.revision-dialog__actions button { min-height: 42px; padding-inline: 14px; }
+.revision-page :is(button, input, select, textarea):focus-visible, .revision-dialog :is(button, input, select, textarea):focus-visible { outline: 3px solid rgb(8 125 32 / 30%); outline-offset: 2px; }
+@media (max-width: 680px) {
+  .revision-card { padding: 16px; }
+  .revision-item__fields { padding-left: 0; }
+  .revision-submit > button, .revision-dialog__actions > button { min-height: 44px; }
+}
+@media (max-width: 420px) {
+  .revision-card { padding: 14px; }
+  .revision-card > .card__header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .revision-item { padding: 11px; }
+  .revision-dialog__actions { flex-direction: column-reverse; }
+  .revision-submit > button, .revision-dialog__actions > button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .revision-page *, .revision-page *::before, .revision-page *::after, .revision-dialog *, .revision-dialog *::before, .revision-dialog *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
