@@ -6,22 +6,20 @@ import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
 import com.gimnasio.sistemagym.repository.ConfiguracionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
 @Service
+@RequiredArgsConstructor
 public class ConfiguracionService {
 
     public static final String CLAVE_PRECIO_PASE_DIARIO = "PRECIO_PASE_DIARIO";
     private static final String MARCADOR_ONBOARDING = "ONBOARDING_ADMIN_COMPLETADO";
 
     private final ConfiguracionRepository configuracionRepository;
-
-    public ConfiguracionService(ConfiguracionRepository configuracionRepository) {
-        this.configuracionRepository = configuracionRepository;
-    }
 
     @Transactional(readOnly = true)
     public List<ConfiguracionRespuesta> listar() {

@@ -10,11 +10,17 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "configuraciones")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Configuracion {
 
     @Id
@@ -39,9 +45,6 @@ public class Configuracion {
     @Column(name = "fecha_actualizacion", nullable = false)
     private LocalDateTime fechaActualizacion;
 
-    public Configuracion() {
-    }
-
     @PrePersist
     protected void alCrear() {
         fechaActualizacion = LocalDateTime.now();
@@ -52,35 +55,4 @@ public class Configuracion {
         fechaActualizacion = LocalDateTime.now();
     }
 
-    public Long getIdConfiguracion() {
-        return idConfiguracion;
-    }
-
-    public String getClave() {
-        return clave;
-    }
-
-    public void setClave(String clave) {
-        this.clave = clave;
-    }
-
-    public String getValor() {
-        return valor;
-    }
-
-    public void setValor(String valor) {
-        this.valor = valor;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public LocalDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
 }

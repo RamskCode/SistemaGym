@@ -9,18 +9,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private static final java.util.Set<String> ROLES_PERMITIDOS = java.util.Set.of(
             "ADMINISTRADOR", "RECEPCIONISTA", "ENTRENADOR", "NUTRICIONISTA");
 
     private final UsuarioRepository usuarioRepository;
-
-    public CustomUserDetailsService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
 
     @Override
     @Transactional(readOnly = true)

@@ -13,20 +13,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/membresias")
+@RequiredArgsConstructor
 public class MembresiaController {
 
     private final MembresiaService membresiaService;
     private final com.gimnasio.sistemagym.service.MembresiaIdempotenteService membresiaIdempotenteService;
-
-    public MembresiaController(MembresiaService membresiaService,
-            com.gimnasio.sistemagym.service.MembresiaIdempotenteService membresiaIdempotenteService) {
-        this.membresiaService = membresiaService;
-        this.membresiaIdempotenteService = membresiaIdempotenteService;
-    }
 
     @GetMapping
     public List<MembresiaRespuesta> listarTodas() {
@@ -49,7 +44,8 @@ public class MembresiaController {
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody RegistrarMembresiaRequest solicitud,
             @AuthenticationPrincipal UserDetails usuarioAutenticado) {
-        return membresiaIdempotenteService.registrar(parsearClave(idempotencyKey), solicitud,
+        return membresiaIdempotenteService.registrar(
+                membresiaIdempotenteService.parsearClaveIdempotencia(idempotencyKey), solicitud,
                 usuarioAutenticado.getUsername());
     }
 
@@ -61,17 +57,7 @@ public class MembresiaController {
             @Valid @RequestBody RegistrarPagoPosteriorRequest solicitud,
             @AuthenticationPrincipal UserDetails usuarioAutenticado) {
         return membresiaIdempotenteService.registrarPago(idMembresia,
-                parsearClave(idempotencyKey), solicitud, usuarioAutenticado.getUsername());
-    }
-
-    private UUID parsearClave(String value) {
-        try {
-            UUID parsed = UUID.fromString(value);
-            if (!parsed.toString().equalsIgnoreCase(value)) throw new IllegalArgumentException();
-            return parsed;
-        }
-        catch (RuntimeException ex) {
-            throw new IllegalArgumentException("Idempotency-Key debe tener formato UUID válido.");
-        }
+                membresiaIdempotenteService.parsearClaveIdempotencia(idempotencyKey),
+                solicitud, usuarioAutenticado.getUsername());
     }
 }

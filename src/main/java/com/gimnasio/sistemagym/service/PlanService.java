@@ -7,6 +7,7 @@ import com.gimnasio.sistemagym.repository.PlanRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,13 +15,10 @@ import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PlanService {
 
     private final PlanRepository planRepository;
-
-    public PlanService(PlanRepository planRepository) {
-        this.planRepository = planRepository;
-    }
 
     public List<Plan> listarTodos() {
         return planRepository.findAll();

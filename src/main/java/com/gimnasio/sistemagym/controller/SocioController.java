@@ -22,16 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/socios")
+@RequiredArgsConstructor
 public class SocioController {
 
     private final SocioService socioService;
-
-    public SocioController(SocioService socioService) {
-        this.socioService = socioService;
-    }
 
     @GetMapping
     public ResponseEntity<List<?>> listarTodos(Authentication autenticacion) {

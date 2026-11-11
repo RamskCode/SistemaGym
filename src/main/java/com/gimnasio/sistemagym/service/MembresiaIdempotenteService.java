@@ -13,16 +13,25 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class MembresiaIdempotenteService {
     private final OperacionPagoIdempotenteService operaciones;
     private final MembresiaService membresias;
 
-    public MembresiaIdempotenteService(
-            OperacionPagoIdempotenteService operaciones, MembresiaService membresias) {
-        this.operaciones = operaciones;
-        this.membresias = membresias;
+    public UUID parsearClaveIdempotencia(String value) {
+        try {
+            UUID parsed = UUID.fromString(value);
+            if (!parsed.toString().equalsIgnoreCase(value)) {
+                throw new IllegalArgumentException();
+            }
+            return parsed;
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException(
+                    "Idempotency-Key debe tener formato UUID válido.");
+        }
     }
 
     public RegistroMembresiaRespuesta registrar(

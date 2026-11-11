@@ -5,7 +5,11 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class CorreccionAsistenciaLaboralRequest {
 
     private Instant fechaEntradaUtc;
@@ -13,30 +17,6 @@ public class CorreccionAsistenciaLaboralRequest {
 
     @NotBlank(message = "El motivo es obligatorio.")
     private String motivo;
-
-    public Instant getFechaEntradaUtc() {
-        return fechaEntradaUtc;
-    }
-
-    public void setFechaEntradaUtc(Instant fechaEntradaUtc) {
-        this.fechaEntradaUtc = fechaEntradaUtc;
-    }
-
-    public Instant getFechaSalidaUtc() {
-        return fechaSalidaUtc;
-    }
-
-    public void setFechaSalidaUtc(Instant fechaSalidaUtc) {
-        this.fechaSalidaUtc = fechaSalidaUtc;
-    }
-
-    public String getMotivo() {
-        return motivo;
-    }
-
-    public void setMotivo(String motivo) {
-        this.motivo = motivo;
-    }
 
     @AssertTrue(message = "Debe indicar al menos un horario para corregir.")
     public boolean isHorarioInformado() {

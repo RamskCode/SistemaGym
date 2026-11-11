@@ -11,16 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/planes")
+@RequiredArgsConstructor
 public class PlanController {
 
     private final PlanService planService;
-
-    public PlanController(PlanService planService) {
-        this.planService = planService;
-    }
 
     @GetMapping
     public ResponseEntity<List<PlanRespuesta>> listarTodos() {

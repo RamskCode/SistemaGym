@@ -8,7 +8,11 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class RegistrarMembresiaRequest {
 
     @NotNull(message = "El ID del socio es obligatorio.")
@@ -37,51 +41,4 @@ public class RegistrarMembresiaRequest {
     @Size(max = 255, message = "Las observaciones no pueden superar 255 caracteres.")
     private String observaciones;
 
-    public Long getIdSocio() {
-        return idSocio;
-    }
-
-    public void setIdSocio(Long idSocio) {
-        this.idSocio = idSocio;
-    }
-
-    public Long getIdPlan() {
-        return idPlan;
-    }
-
-    public void setIdPlan(Long idPlan) {
-        this.idPlan = idPlan;
-    }
-
-    public BigDecimal getMontoPrimerPago() {
-        return montoPrimerPago;
-    }
-
-    public void setMontoPrimerPago(BigDecimal montoPrimerPago) {
-        this.montoPrimerPago = montoPrimerPago;
-    }
-
-    public String getMetodoPago() {
-        return metodoPago;
-    }
-
-    public void setMetodoPago(String metodoPago) {
-        this.metodoPago = metodoPago;
-    }
-
-    public String getReferencia() {
-        return referencia;
-    }
-
-    public void setReferencia(String referencia) {
-        this.referencia = referencia;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
 }

@@ -7,6 +7,7 @@ import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
 import com.gimnasio.sistemagym.repository.ElementoRevisionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -14,13 +15,10 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ElementoRevisionService {
 
     private final ElementoRevisionRepository repository;
-
-    public ElementoRevisionService(ElementoRevisionRepository repository) {
-        this.repository = repository;
-    }
 
     public List<ElementoRevisionRespuesta> listarTodos() {
         return repository.findAllByOrderByNombreAscIdElementoAsc().stream()
