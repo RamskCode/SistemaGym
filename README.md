@@ -1,7 +1,5 @@
 # SistemaGym | Sistema de Gestión de Gimnasios
 
-Sistema web para la administración de gimnasios, desarrollado con una arquitectura cliente-servidor, API REST y autenticación basada en roles.
-
 ## Stack tecnológico
 
 | Componente | Tecnologías y herramientas |
@@ -17,14 +15,6 @@ Sistema web para la administración de gimnasios, desarrollado con una arquitect
 | **Pruebas de API** | Postman |
 | **IDE** | IntelliJ IDEA |
 | **Control de versiones** | Git, GitHub |
-
-## Funcionalidades
-
-- Gestión de socios y membresías.
-- Control de asistencias y pases diarios.
-- Administración de pagos.
-- Gestión de usuarios, empleados y permisos.
-- Reportes y estadísticas.
 
 ## Arquitectura
 
