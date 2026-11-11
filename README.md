@@ -1,4 +1,4 @@
-# SistemaGym 
+# SistemaGym | Sistema de Gestión de Gimnasios
 
 ## Stack tecnológico
 | Componente | Tecnologías y herramientas |
