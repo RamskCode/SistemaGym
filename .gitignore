@@ -14,3 +14,8 @@ frontend/screenshots/
 pruebas.http
 
 src/test/resources/application.properties
+
+!src/test/resources/db/mysql/
+!src/test/resources/db/h2/
+!src/test/resources/db/mysql/sistemagym-test-schema.sql
+!src/test/resources/db/h2/sistemagym-application-test-data.sql
