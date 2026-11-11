@@ -9,3 +9,6 @@ frontend/test-results/
 .env
 .env.*
 *private*
+
+frontend/screenshots/
+pruebas.http
