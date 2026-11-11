@@ -12,3 +12,5 @@ frontend/test-results/
 
 frontend/screenshots/
 pruebas.http
+
+src/test/resources/application.properties
