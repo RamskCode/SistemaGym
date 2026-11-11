@@ -1,31 +1,34 @@
 # SistemaGym | Sistema de Gestión de Gimnasios
 
-Sistema web desarrollado para optimizar la administración de gimnasios, centralizando la gestión de socios, membresías, asistencias, pagos y personal mediante una interfaz moderna e intuitiva.
+Sistema web para la administración de gimnasios, desarrollado con una arquitectura cliente-servidor, API REST y autenticación basada en roles.
 
-## Funcionalidades principales
+## Stack tecnológico
+
+| Componente | Tecnologías y herramientas |
+|---|---|
+| **Lenguaje backend** | Java 21 |
+| **Framework backend** | Spring Boot |
+| **Seguridad** | Spring Security, JWT |
+| **Frontend** | React, TypeScript |
+| **Herramienta de compilación frontend** | Vite |
+| **Base de datos** | MySQL |
+| **Persistencia** | Spring Data JPA, Hibernate |
+| **Gestión de dependencias** | Maven, npm |
+| **Pruebas de API** | Postman |
+| **IDE** | IntelliJ IDEA |
+| **Control de versiones** | Git, GitHub |
+
+## Funcionalidades
 
 - Gestión de socios y membresías.
-- Registro y control de asistencias.
-- Administración de pagos y pases diarios.
-- Gestión de usuarios, empleados y roles.
-- Reportes y estadísticas administrativas.
+- Control de asistencias y pases diarios.
+- Administración de pagos.
+- Gestión de usuarios, empleados y permisos.
+- Reportes y estadísticas.
 
-## Tecnologías utilizadas
+## Arquitectura
 
-| Backend | Frontend | Base de datos |
-|---|---|---|
-| Java, Spring Boot | React, TypeScript, Vite | MySQL |
-
-## Demo interactiva
-
-**Acceder:** https://sistemagym-smoky.vercel.app
-
-**Credenciales de prueba:**
-- Usuario: `admin@sistemagym.com`
-- Contraseña: `admin123`
-
-La demo utiliza datos ficticios y funciona de manera independiente del backend y la base de datos de producción.
-
-## Estado del proyecto
-
-Proyecto en desarrollo y mejora continua, enfocado en la implementación de funcionalidades administrativas, seguridad y experiencia de usuario.
+- **Backend:** API REST desarrollada con Spring Boot.
+- **Frontend:** aplicación SPA desarrollada con React y TypeScript.
+- **Seguridad:** autenticación JWT y autorización basada en roles.
+- **Persistencia:** base de datos relacional MySQL.
