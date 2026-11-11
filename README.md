@@ -1,4 +1,4 @@
-# SistemaGym | Sistema de Gestión de Gimnasios
+# SistemaGym
 
 ## Acceso al sistema
 
