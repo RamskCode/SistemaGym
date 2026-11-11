@@ -1,7 +1,6 @@
-# SistemaGym | Sistema de Gestión de Gimnasios
+# SistemaGym 
 
 ## Stack tecnológico
-
 | Componente | Tecnologías y herramientas |
 |---|---|
 | **Lenguaje backend** | Java 21 |
@@ -17,7 +16,6 @@
 | **Control de versiones** | Git, GitHub |
 
 ## Arquitectura
-
 - **Backend:** API REST desarrollada con Spring Boot.
 - **Frontend:** aplicación SPA desarrollada con React y TypeScript.
 - **Seguridad:** autenticación JWT y autorización basada en roles.
