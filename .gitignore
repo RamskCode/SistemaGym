@@ -1,5 +1,6 @@
 
 *.sql
+/docs/
 .idea/
 target/
 frontend/node_modules/
@@ -20,3 +21,5 @@ src/test/resources/application.properties
 !src/test/resources/db/h2/
 !src/test/resources/db/mysql/sistemagym-test-schema.sql
 !src/test/resources/db/h2/sistemagym-application-test-data.sql
+!src/test/resources/db/postgresql/
+!src/test/resources/db/postgresql/sistemagym-schema.sql

@@ -73,7 +73,7 @@ class PostgreSql17SchemaAndJpaIT {
             connection.createStatement().execute(
                     "CREATE EXTENSION unaccent WITH SCHEMA extensions");
             ScriptUtils.executeSqlScript(connection,
-                    new FileSystemResource("docs/sql/postgresql/01_sistemagym_schema.sql"));
+                    new FileSystemResource("src/test/resources/db/postgresql/sistemagym-schema.sql"));
             connection.createStatement().executeUpdate("""
                     INSERT INTO roles (nombre, descripcion) VALUES
                     ('ADMINISTRADOR', 'Rol de integración'),
