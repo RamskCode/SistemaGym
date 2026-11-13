@@ -19,9 +19,3 @@ Sistema web para la gestión de gimnasios, desarrollado con **Java, Spring Boot,
 - **Backend:** Java 21, Spring Boot, Spring Security y JPA.
 - **Frontend:** React, TypeScript y Vite.
 - **Base de datos:** PostgreSQL.
-- **Despliegue:** Vercel, Render y Supabase.
-
-### Autor
-
-**Jhonatan Ricaldi**  
-[GitHub - RamskCode](https://github.com/RamskCode)
