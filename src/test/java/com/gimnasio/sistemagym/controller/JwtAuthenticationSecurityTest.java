@@ -151,6 +151,40 @@ class JwtAuthenticationSecurityTest {
     }
 
     @Test
+    void refreshAceptaOriginMismoHostYRechazaHostReescritoPorProxy() throws Exception {
+        var rotated = new RefreshSessionService.Tokens("new-access", "new-refresh", "new-csrf",
+                900_000, java.time.Duration.ofHours(6));
+        when(refreshSessionService.renovar("old-refresh", "csrf-value")).thenReturn(rotated);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Host", "localhost:5173")
+                        .header("Origin", "http://localhost:5173")
+                        .cookie(new jakarta.servlet.http.Cookie("SG_REFRESH", "old-refresh"),
+                                new jakarta.servlet.http.Cookie("SG_CSRF", "csrf-value"))
+                        .header("X-CSRF-Token", "csrf-value"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Host", "localhost:8080")
+                        .header("Origin", "http://localhost:5173")
+                        .cookie(new jakarta.servlet.http.Cookie("SG_REFRESH", "old-refresh"),
+                                new jakarta.servlet.http.Cookie("SG_CSRF", "csrf-value"))
+                        .header("X-CSRF-Token", "csrf-value"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .header("Host", "localhost:5173")
+                        .header("Origin", "https://attacker.example")
+                        .cookie(new jakarta.servlet.http.Cookie("SG_REFRESH", "old-refresh"),
+                                new jakarta.servlet.http.Cookie("SG_CSRF", "csrf-value"))
+                        .header("X-CSRF-Token", "csrf-value"))
+                .andExpect(status().isUnauthorized());
+
+        org.mockito.Mockito.verify(refreshSessionService,
+                org.mockito.Mockito.times(1)).renovar("old-refresh", "csrf-value");
+    }
+
+    @Test
     void logoutRevocaYEliminaAmbasCookies() throws Exception {
         mockMvc.perform(post("/api/auth/logout")
                         .cookie(new jakarta.servlet.http.Cookie("SG_REFRESH", "refresh-value"),

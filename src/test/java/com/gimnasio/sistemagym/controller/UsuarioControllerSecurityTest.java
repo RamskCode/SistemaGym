@@ -305,6 +305,24 @@ class UsuarioControllerSecurityTest {
     }
 
     @Test
+    void validacionRestRechazaFormatosDniYCeFueraDeRegla() throws Exception {
+        for (String[] documento : new String[][] {
+                {"DNI", "1234567"}, {"DNI", "123456789"}, {"DNI", "1234AB78"},
+                {"CE", "A".repeat(13)}, {"CE", "AB C"}, {"CE", "AB-C"}, {"CE", "AB!C"}
+        }) {
+            String body = "{\"nombres\":\"Ana\",\"apellidos\":\"Prueba\","
+                    + "\"correo\":\"ana@example.com\",\"rol\":\"NUTRICIONISTA\","
+                    + "\"tipoDocumento\":\"" + documento[0] + "\",\"numeroDocumento\":\""
+                    + documento[1] + "\"}";
+            mockMvc.perform(post("/api/usuarios")
+                            .with(user("admin").roles("ADMINISTRADOR"))
+                            .contentType(APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        verifyNoInteractions(usuarioAdminService);
+    }
+
+    @Test
     void correoDuplicadoSeDevuelveComoConflictoHttp() throws Exception {
         when(usuarioAdminService.crear(any(CrearUsuarioRequest.class)))
                 .thenThrow(new ConflictoException(

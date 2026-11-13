@@ -17,6 +17,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import jakarta.servlet.DispatcherType;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 public class SecurityConfig {
@@ -47,10 +48,12 @@ public class SecurityConfig {
             HttpSecurity http,
             AuthenticationManager authenticationManager,
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            AuthenticationEntryPoint jwtAuthenticationEntryPoint) {
+            AuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            @Value("${app.actuator.health.public:false}") boolean publicActuatorHealth) {
 
         http
                 .authenticationManager(authenticationManager)
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -59,7 +62,11 @@ public class SecurityConfig {
                 .headers(headers -> headers.referrerPolicy(referrer ->
                         referrer.policy(ReferrerPolicy.NO_REFERRER))
                         .cacheControl(Customizer.withDefaults()))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
+                    if (publicActuatorHealth) {
+                        auth.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll();
+                    }
+                    auth.requestMatchers("/actuator/**").denyAll()
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
@@ -174,6 +181,8 @@ public class SecurityConfig {
                         .hasRole("RECEPCIONISTA")
                         .requestMatchers(HttpMethod.GET, "/api/ingresos/socios/habilitados")
                         .hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                        .requestMatchers(HttpMethod.GET, "/api/ingresos/historial")
+                        .hasRole("RECEPCIONISTA")
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/ingresos/pase-diario/habilitado",
@@ -193,6 +202,13 @@ public class SecurityConfig {
                                 "/api/configuraciones",
                                 "/api/configuraciones/**"
                         ).hasRole("ADMINISTRADOR")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/asistencias-laborales/empleados-con-historial"
+                        ).hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/asistencias-laborales/consulta-recepcionista")
+                        .hasRole("RECEPCIONISTA")
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/asistencias-laborales/personal-seleccionable"
@@ -227,10 +243,10 @@ public class SecurityConfig {
                         .hasRole("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH,
                                 "/api/asistencias-laborales/*/anulacion")
-                        .hasRole("ADMINISTRADOR")
+                        .hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                         .requestMatchers("/api/**").denyAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
 

@@ -3,6 +3,9 @@ package com.gimnasio.sistemagym.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.AssertTrue;
+import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 
 /**
  * Datos para registrar un ingreso. Para un visitante se exigen nombre y
@@ -42,4 +45,15 @@ public record RegistrarIngresoRequest(
 
         @Size(max = 36, message = "La clave de idempotencia no es válida.")
         String claveIdempotencia) {
+
+    @AssertTrue(message = "El número de documento no cumple el formato del tipo seleccionado.")
+    public boolean isDocumentoValido() {
+        if (tipoDocumento == null || numeroDocumento == null) return true;
+        try {
+            return DocumentoIdentidad.esValido(TipoDocumento.valueOf(
+                    tipoDocumento.toUpperCase(java.util.Locale.ROOT)), numeroDocumento);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
 }

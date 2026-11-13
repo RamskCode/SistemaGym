@@ -8,6 +8,9 @@ import com.gimnasio.sistemagym.entity.EstadoAsistenciaLaboral;
 public interface AsistenciaLaboralConsulta {
     Long getIdAsistencia();
     Long getIdEmpleado();
+    String getNombresEmpleado();
+    String getApellidosEmpleado();
+    String getRolEmpleado();
     LocalDateTime getFechaEntradaUtc();
     LocalDateTime getFechaSalidaUtc();
     LocalDate getFechaLaboral();

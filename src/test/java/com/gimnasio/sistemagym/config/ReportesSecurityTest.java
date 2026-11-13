@@ -41,4 +41,15 @@ class ReportesSecurityTest {
                 .andExpect(status().isUnauthorized());
         verify(reportesService, times(1)).resumen(java.time.LocalDate.parse("2026-01-01"), java.time.LocalDate.parse("2026-01-31"), null);
     }
+
+    @Test
+    void elDetalleHistoricoDeIngresoSigueSiendoExclusivoDelAdministrador() throws Exception {
+        mockMvc.perform(get("/api/reportes/ingresos/14")
+                        .with(user("admin").roles("ADMINISTRADOR")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/reportes/ingresos/14")
+                        .with(user("recep").roles("RECEPCIONISTA")))
+                .andExpect(status().isForbidden());
+        verify(reportesService).detalleIngresoCliente(14L);
+    }
 }

@@ -12,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -66,7 +68,9 @@ public class Ingreso {
     @Column(name = "clave_idempotencia", length = 36, unique = true, updatable = false)
     private String claveIdempotencia;
 
-    @Column(name = "hash_solicitud", length = 64, updatable = false)
+    @Column(name = "hash_solicitud", length = 64, updatable = false,
+            columnDefinition = "char(64)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String hashSolicitud;
 
     public Ingreso() {

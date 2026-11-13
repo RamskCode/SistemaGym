@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ApiError,
+  apiUrl,
   apiGet,
   apiPatch,
   apiPost,
@@ -46,6 +47,31 @@ function createAuth(initialToken: string | null = 'memory-token') {
 }
 
 afterEach(() => vi.restoreAllMocks())
+
+describe('API base URL', () => {
+  it('uses same-origin when no deployment base URL is configured', () => {
+    expect(apiUrl('/api/health')).toBe('/api/health')
+  })
+
+  it('uses an HTTPS API origin and rejects insecure or path-based production values', async () => {
+    vi.resetModules()
+    vi.stubEnv('VITE_API_BASE_URL', 'https://gym-api.example.test/')
+    const configured = await import('../api/http')
+    expect(configured.apiUrl('/api/health')).toBe('https://gym-api.example.test/api/health')
+
+    vi.resetModules()
+    vi.stubEnv('VITE_API_BASE_URL', 'http://api.example.test')
+    const insecure = await import('../api/http')
+    expect(() => insecure.apiUrl('/api/health')).toThrow(/HTTPS/)
+
+    vi.resetModules()
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.test/v1')
+    const pathBased = await import('../api/http')
+    expect(() => pathBased.apiUrl('/api/health')).toThrow(/sin ruta/)
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+})
 
 describe('authenticated HTTP API', () => {
   it('sends a protected GET with only the current bearer token and JSON accept header', async () => {

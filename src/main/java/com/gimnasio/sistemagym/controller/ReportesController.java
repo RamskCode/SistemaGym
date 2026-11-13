@@ -3,6 +3,7 @@ package com.gimnasio.sistemagym.controller;
 import com.gimnasio.sistemagym.dto.ReporteFilaRespuesta;
 import com.gimnasio.sistemagym.dto.ReporteResumenRespuesta;
 import com.gimnasio.sistemagym.dto.PlanReporteRespuesta;
+import com.gimnasio.sistemagym.dto.DetalleIngresoClienteRespuesta;
 import com.gimnasio.sistemagym.service.ReportesService;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +29,11 @@ public class ReportesController {
 
     @GetMapping("/planes")
     public List<PlanReporteRespuesta> planes() { return service.planes(); }
+
+    @GetMapping("/ingresos/{idIngreso}")
+    public DetalleIngresoClienteRespuesta detalleIngreso(@org.springframework.web.bind.annotation.PathVariable Long idIngreso) {
+        return service.detalleIngresoCliente(idIngreso);
+    }
 
     @GetMapping("/detalle")
     public List<ReporteFilaRespuesta> detalle(

@@ -15,6 +15,9 @@ export type PersonalSeleccionable = {
 export type AsistenciaLaboral = {
   idAsistencia: number
   idEmpleado: number
+  nombresEmpleado?: string | null
+  apellidosEmpleado?: string | null
+  rolEmpleado?: string | null
   fechaEntradaUtc: string
   fechaSalidaUtc: string | null
   fechaLaboral: string
@@ -157,7 +160,41 @@ export function consultarAsistenciasAdmin(
     ? '/api/asistencias-laborales'
     : `/api/asistencias-laborales/empleado/${idEmpleado}`
   const requestPath = `${path}?${parametrosConsulta(query)}` as `/api/${string}`
-  return apiGet<AsistenciaLaboralPagina>(requestPath, auth)
+  return apiGet<AsistenciaLaboralPagina>(requestPath, auth).then((result) => ({
+    ...result,
+    contenido: result.contenido.map((item) => ({
+      ...item,
+      nombresEmpleado: item.nombresEmpleado ? formatPersonName(item.nombresEmpleado) : item.nombresEmpleado,
+      apellidosEmpleado: item.apellidosEmpleado ? formatPersonName(item.apellidosEmpleado) : item.apellidosEmpleado,
+    })),
+  }))
+}
+
+export function consultarHistorialAsistenciaRecepcionista(
+  auth: AuthenticatedRequestContext,
+  query: ConsultaAsistenciasAdmin,
+  idEmpleado?: number,
+): Promise<AsistenciaLaboralPagina> {
+  if (!Number.isInteger(query.page) || query.page < 0 || ![10, 20, 50, 100].includes(query.size)) {
+    return Promise.reject(new Error('Parámetros de paginación inválidos.'))
+  }
+  const params = parametrosConsulta(query)
+  if (idEmpleado !== undefined) params.set('idEmpleado', String(idEmpleado))
+  return apiGet<AsistenciaLaboralPagina>(`/api/asistencias-laborales/consulta-recepcionista?${params}`, auth).then((result) => ({
+    ...result,
+    contenido: result.contenido.map((item) => ({
+      ...item,
+      nombresEmpleado: item.nombresEmpleado ? formatPersonName(item.nombresEmpleado) : item.nombresEmpleado,
+      apellidosEmpleado: item.apellidosEmpleado ? formatPersonName(item.apellidosEmpleado) : item.apellidosEmpleado,
+    })),
+  }))
+}
+
+export type EmpleadoConHistorial = {
+  idEmpleado: number
+  nombres: string
+  apellidos: string
+  rol: string
 }
 
 export function consultarHistorialAsistencia(
@@ -192,6 +229,16 @@ export function listarPersonalSeleccionable(
 ): Promise<PersonalSeleccionable[]> {
   return apiGet<PersonalSeleccionable[]>('/api/asistencias-laborales/personal-seleccionable', auth).then((people) => people.map((person) => ({
     ...person, nombres: formatPersonName(person.nombres), apellidos: formatPersonName(person.apellidos),
+  })))
+}
+
+export function listarEmpleadosConHistorial(
+  auth: AuthenticatedRequestContext,
+): Promise<EmpleadoConHistorial[]> {
+  return apiGet<EmpleadoConHistorial[]>('/api/asistencias-laborales/empleados-con-historial', auth).then((people) => people.map((person) => ({
+    ...person,
+    nombres: formatPersonName(person.nombres),
+    apellidos: formatPersonName(person.apellidos),
   })))
 }
 

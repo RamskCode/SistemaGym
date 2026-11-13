@@ -43,11 +43,27 @@ export class ApiError extends HttpError {
   }
 }
 
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, '') ?? ''
+
+/** Same-origin by default for local development; production may target Render directly. */
+export function apiUrl(path: `/api/${string}`): string {
+  if (!configuredApiBase) return path
+  const base = new URL(configuredApiBase)
+  if (base.protocol !== 'https:' && base.hostname !== 'localhost' && base.hostname !== '127.0.0.1') {
+    throw new Error('VITE_API_BASE_URL debe usar HTTPS fuera de localhost.')
+  }
+  if (base.pathname !== '/' || base.search || base.hash || base.username || base.password) {
+    throw new Error('VITE_API_BASE_URL debe ser un origen sin ruta ni credenciales.')
+  }
+  return `${base.origin}${path}`
+}
+
 /** Minimal same-origin JSON helper for public endpoints (including login). */
 export async function apiRequest<T>(path: `/api/${string}`, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: 'no-store',
+    credentials: 'include',
     headers: {
       Accept: 'application/json',
       ...init?.headers,

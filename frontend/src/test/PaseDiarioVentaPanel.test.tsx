@@ -40,8 +40,52 @@ function habilitarPanel() {
 describe('PaseDiarioVentaPanel', () => {
   it('mantiene desactivada la venta hasta confirmar que el esquema v2 está listo', async () => {
     render(<PaseDiarioVentaPanel auth={auth} />)
-    expect(await screen.findByText(/temporalmente deshabilitada/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Venta de pase diario no disponible/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Buscar persona/ })).not.toBeInTheDocument()
+  })
+
+  it('explica el error de disponibilidad cuando no puede consultar la tarifa o el esquema', async () => {
+    server.use(http.get('/api/ingresos/pase-diario/habilitado', () => HttpResponse.json({ message: 'Servicio no disponible' }, { status: 503 })))
+    render(<PaseDiarioVentaPanel auth={auth} />)
+    expect(await screen.findByText('No se pudo habilitar el pase diario')).toBeInTheDocument()
+    expect(screen.getByText(/servidor no pudo completar/i)).toBeInTheDocument()
+    expect(screen.getByText(/No se registró ningún acceso ni se realizó un cobro/)).toBeInTheDocument()
+  })
+
+  it('registra una persona nueva y su pase con confirmación explícita', async () => {
+    const user = userEvent.setup()
+    habilitarPanel()
+    let personaCreada: unknown
+    let ingresoCreado: unknown
+    server.use(
+      http.get('/api/socios/buscar', () => HttpResponse.json([])),
+      http.post('/api/socios', async ({ request }) => {
+        personaCreada = await request.json()
+        return HttpResponse.json({ ...socio, idSocio: 84, dni: '87654321', numeroDocumento: '87654321', nombres: 'Luz', apellidos: 'Rojas' }, { status: 201 })
+      }),
+      http.post('/api/ingresos', async ({ request }) => {
+        ingresoCreado = await request.json()
+        return HttpResponse.json({
+          idIngreso: 88, tipoIngreso: 'VISITANTE', idSocio: 84, idVisitante: null,
+          tipoDocumento: 'DNI', numeroDocumento: '87654321', fechaHora: '2026-11-10T12:00:00',
+          paseDiarioCobrado: true, montoCobrado: 12.5, idPago: 92, resultado: 'ACEPTADO',
+        }, { status: 201 })
+      }),
+    )
+
+    render(<PaseDiarioVentaPanel auth={auth} />)
+    await user.type(await screen.findByLabelText('Número de documento'), '87654321')
+    await user.click(screen.getByRole('button', { name: 'Buscar persona' }))
+    await screen.findByText(/Puedes registrar una persona nueva/)
+    await user.type(screen.getByLabelText('Nombres'), 'Luz')
+    await user.type(screen.getByLabelText('Apellidos'), 'Rojas')
+    await user.click(screen.getByLabelText(/Confirmo los datos/))
+    await user.click(screen.getByRole('button', { name: 'Registrar persona y pase diario' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Pase diario vendido por S/')
+    expect(personaCreada).toMatchObject({ nombres: 'Luz', apellidos: 'Rojas', numeroDocumento: '87654321' })
+    expect(ingresoCreado).toMatchObject({ idSocio: 84, numeroDocumento: '87654321', metodoPago: 'EFECTIVO' })
+    expect(ingresoCreado).toHaveProperty('claveIdempotencia')
   })
 
   it('busca la ficha real, confirma, cobra una vez y muestra el resultado del servidor', async () => {

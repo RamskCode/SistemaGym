@@ -4,6 +4,8 @@ import com.gimnasio.sistemagym.dto.ActualizarSocioRequest;
 import com.gimnasio.sistemagym.dto.SocioRespuesta;
 import com.gimnasio.sistemagym.entity.Auditoria;
 import com.gimnasio.sistemagym.entity.Socio;
+import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 import com.gimnasio.sistemagym.exception.ConflictoException;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
 import com.gimnasio.sistemagym.repository.SocioRepository;
@@ -189,8 +191,8 @@ public class SocioService {
 
     private void normalizarDocumento(Socio socio, String dniLegado, String tipo, String numero) {
         String normalizedType = tipo == null || tipo.isBlank() ? null : tipo.trim().toUpperCase(java.util.Locale.ROOT);
-        String normalizedNumber = numero == null || numero.isBlank() ? null : numero.trim();
-        String legacy = dniLegado == null || dniLegado.isBlank() ? null : dniLegado.trim();
+        String normalizedNumber = numero == null || numero.isEmpty() ? null : numero;
+        String legacy = dniLegado == null || dniLegado.isEmpty() ? null : dniLegado;
         if (normalizedType == null && normalizedNumber == null && legacy != null) {
             normalizedType = "DNI";
             normalizedNumber = legacy;
@@ -202,6 +204,10 @@ public class SocioService {
         if (legacy != null && normalizedType != null && (!"DNI".equals(normalizedType) || !legacy.equals(normalizedNumber))) {
             throw new IllegalArgumentException("El documento enviado en formato antiguo no coincide con el documento tipado.");
         }
+        if (normalizedType != null && normalizedNumber != null) {
+            normalizedNumber = DocumentoIdentidad.normalizar(
+                    TipoDocumento.valueOf(normalizedType), normalizedNumber);
+        }
         socio.setTipoDocumento(normalizedType);
         socio.setNumeroDocumento(normalizedNumber);
         // Mantener el campo legado y su índice único para clientes y datos históricos.
@@ -210,9 +216,8 @@ public class SocioService {
 
     private void validarDocumento(String tipo, String numero) {
         if (tipo == null && numero == null) return;
-        if ("DNI".equals(tipo) && numero.matches("[0-9]{8}")) return;
-        if ("CE".equals(tipo) && numero.matches("[0-9]{1,12}")) return;
-        throw new IllegalArgumentException("DNI debe tener 8 dígitos y CE entre 1 y 12 dígitos numéricos.");
+        if (tipo == null) return;
+        DocumentoIdentidad.normalizar(TipoDocumento.valueOf(tipo), numero);
     }
 
     private void validarUnicidad(Socio socio, Long idActual) {

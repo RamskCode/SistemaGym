@@ -54,3 +54,39 @@
   .report-dialog__actions { justify-content: stretch; }
   .report-dialog__actions > button { flex: 1 1 100%; }
 }
+
+/* Trainer incident tracking */
+.mis-reportes-page { gap: var(--space-5, 20px); }
+.mis-reportes-page > .page-title { align-items: center; gap: 20px; }
+.mis-reportes-page > .page-title h1 { letter-spacing: -.03em; }
+.report-list { gap: 10px; }
+.report-record, .report-detail-card, .report-history-card { padding: 17px 19px; }
+.report-record__eyebrow { margin-bottom: 5px; color: #526052; font-size: var(--type-help, 12px); }
+.report-record__top h2 { color: #202720; font-size: var(--type-body, 15px); }
+.report-origin { display: inline-flex; width: fit-content; min-height: 24px; align-items: center; margin-top: 8px; padding: 3px 9px; border: 1px solid #dce4dc; border-radius: 999px; background: #f7f9f7; color: #435044; font-size: var(--type-help, 12px); font-weight: 600; }
+.report-origin--checklist { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.report-origin--direct { border-color: #dce4dc; background: #f5f7f5; color: #435044; }
+.report-record__description { margin: 9px 0; color: #344035; font-size: var(--type-label, 13px); }
+.report-record__meta { gap: 30px; margin-bottom: 10px; }
+.report-record__meta dt, .report-main-data dt, .report-confirm-summary dt { color: #526052; font-size: var(--type-help, 12px); }
+.report-record__meta dd, .report-main-data dd, .report-confirm-summary dd { color: #202720; font-size: var(--type-label, 13px); }
+.report-state { display: inline-flex; min-height: 27px; align-items: center; padding: 4px 9px; border: 1px solid transparent; border-radius: 999px; font-size: var(--type-help, 12px); }
+.report-state--pendiente { border-color: #ead8aa; background: #fff8e9; color: #725316; }
+.report-state--en_revision { border-color: #cddced; background: #f0f5fb; color: #355879; }
+.report-state--solucionado { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.report-main-data { gap: 15px 20px; }
+.report-description h2 { color: #303930; font-size: var(--type-section-title, 16px); }
+.report-description p, .report-history__note { color: #344035; font-size: var(--type-label, 13px); }
+.report-history__transition { font-size: var(--type-label, 13px); }
+.report-history__meta { color: #526052; font-size: var(--type-help, 12px); }
+.report-dialog { border-color: #dce4dc; border-radius: 14px; padding: clamp(20px, 3vw, 27px); }
+.report-dialog h2 { font-size: var(--type-dialog-title, 20px); }
+.report-field { color: #435044; font-size: var(--type-label, 13px); }
+.report-field textarea, .report-field select { min-height: var(--field-height, 42px); border-color: #bdc9be; font-size: var(--type-body, 14px); }
+.report-field textarea { min-height: 120px; }
+.report-form-note { padding: 10px 12px; border-left: 3px solid #7ca781; background: #f6f9f6; color: #435044; font-size: var(--type-help, 12px); }
+.report-dialog__actions button { min-height: 42px; }
+.report-feedback { border-radius: 10px; font-size: var(--type-label, 13px); }
+.mis-reportes-page :is(button, a, select, textarea):focus-visible { outline: 3px solid rgb(8 125 32 / 30%); outline-offset: 2px; }
+@media (max-width: 620px) { .report-record, .report-detail-card, .report-history-card { padding: 15px; } .report-main-data { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .report-main-data { grid-template-columns: minmax(0, 1fr); } }

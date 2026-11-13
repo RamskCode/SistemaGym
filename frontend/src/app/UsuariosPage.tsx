@@ -17,6 +17,7 @@ import {
 } from '../api/usuarios'
 import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/Button'
+import { documentHelp, isValidDocument, normalizeDocumentInput } from '../utils/documentIdentity'
 import { Card } from '../components/Card'
 import { PageTitle } from '../components/PageTitle'
 import './usuarios.css'
@@ -57,7 +58,7 @@ function validate(values: FormValues, editing: boolean): { payload?: CrearUsuari
   const nombres = formatPersonName(values.nombres)
   const apellidos = formatPersonName(values.apellidos)
   const correo = values.correo.trim()
-  const numeroDocumento = values.numeroDocumento.trim().toUpperCase()
+  const numeroDocumento = values.numeroDocumento
   if (!nombres || nombres.length > 100) return { error: 'Los nombres son obligatorios y no pueden superar 100 caracteres.' }
   if (!apellidos || apellidos.length > 100) return { error: 'Los apellidos son obligatorios y no pueden superar 100 caracteres.' }
   if (!correo || correo.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return { error: 'Ingresa un correo válido de hasta 150 caracteres.' }
@@ -65,8 +66,7 @@ function validate(values: FormValues, editing: boolean): { payload?: CrearUsuari
   if (editing && !values.editarDocumento) return { payload: { nombres, apellidos, correo } }
   if (!values.tipoDocumento && !numeroDocumento) return { error: 'Selecciona un tipo e ingresa el número de documento.' }
   if (!values.tipoDocumento || !numeroDocumento) return { error: 'Tipo y número de documento deben proporcionarse juntos.' }
-  if (!/^\d{1,12}$/.test(numeroDocumento)) return { error: 'El documento debe contener entre 1 y 12 dígitos numéricos.' }
-  if (values.tipoDocumento === 'DNI' && !/^\d{8}$/.test(numeroDocumento)) return { error: 'El DNI debe contener exactamente 8 dígitos.' }
+  if (!isValidDocument(values.tipoDocumento, numeroDocumento)) return { error: values.tipoDocumento === 'DNI' ? 'El DNI debe contener exactamente 8 dígitos.' : 'El CE debe contener entre 1 y 12 dígitos.' }
   if (editing) return { payload: { nombres, apellidos, correo, tipoDocumento: values.tipoDocumento, numeroDocumento } }
   return { payload: { nombres, apellidos, correo, rol: values.rol, tipoDocumento: values.tipoDocumento, numeroDocumento } }
 }
@@ -470,7 +470,7 @@ export function UsuariosPage() {
         {editing && <section className="usuarios-form-section usuarios-form-section--document" aria-labelledby="usuarios-edit-document-title"><h3 id="usuarios-edit-document-title">Documento de identidad</h3>
           <label className="usuarios-check"><input type="checkbox" checked={values.editarDocumento} onChange={(event) => setValues((old) => ({ ...old, editarDocumento: event.target.checked, tipoDocumento: event.target.checked ? editing.tipoDocumento ?? '' : '', numeroDocumento: event.target.checked ? editing.numeroDocumento ?? '' : '' }))}/>Actualizar documento de identidad</label>
         </section>}
-        {(!editing || values.editarDocumento) && <div className={`usuarios-document ${editing ? 'usuarios-document--edit usuarios-form-field--wide' : ''}`}><div className="usuarios-document__intro"><strong>Documento de identidad</strong><p>Se utiliza para identificar de forma única a cada empleado.</p></div><div className="usuarios-document-types" role="group" aria-label="Tipo de documento">{(['DNI', 'CE'] as const).map((type) => <button aria-pressed={values.tipoDocumento === type} className={values.tipoDocumento === type ? 'usuarios-document-type usuarios-document-type--selected' : 'usuarios-document-type'} key={type} onClick={() => setValues({ ...values, tipoDocumento: type, numeroDocumento: '' })} type="button">{type}</button>)}</div><label className="usuarios-form-field"><span>Número de documento <b>*</b></span><input aria-label="Número de documento" type="text" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} autoComplete="off" aria-describedby="usuarios-document-help" aria-invalid={Boolean(values.numeroDocumento && !/^\d+$/.test(values.numeroDocumento))} value={values.numeroDocumento} onChange={(event) => { const next = event.target.value; if (/^\d*$/.test(next)) setValues({ ...values, numeroDocumento: next }) }}/><small id="usuarios-document-help" aria-live="polite">{values.tipoDocumento ? values.tipoDocumento === 'DNI' ? 'DNI: exactamente 8 dígitos.' : 'CE: de 1 a 12 dígitos.' : 'Selecciona DNI o CE; escribe solo números.'} {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12} dígitos</small></label></div>}
+          {(!editing || values.editarDocumento) && <div className={`usuarios-document ${editing ? 'usuarios-document--edit usuarios-form-field--wide' : ''}`}><div className="usuarios-document__intro"><strong>Documento de identidad</strong><p>Se utiliza para identificar de forma única a cada empleado.</p></div><div className="usuarios-document-types" role="group" aria-label="Tipo de documento">{(['DNI', 'CE'] as const).map((type) => <button aria-pressed={values.tipoDocumento === type} className={values.tipoDocumento === type ? 'usuarios-document-type usuarios-document-type--selected' : 'usuarios-document-type'} key={type} onClick={() => setValues({ ...values, tipoDocumento: type, numeroDocumento: normalizeDocumentInput(type, values.numeroDocumento) })} type="button">{type}</button>)}</div><label className="usuarios-form-field"><span>Número de documento <b>*</b></span><input aria-label="Número de documento" type="text" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} autoComplete="off" aria-describedby="usuarios-document-help" aria-invalid={Boolean(values.numeroDocumento && !isValidDocument(values.tipoDocumento, values.numeroDocumento))} value={values.numeroDocumento} onChange={(event) => setValues({ ...values, numeroDocumento: normalizeDocumentInput(values.tipoDocumento, event.target.value) })}/><small id="usuarios-document-help" aria-live="polite">{documentHelp(values.tipoDocumento)} {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12} dígitos</small></label></div>}
         {formError && <p className="usuarios-inline-error" role="alert">{formError}</p>}
         <div className="usuarios-actions usuarios-form-actions"><Button type="button" variant="secondary" disabled={saving} onClick={closeForm}>Cancelar</Button><Button type="submit" disabled={Boolean(uncertain) || saving || (editing ? !hasEditedUserChanges(values, editing) : false)}>{editing ? 'Guardar cambios' : 'Revisar datos'}</Button></div>
       </form>

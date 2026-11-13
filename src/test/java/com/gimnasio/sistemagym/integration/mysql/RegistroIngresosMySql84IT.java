@@ -292,7 +292,7 @@ class RegistroIngresosMySql84IT extends MySql84IntegrationTestSupport {
     }
 
     @Test
-    void rechazaCeAlfanumericoSinCrearContactoIngresoNiPago()
+    void rechazaCeConLetrasSinCrearContactoIngresoNiPago()
             throws Exception {
         recordarDocumento("CE", "AB-123");
 
@@ -300,11 +300,29 @@ class RegistroIngresosMySql84IT extends MySql84IntegrationTestSupport {
                         cuerpoVisitante("ce", "  ab-123  ", "Visitante CE",
                                 "988777666", null, "YAPE")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje", containsString("1 y 12 dígitos")));
+                .andExpect(jsonPath("$.errores[0]", containsString("formato del tipo seleccionado")));
 
         assertEquals(0L, contarContactos("CE", "AB-123"));
         assertEquals(0L, contarIngresos());
         assertEquals(0L, contarPagos());
+    }
+
+    @Test
+    void registraVisitanteConCeNumericoDeHastaDoceDigitos() throws Exception {
+        String ce = "001234567890";
+        recordarDocumento("CE", ce);
+
+        mockMvc.perform(registrar("RECEPCIONISTA",
+                        cuerpoVisitante("CE", ce, "Visitante CE numérico",
+                                "988777666", null, "YAPE")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tipoDocumento").value("CE"))
+                .andExpect(jsonPath("$.numeroDocumento").value(ce))
+                .andExpect(jsonPath("$.paseDiarioCobrado").value(true));
+
+        assertEquals(1L, contarContactos("CE", ce));
+        assertEquals(1L, contarIngresos());
+        assertEquals(1L, contarPagos());
     }
 
     @Test

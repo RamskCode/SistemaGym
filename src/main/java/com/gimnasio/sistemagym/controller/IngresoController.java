@@ -59,10 +59,13 @@ public class IngresoController {
             @RequestParam(defaultValue = "") @Size(max = 100) String nombre,
             @RequestParam(defaultValue = "") @Pattern(regexp = "DNI|CE|", message = "El tipo de documento no es válido.") String tipoDocumento,
             @RequestParam(defaultValue = "") @Size(max = 12)
-            @Pattern(regexp = "\\d*", message = "El documento solo puede contener dígitos.") String numeroDocumento,
+            @Pattern(regexp = "[0-9]*", message = "El documento solo puede contener dígitos.") String numeroDocumento,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "nombres,asc") String sort) {
+        if ("DNI".equals(tipoDocumento) && !numeroDocumento.matches("[0-9]*")) {
+            throw new IllegalArgumentException("El filtro DNI solo puede contener dígitos.");
+        }
         String[] sortParts = sort.split(",", -1);
         String property = switch (sortParts[0]) {
             case "nombres" -> "nombres";

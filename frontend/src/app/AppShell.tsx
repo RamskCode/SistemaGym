@@ -13,6 +13,7 @@ export function AppShell() {
   const [profileUnavailable, setProfileUnavailable] = useState(false)
   const auth = useAuth()
   const { logout, user } = auth
+  const isReception = user?.roles.length === 1 && user.roles[0] === 'RECEPCIONISTA'
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
@@ -95,7 +96,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isReception ? ' app-shell--reception' : ''}`}>
       <Sidebar
         isOpen={menuOpen}
         onClose={closeNavigationMenu}

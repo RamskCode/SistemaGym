@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 @Entity
@@ -20,10 +22,14 @@ public class SesionRefresh {
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
-    @Column(name = "token_hash", length = 64, nullable = false, unique = true)
+    @Column(name = "token_hash", length = 64, nullable = false, unique = true,
+            columnDefinition = "char(64)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String tokenHash;
 
-    @Column(name = "csrf_hash", length = 64, nullable = false)
+    @Column(name = "csrf_hash", length = 64, nullable = false,
+            columnDefinition = "char(64)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String csrfHash;
 
     @Column(name = "version_credenciales", nullable = false)

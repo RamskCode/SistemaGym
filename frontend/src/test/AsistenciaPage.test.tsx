@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { AsistenciaPage } from '../app/AsistenciaPage'
 import { server } from './server'
 
 let auth: AuthContextValue
-const row = { idAsistencia: 18, idEmpleado: 31, fechaEntradaUtc: '2026-11-06T04:59:00Z', fechaSalidaUtc: '2026-11-06T05:30:00Z', fechaLaboral: '2026-11-05', estado: 'ACTIVA' }
+const row = { idAsistencia: 18, idEmpleado: 31, nombresEmpleado: 'Ana', apellidosEmpleado: 'Díaz', rolEmpleado: 'ENTRENADOR', fechaEntradaUtc: '2026-11-06T04:59:00Z', fechaSalidaUtc: '2026-11-06T05:30:00Z', fechaLaboral: '2026-11-05', estado: 'ACTIVA' }
 const employee = { idEmpleado: 5, nombres: 'Luis', apellidos: 'Ramos', rol: 'ENTRENADOR' }
 const adminHistory = {
   idAsistencia: 18, empleado: { idUsuario: 31, nombres: 'Ana', apellidos: 'Díaz', correo: 'ana@example.test' },
@@ -26,6 +26,7 @@ function Harness() { auth = useAuth(); return <AsistenciaPage /> }
 function renderPage() { return render(<AuthProvider><MemoryRouter><Harness /></MemoryRouter></AuthProvider>) }
 beforeEach(() => {
   server.use(http.get('/api/ingresos/socios/habilitados', () => HttpResponse.json({ contenido: [], pagina: 0, tamano: 20, totalElementos: 0, totalPaginas: 0 })))
+  server.use(http.get('/api/asistencias-laborales/empleados-con-historial', () => HttpResponse.json([employee])))
 })
 async function signIn(role = 'RECEPCIONISTA') {
   server.use(http.post('/api/auth/login', () => HttpResponse.json(tokenResponse(role))))
@@ -37,6 +38,10 @@ async function signIn(role = 'RECEPCIONISTA') {
 function getHandlers(page = 0) {
   server.use(http.get('/api/ingresos/socios/habilitados', () => HttpResponse.json({ contenido: [], pagina: 0, tamano: 20, totalElementos: 0, totalPaginas: 0 })))
   server.use(http.get('/api/asistencias-laborales/personal-seleccionable', () => HttpResponse.json([employee])))
+  server.use(http.get('/api/asistencias-laborales/consulta-recepcionista', ({ request }) => {
+    const url = new URL(request.url)
+    return HttpResponse.json({ contenido: page === 0 ? [row] : [], pagina: Number(url.searchParams.get('page')), tamano: 20, totalElementos: 11, totalPaginas: 2 })
+  }))
   server.use(http.get('/api/asistencias-laborales/mis-asistencias', ({ request }) => {
     const url = new URL(request.url)
     return HttpResponse.json({ contenido: page === 0 ? [row] : [], pagina: Number(url.searchParams.get('page')), tamano: 10, totalElementos: 11, totalPaginas: 2 })
@@ -44,6 +49,32 @@ function getHandlers(page = 0) {
 }
 
 describe('AsistenciaPage', () => {
+  it('loads the read-only customer entry history using Lima today and paginates it', async () => {
+    const user = userEvent.setup()
+    getHandlers()
+    let query = new URLSearchParams()
+    server.use(http.get('/api/ingresos/historial', ({ request }) => {
+      query = new URL(request.url).searchParams
+      return HttpResponse.json({
+        contenido: [{ id: 77, tipo: 'SOCIO', persona: 'Ana Quispe', detalle: 'Ingreso con membresía',
+          estado: 'REGISTRADO', monto: null, fecha: '2026-11-12T09:30:00',
+          documentoProtegido: 'DNI · ••••1234', modalidad: 'MEMBRESIA', operacion: 'PRIMER_INGRESO', responsable: 'Luis Ramos' }],
+        pagina: Number(query.get('pagina')), tamano: 25, totalElementos: 26, totalPaginas: 2,
+      })
+    }))
+    renderPage()
+    await signIn()
+    await user.click(screen.getByRole('tab', { name: 'Historial de ingresos' }))
+    expect(await screen.findByText('Ana Quispe')).toBeInTheDocument()
+    expect(screen.getAllByText('Membresía').length).toBeGreaterThan(1)
+    expect(screen.getByText('DNI · ••••1234')).toBeInTheDocument()
+    expect(query.get('desde')).toBe('2026-11-12')
+    expect(query.get('hasta')).toBe('2026-11-12')
+    expect(screen.queryByRole('button', { name: /editar|eliminar|corregir/i })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await waitFor(() => expect(query.get('pagina')).toBe('1'))
+  })
+
   it('searches a member, displays membership eligibility and registers a non-chargeable entry', async () => {
     const user = userEvent.setup()
     getHandlers()
@@ -259,8 +290,10 @@ describe('AsistenciaPage', () => {
     }))
     renderPage()
     await signIn()
-    expect(await screen.findByText(/11:59:00 p\. m\./i)).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Historial laboral' }))
+    expect(await screen.findByText(/11:59 p\. m\./i)).toBeInTheDocument()
     expect(screen.getByText('2026-11-05')).toBeInTheDocument()
+    await user.click(screen.getByRole('tab', { name: 'Asistencia laboral' }))
     await user.click(screen.getByRole('button', { name: 'Registrar mi entrada' }))
     await user.click(screen.getByRole('button', { name: 'Confirmar marcación' }))
     expect(screen.getByRole('button', { name: 'Registrando…' })).toBeDisabled()
@@ -273,21 +306,22 @@ describe('AsistenciaPage', () => {
     const user = userEvent.setup()
     let lastQuery = new URLSearchParams()
     server.use(http.get('/api/asistencias-laborales/personal-seleccionable', () => HttpResponse.json([employee])))
-    server.use(http.get('/api/asistencias-laborales/mis-asistencias', ({ request }) => {
+    server.use(http.get('/api/asistencias-laborales/consulta-recepcionista', ({ request }) => {
       lastQuery = new URL(request.url).searchParams
-      return HttpResponse.json({ contenido: [row], pagina: Number(lastQuery.get('page')), tamano: 10, totalElementos: 11, totalPaginas: 2 })
+      return HttpResponse.json({ contenido: [row], pagina: Number(lastQuery.get('page')), tamano: 20, totalElementos: 11, totalPaginas: 2 })
     }))
     renderPage()
     await signIn()
+    await user.click(screen.getByRole('tab', { name: 'Historial laboral' }))
     await screen.findByText('2026-11-05')
-    await user.type(screen.getByLabelText('Fecha desde'), '2026-11-01')
-    await user.type(screen.getByLabelText('Fecha hasta'), '2026-11-30')
+    fireEvent.change(screen.getByLabelText('Fecha desde'), { target: { value: '2026-11-01' } })
+    fireEvent.change(screen.getByLabelText('Fecha hasta'), { target: { value: '2026-11-30' } })
     await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
     await waitFor(() => expect(lastQuery.get('fechaDesde')).toBe('2026-11-01'))
     expect(lastQuery.get('fechaHasta')).toBe('2026-11-30')
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await waitFor(() => expect(lastQuery.get('page')).toBe('1'))
-    expect(lastQuery.get('size')).toBe('10')
+    expect(lastQuery.get('size')).toBe('20')
   })
 
   it('explains an uncertain network result and does not retry automatically', async () => {
@@ -300,7 +334,9 @@ describe('AsistenciaPage', () => {
     }))
     renderPage()
     await signIn()
+    await user.click(screen.getByRole('tab', { name: 'Historial laboral' }))
     await screen.findByText('2026-11-05')
+    await user.click(screen.getByRole('tab', { name: 'Asistencia laboral' }))
     await user.click(screen.getByRole('button', { name: 'Registrar mi salida' }))
     await user.click(screen.getByRole('button', { name: 'Confirmar marcación' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Marcación bloqueada por resultado incierto')
@@ -315,7 +351,9 @@ describe('AsistenciaPage', () => {
     server.use(http.post('/api/asistencias-laborales/mi-entrada', () => { calls += 1; return HttpResponse.json({}, { status: 500 }) }))
     const page = renderPage()
     await signIn()
+    await user.click(screen.getByRole('tab', { name: 'Historial laboral' }))
     await screen.findByText('2026-11-05')
+    await user.click(screen.getByRole('tab', { name: 'Asistencia laboral' }))
     await user.click(screen.getByRole('button', { name: 'Registrar mi entrada' }))
     await user.click(screen.getByRole('button', { name: 'Confirmar marcación' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Marcación bloqueada por resultado incierto')
@@ -548,7 +586,7 @@ describe('AsistenciaPage', () => {
       http.get('/api/asistencias-laborales/personal-seleccionable', () => HttpResponse.json([employee])),
       http.get('/api/asistencias-laborales', ({ request }) => {
         lastQuery = new URL(request.url).searchParams
-        return HttpResponse.json({ contenido: [row], pagina: Number(lastQuery.get('page')), tamano: Number(lastQuery.get('size')), totalElementos: 41, totalPaginas: 3 })
+        return HttpResponse.json({ contenido: [{ ...row, idEmpleado: 31 }], pagina: Number(lastQuery.get('page')), tamano: Number(lastQuery.get('size')), totalElementos: 41, totalPaginas: 3 })
       }),
       http.get('/api/asistencias-laborales/empleado/:id', ({ request }) => {
         lastQuery = new URL(request.url).searchParams
@@ -566,10 +604,10 @@ describe('AsistenciaPage', () => {
     await signIn('ADMINISTRADOR')
     await screen.findByText('2026-11-05')
     await user.selectOptions(screen.getByLabelText('Estado'), 'ANULADA')
-    await user.selectOptions(screen.getByLabelText('Empleado'), '5')
+    await user.selectOptions(screen.getAllByLabelText('Empleado')[0], '5')
     await user.type(screen.getByLabelText('Fecha desde'), '2026-11-01')
     await user.type(screen.getByLabelText('Fecha hasta'), '2026-11-30')
-    await user.click(screen.getByRole('button', { name: 'Aplicar' }))
+    await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
     await waitFor(() => expect(lastQuery.get('estado')).toBe('ANULADA'))
     expect(lastQuery.get('fechaDesde')).toBe('2026-11-01')
     expect(lastQuery.get('fechaHasta')).toBe('2026-11-30')
@@ -578,6 +616,7 @@ describe('AsistenciaPage', () => {
     await waitFor(() => expect(lastQuery.get('page')).toBe('1'))
     await user.click(await screen.findByRole('button', { name: /Ver historial/ }))
     expect(await screen.findByRole('dialog', { name: 'Detalle e historial de asistencia' })).toBeInTheDocument()
+    expect(screen.getAllByText('Ana Díaz').length).toBeGreaterThan(0)
     expect(screen.getByText(/Motivo: Ajuste validado/)).toBeInTheDocument()
     expect(within(screen.getByRole('dialog')).getAllByText(/11:59:00 p\. m\./i).length).toBeGreaterThan(0)
     expect(screen.getByText(/CORRECCION/)).toBeInTheDocument()
@@ -597,14 +636,79 @@ describe('AsistenciaPage', () => {
     )
     renderPage()
     await signIn('ADMINISTRADOR')
-    await user.selectOptions(await screen.findByLabelText('Empleado'), '5')
-    await user.type(screen.getByLabelText('Fecha desde'), '2026-01-01')
-    await user.type(screen.getByLabelText('Fecha hasta'), '2026-12-31')
-    await user.click(screen.getByRole('button', { name: /Aplicar/ }))
+    await user.selectOptions(await screen.findByLabelText('Empleado del reporte'), '5')
+    await user.type(screen.getByLabelText('Desde del reporte'), '2026-01-01')
+    await user.type(screen.getByLabelText('Hasta del reporte'), '2026-12-31')
     await user.click(screen.getByRole('button', { name: 'Consultar reporte' }))
-    expect(await screen.findByText('16.5')).toBeInTheDocument()
+    expect(await screen.findByText('16.5', { selector: 'dd' })).toBeInTheDocument()
+    expect(screen.getByText(/Reporte consultado/)).toBeInTheDocument()
     expect(new URL(reportUrl).pathname).toBe('/api/asistencias-laborales/reportes/empleados/5')
     expect(new URL(reportUrl).searchParams.get('fechaDesde')).toBe('2026-01-01')
+  })
+
+  it('filters history and requests report for an inactive employee excluded from attendance entry choices', async () => {
+    const user = userEvent.setup()
+    const formerEmployee = { idEmpleado: 44, nombres: 'Maricarmen Maira', apellidos: 'Santos Hinostrosa', rol: 'RECEPCIONISTA' }
+    const formerEmployeeRow = { ...row, idEmpleado: 44, nombresEmpleado: formerEmployee.nombres, apellidosEmpleado: formerEmployee.apellidos, rolEmpleado: formerEmployee.rol }
+    let filteredEmployeeId = ''
+    let reportEmployeeId = ''
+    server.use(
+      http.get('/api/asistencias-laborales/empleados-con-historial', () => HttpResponse.json([employee, formerEmployee])),
+      http.get('/api/asistencias-laborales', () => HttpResponse.json({ contenido: [], pagina: 0, tamano: 20, totalElementos: 0, totalPaginas: 0 })),
+      http.get('/api/asistencias-laborales/empleado/:id', ({ params, request }) => {
+        filteredEmployeeId = String(params.id)
+        const query = new URL(request.url).searchParams
+        return HttpResponse.json({ contenido: [formerEmployeeRow], pagina: Number(query.get('page')), tamano: 20, totalElementos: 2, totalPaginas: 1 })
+      }),
+      http.get('/api/asistencias-laborales/reportes/empleados/:id', ({ params }) => {
+        reportEmployeeId = String(params.id)
+        return HttpResponse.json({ idEmpleado: 44, fechaDesde: '2026-11-01', fechaHasta: '2026-11-30', cantidadActivas: 2, cantidadAnuladas: 0, jornadasCerradas: 2, jornadasAbiertas: 0, totalHorasRegistradas: 0.5 })
+      }),
+    )
+    renderPage(); await signIn('ADMINISTRADOR')
+    await waitFor(() => expect(screen.getAllByRole('option', { name: /Maricarmen Maira Santos Hinostrosa/ })).toHaveLength(2))
+    await user.selectOptions(screen.getAllByLabelText('Empleado')[0], '44')
+    await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
+    expect(await screen.findByRole('row', { name: /Maricarmen Maira Santos Hinostrosa/ })).toBeInTheDocument()
+    expect(screen.getByText('Recepcionista')).toBeInTheDocument()
+    expect(filteredEmployeeId).toBe('44')
+
+    await user.selectOptions(screen.getByLabelText('Empleado del reporte'), '44')
+    await user.type(screen.getByLabelText('Desde del reporte'), '2026-11-01')
+    await user.type(screen.getByLabelText('Hasta del reporte'), '2026-11-30')
+    await user.click(screen.getByRole('button', { name: 'Consultar reporte' }))
+    expect(await screen.findByText('0.5', { selector: 'dd' })).toBeInTheDocument()
+    expect(reportEmployeeId).toBe('44')
+  })
+
+  it('shows an explanatory empty state when the report has no attendance records', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/asistencias-laborales/personal-seleccionable', () => HttpResponse.json([employee])),
+      http.get('/api/asistencias-laborales', () => HttpResponse.json({ contenido: [], pagina: 0, tamano: 20, totalElementos: 0, totalPaginas: 0 })),
+      http.get('/api/asistencias-laborales/reportes/empleados/:id', () => HttpResponse.json({ idEmpleado: 5, fechaDesde: '2026-01-01', fechaHasta: '2026-01-31', cantidadActivas: 0, cantidadAnuladas: 0, jornadasCerradas: 0, jornadasAbiertas: 0, totalHorasRegistradas: 0 })),
+    )
+    renderPage(); await signIn('ADMINISTRADOR')
+    await user.selectOptions(await screen.findByLabelText('Empleado del reporte'), '5')
+    await user.type(screen.getByLabelText('Desde del reporte'), '2026-01-01')
+    await user.type(screen.getByLabelText('Hasta del reporte'), '2026-01-31')
+    await user.click(screen.getByRole('button', { name: 'Consultar reporte' }))
+    expect(await screen.findByText('Sin asistencias en este período')).toBeInTheDocument()
+  })
+
+  it('presents a report query failure as an actionable error state', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('/api/asistencias-laborales/personal-seleccionable', () => HttpResponse.json([employee])),
+      http.get('/api/asistencias-laborales', () => HttpResponse.json({ contenido: [], pagina: 0, tamano: 20, totalElementos: 0, totalPaginas: 0 })),
+      http.get('/api/asistencias-laborales/reportes/empleados/:id', () => HttpResponse.json({}, { status: 500 })),
+    )
+    renderPage(); await signIn('ADMINISTRADOR')
+    await user.selectOptions(await screen.findByLabelText('Empleado del reporte'), '5')
+    await user.type(screen.getByLabelText('Desde del reporte'), '2026-01-01')
+    await user.type(screen.getByLabelText('Hasta del reporte'), '2026-01-31')
+    await user.click(screen.getByRole('button', { name: 'Consultar reporte' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('El servidor no pudo completar la operación.')
   })
 
   it.each([400, 401, 403, 404])('shows a safe query error for HTTP %s', async (status) => {

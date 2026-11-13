@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { BriefcaseBusiness, CalendarDays, Search, SearchX } from 'lucide-react'
+import { BriefcaseBusiness, Search, SearchX } from 'lucide-react'
 import { ApiError } from '../api/http'
 import {
   consultarAsistenciasAdmin,
@@ -7,10 +7,10 @@ import {
   consultarReporteAsistenciaEmpleado,
   anularAsistenciaLaboral,
   corregirAsistenciaLaboral,
-  listarPersonalSeleccionable,
+  listarEmpleadosConHistorial,
   type AsistenciaLaboralPagina,
   type HistorialAsistenciaLaboral,
-  type PersonalSeleccionable,
+  type EmpleadoConHistorial,
   type ReporteAsistenciaEmpleado,
 } from '../api/asistenciasLaborales'
 import type { AuthContextValue } from '../auth/AuthContext'
@@ -66,9 +66,11 @@ function fechaInputAUtc(value: string) {
 }
 
 export function AsistenciaAdminView({ auth }: { auth: AuthContextValue }) {
-  const [personal, setPersonal] = useState<PersonalSeleccionable[]>([])
+  const [personal, setPersonal] = useState<EmpleadoConHistorial[]>([])
   const [idEmpleado, setIdEmpleado] = useState('')
-  const [buscarEmpleado, setBuscarEmpleado] = useState('')
+  const [idEmpleadoReporte, setIdEmpleadoReporte] = useState('')
+  const [desdeReporte, setDesdeReporte] = useState('')
+  const [hastaReporte, setHastaReporte] = useState('')
   const [page, setPage] = useState<AsistenciaLaboralPagina | null>(null)
   const [pageNumber, setPageNumber] = useState(0)
   const [desde, setDesde] = useState('')
@@ -140,7 +142,7 @@ export function AsistenciaAdminView({ auth }: { auth: AuthContextValue }) {
   useEffect(() => { void load(0) }, [load])
   useEffect(() => {
     let active = true
-    void listarPersonalSeleccionable(auth).then((result) => {
+    void listarEmpleadosConHistorial(auth).then((result) => {
     if (active) { setPersonal(result); setPersonalError('') }
     }).catch((reason: unknown) => {
       if (active) setPersonalError(errorMessage(reason))
@@ -328,13 +330,13 @@ export function AsistenciaAdminView({ auth }: { auth: AuthContextValue }) {
   async function runReport() {
     setReportError('')
     setReporte(null)
-    if (!filters.idEmpleado) { setReportError('Aplica un filtro de empleado para consultar su reporte.'); return }
-    if (!rangoHastaDoceMeses(filters.desde, filters.hasta)) {
-      setReportError('Selecciona un período válido de hasta 12 meses en los filtros del historial.')
+    if (!idEmpleadoReporte) { setReportError('Selecciona un empleado para consultar su reporte.'); return }
+    if (!rangoHastaDoceMeses(desdeReporte, hastaReporte)) {
+      setReportError('Selecciona fechas válidas; el período debe ser de hasta 12 meses.')
       return
     }
     setLoadingReport(true)
-    try { setReporte(await consultarReporteAsistenciaEmpleado(auth, Number(filters.idEmpleado), filters.desde, filters.hasta)) }
+    try { setReporte(await consultarReporteAsistenciaEmpleado(auth, Number(idEmpleadoReporte), desdeReporte, hastaReporte)) }
     catch (reason) { setReportError(errorMessage(reason)) }
     finally { setLoadingReport(false) }
   }
@@ -343,28 +345,38 @@ export function AsistenciaAdminView({ auth }: { auth: AuthContextValue }) {
     <header className="laboral-heading"><div><p className="ingresos-eyebrow">SUPERVISIÓN · PERSONAL</p><h2>Asistencia laboral</h2><p>Consulta y revisa los registros de jornada del personal.</p></div></header>
     <Card className="asistencia-card laboral-history-card" title="Historial de asistencias">
       <form className="laboral-toolbar" onSubmit={(event) => { event.preventDefault(); setPageNumber(0); setFilters({ desde, hasta, estado, idEmpleado }) }}>
-        <label className="laboral-search"><span className="asistencia-sr-only">Buscar empleado por nombre o apellido</span><Search aria-hidden="true" size={17}/><input aria-label="Buscar empleado" placeholder="Buscar empleado" type="search" value={buscarEmpleado} onChange={(event) => setBuscarEmpleado(event.target.value)}/></label>
-        <label className="laboral-filter">Empleado<select aria-label="Empleado" value={idEmpleado} onChange={(event) => setIdEmpleado(event.target.value)}><option value="">Todo el personal</option>{personal.filter(person => `${person.nombres} ${person.apellidos}`.toLocaleLowerCase().includes(buscarEmpleado.trim().toLocaleLowerCase())).map(person => <option key={person.idEmpleado} value={person.idEmpleado}>{person.nombres} {person.apellidos}</option>)}</select></label>
-        <label className="laboral-filter">Desde<input aria-label="Fecha desde" type="date" value={desde} onChange={(event) => setDesde(event.target.value)}/></label>
-        <label className="laboral-filter">Hasta<input aria-label="Fecha hasta" type="date" value={hasta} onChange={(event) => setHasta(event.target.value)}/></label>
+        <label className="laboral-filter">Empleado<select aria-label="Empleado" value={idEmpleado} onChange={(event) => setIdEmpleado(event.target.value)}><option value="">Todo el personal</option>{personal.map(person => <option key={person.idEmpleado} value={person.idEmpleado}>{person.nombres} {person.apellidos}</option>)}</select></label>
+        <label className="laboral-filter">Desde<input aria-label="Fecha desde" max={hasta || undefined} type="date" value={desde} onChange={(event) => setDesde(event.target.value)}/></label>
+        <label className="laboral-filter">Hasta<input aria-label="Fecha hasta" min={desde || undefined} type="date" value={hasta} onChange={(event) => setHasta(event.target.value)}/></label>
         <label className="laboral-filter">Estado<select aria-label="Estado" value={estado} onChange={(event) => setEstado(event.target.value)}><option value="">Todos</option><option value="ACTIVA">Activa</option><option value="ANULADA">Anulada</option></select></label>
-        <div className="laboral-actions"><Button type="submit" variant="secondary" disabled={loading}><Search aria-hidden="true" size={15}/>Aplicar</Button><Button type="button" variant="ghost" disabled={loading} onClick={() => { setDesde(''); setHasta(''); setEstado(''); setIdEmpleado(''); setBuscarEmpleado(''); setPageNumber(0); setFilters({ desde: '', hasta: '', estado: '', idEmpleado: '' }) }}>Limpiar</Button></div>
+        <div className="laboral-actions"><Button type="submit" variant="secondary" disabled={loading || Boolean(desde && hasta && desde > hasta)}><Search aria-hidden="true" size={15}/>Aplicar filtros</Button><Button type="button" variant="ghost" disabled={loading} onClick={() => { setDesde(''); setHasta(''); setEstado(''); setIdEmpleado(''); setPageNumber(0); setFilters({ desde: '', hasta: '', estado: '', idEmpleado: '' }) }}>Limpiar</Button></div>
       </form>
+      {desde && hasta && desde > hasta && <p className="asistencia-feedback asistencia-feedback--error" role="alert">La fecha «Desde» no puede ser posterior a «Hasta».</p>}
       {personalError && <p className="asistencia-feedback asistencia-feedback--error" role="alert">No se pudo cargar la lista de empleados. Puedes consultar los registros disponibles.</p>}
       {error && <p className="asistencia-feedback asistencia-feedback--error" role="alert">{error}<Button type="button" variant="secondary" onClick={() => void load(pageNumber)}>Reintentar</Button></p>}
       {loading ? <p className="laboral-state" aria-live="polite">Cargando asistencias…</p> : error ? null : !page?.contenido.length ? <div className="laboral-empty"><span><SearchX aria-hidden="true" size={20}/></span><strong>No hay asistencias para mostrar</strong><small>Prueba con otras fechas o ajusta los filtros.</small></div> : <>
         <div className="laboral-table-wrap"><table className="laboral-table"><caption className="asistencia-sr-only">Registros de asistencia laboral</caption><thead><tr><th scope="col">EMPLEADO</th><th scope="col">CARGO</th><th scope="col">FECHA</th><th scope="col">ENTRADA</th><th scope="col">SALIDA</th><th scope="col">ESTADO</th><th scope="col">ACCIONES</th></tr></thead><tbody>{page.contenido.map(row => {
-          const person = personal.find(item => item.idEmpleado === row.idEmpleado)
-          return <tr key={row.idAsistencia}><td data-label="Empleado"><strong>{person ? `${person.nombres} ${person.apellidos}` : 'Empleado no disponible'}</strong></td><td data-label="Cargo">{person ? person.rol === 'ENTRENADOR' ? 'Entrenador' : 'Nutricionista' : 'No disponible'}</td><td data-label="Fecha">{row.fechaLaboral}</td><td data-label="Entrada">{horaLima(row.fechaEntradaUtc)}</td><td data-label="Salida">{horaLima(row.fechaSalidaUtc)}</td><td data-label="Estado"><span className={`asistencia-state asistencia-state--${row.estado.toLowerCase()}`}>{row.estado === 'ACTIVA' ? 'Activa' : 'Anulada'}</span></td><td data-label="Acciones"><Button type="button" variant="secondary" aria-label={`Ver historial de asistencia del ${row.fechaLaboral}`} onClick={(event) => void openHistory(row.idAsistencia, event.currentTarget)}>Ver historial</Button></td></tr>
+          const employeeName = [row.nombresEmpleado, row.apellidosEmpleado].filter(Boolean).join(' ').trim()
+          const roles: Record<string, string> = { ENTRENADOR: 'Entrenador', NUTRICIONISTA: 'Nutricionista', RECEPCIONISTA: 'Recepcionista', ADMINISTRADOR: 'Administrador' }
+          const employeeRole = row.rolEmpleado ? roles[row.rolEmpleado] ?? row.rolEmpleado : 'Cargo no disponible'
+          return <tr key={row.idAsistencia}><td data-label="Empleado"><strong>{employeeName || `Identidad no disponible (ID ${row.idEmpleado})`}</strong></td><td data-label="Cargo">{employeeRole}</td><td data-label="Fecha">{row.fechaLaboral}</td><td data-label="Entrada">{horaLima(row.fechaEntradaUtc)}</td><td data-label="Salida">{horaLima(row.fechaSalidaUtc)}</td><td data-label="Estado"><span className={`asistencia-state asistencia-state--${row.estado.toLowerCase()}`}>{row.estado === 'ACTIVA' ? 'Activa' : 'Anulada'}</span></td><td data-label="Acciones"><Button type="button" variant="secondary" aria-label={`Ver historial de asistencia del ${row.fechaLaboral}`} onClick={(event) => void openHistory(row.idAsistencia, event.currentTarget)}>Ver historial</Button></td></tr>
         })}</tbody></table></div>
         <nav aria-label="Paginación de asistencias laborales" className="laboral-pagination"><Button variant="secondary" type="button" disabled={pageNumber <= 0 || loading} onClick={() => void load(pageNumber - 1)}>Anterior</Button><span>Página {pageNumber + 1} de {Math.max(1, page.totalPaginas)} · {page.totalElementos} registros</span><Button variant="secondary" type="button" disabled={pageNumber + 1 >= page.totalPaginas || loading} onClick={() => void load(pageNumber + 1)}>Siguiente</Button></nav>
       </>}
     </Card>
     <Card className="asistencia-card laboral-report-card" title="Reporte por empleado">
-      <div className="laboral-report-heading"><span className="laboral-report-icon"><BriefcaseBusiness aria-hidden="true" size={18}/></span><p>Usa el empleado y el período seleccionados en los filtros del historial.</p></div>
-      <div className="laboral-report-controls"><div><span>Empleado</span><strong>{personal.find(person => String(person.idEmpleado) === filters.idEmpleado) ? `${personal.find(person => String(person.idEmpleado) === filters.idEmpleado)?.nombres} ${personal.find(person => String(person.idEmpleado) === filters.idEmpleado)?.apellidos}` : 'Aplica un filtro de empleado'}</strong></div><div><span>Período aplicado</span><strong><CalendarDays aria-hidden="true" size={15}/>{filters.desde || 'Sin límite'} – {filters.hasta || 'Sin límite'}</strong></div><Button type="button" variant="secondary" disabled={loadingReport || !filters.idEmpleado || !filters.desde || !filters.hasta} onClick={() => void runReport()}>{loadingReport ? 'Consultando…' : 'Consultar reporte'}</Button></div>
+      <div className="laboral-report-heading"><span className="laboral-report-icon"><BriefcaseBusiness aria-hidden="true" size={18}/></span><p>Selecciona un empleado y un período para consultar sus métricas de asistencia. El reporte admite períodos de hasta 12 meses.</p></div>
+      <form className="laboral-report-controls" onSubmit={(event) => { event.preventDefault(); void runReport() }}>
+        <label className="laboral-filter">Empleado<select aria-label="Empleado del reporte" value={idEmpleadoReporte} onChange={(event) => { setIdEmpleadoReporte(event.target.value); setReporte(null); setReportError('') }}><option value="">Selecciona un empleado</option>{personal.map(person => <option key={person.idEmpleado} value={person.idEmpleado}>{person.nombres} {person.apellidos}</option>)}</select></label>
+        <label className="laboral-filter">Desde<input aria-label="Desde del reporte" max={hastaReporte || undefined} type="date" value={desdeReporte} onChange={(event) => { setDesdeReporte(event.target.value); setReporte(null); setReportError('') }}/></label>
+        <label className="laboral-filter">Hasta<input aria-label="Hasta del reporte" min={desdeReporte || undefined} type="date" value={hastaReporte} onChange={(event) => { setHastaReporte(event.target.value); setReporte(null); setReportError('') }}/></label>
+        <Button type="submit" disabled={loadingReport || !idEmpleadoReporte || !desdeReporte || !hastaReporte || desdeReporte > hastaReporte || !rangoHastaDoceMeses(desdeReporte, hastaReporte)}>{loadingReport ? 'Consultando…' : 'Consultar reporte'}</Button>
+      </form>
+      {(!idEmpleadoReporte || !desdeReporte || !hastaReporte) && <p className="laboral-report-hint">Para consultar, selecciona un empleado y las fechas «Desde» y «Hasta».</p>}
+      {idEmpleadoReporte && desdeReporte && hastaReporte && !rangoHastaDoceMeses(desdeReporte, hastaReporte) && <p className="asistencia-feedback asistencia-feedback--error" role="alert">El rango debe ser válido y no superar 12 meses.</p>}
       {reportError && <p className="asistencia-feedback asistencia-feedback--error" role="alert">{reportError}</p>}
-      {reporte && <dl className="asistencia-report"><div><dt>Período</dt><dd>{reporte.fechaDesde} – {reporte.fechaHasta}</dd></div><div><dt>Asistencias activas</dt><dd>{reporte.cantidadActivas}</dd></div><div><dt>Asistencias anuladas</dt><dd>{reporte.cantidadAnuladas}</dd></div><div><dt>Jornadas cerradas</dt><dd>{reporte.jornadasCerradas}</dd></div><div><dt>Jornadas abiertas</dt><dd>{reporte.jornadasAbiertas}</dd></div><div><dt>Horas registradas</dt><dd>{reporte.totalHorasRegistradas}</dd></div></dl>}
+      {loadingReport && <p className="laboral-state" aria-live="polite">Consultando reporte…</p>}
+      {reporte && <><p className="laboral-report-result" role="status"><strong>Reporte consultado</strong> · {personal.find(person => person.idEmpleado === reporte.idEmpleado)?.nombres} {personal.find(person => person.idEmpleado === reporte.idEmpleado)?.apellidos} · {reporte.fechaDesde} – {reporte.fechaHasta}</p>{reporte.cantidadActivas + reporte.cantidadAnuladas === 0 ? <div className="laboral-empty"><strong>Sin asistencias en este período</strong><small>El empleado no tiene registros para las fechas consultadas.</small></div> : <dl className="asistencia-report"><div><dt>Asistencias activas</dt><dd>{reporte.cantidadActivas}</dd></div><div><dt>Asistencias anuladas</dt><dd>{reporte.cantidadAnuladas}</dd></div><div><dt>Jornadas cerradas</dt><dd>{reporte.jornadasCerradas}</dd></div><div><dt>Jornadas abiertas</dt><dd>{reporte.jornadasAbiertas}</dd></div><div><dt>Horas registradas</dt><dd>{reporte.totalHorasRegistradas}</dd></div></dl>}</>}
     </Card>
     {(loadingDetail || detailError || historial) && <div className="asistencia-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeHistory() }}><section className="asistencia-dialog asistencia-history" role="dialog" aria-modal="true" aria-labelledby="asistencia-history-title" onKeyDown={handleHistoryKeyDown} onClick={(event) => event.stopPropagation()}>
       <button ref={historyCloseRef} className="asistencia-close" type="button" aria-label="Cerrar detalle" disabled={writeBusy || verifying} onClick={closeHistory}>×</button><p className="asistencia-dialog-eyebrow">ADMINISTRACIÓN · AUDITORÍA</p><h2 id="asistencia-history-title">Detalle e historial de asistencia</h2>

@@ -3,6 +3,7 @@ package com.gimnasio.sistemagym.dto;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 import java.util.HashSet;
@@ -64,10 +65,7 @@ public class ActualizarMiCuentaRequest {
         if (tipoDocumento == null || numeroDocumento == null) {
             return tipoDocumento == null && numeroDocumento == null;
         }
-        return switch (tipoDocumento) {
-            case DNI -> numeroDocumento.matches("[0-9]{8}");
-            case CE -> numeroDocumento.matches("[0-9]{1,12}");
-        };
+        return DocumentoIdentidad.esValido(tipoDocumento, numeroDocumento);
     }
 
     @AssertTrue(message = "La solicitud contiene campos que no se pueden modificar desde Mi cuenta.")

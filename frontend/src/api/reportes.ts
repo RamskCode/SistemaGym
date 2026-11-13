@@ -13,6 +13,14 @@ export type ReporteResumen = {
 export type ReporteFila = { id: number; tipo: string; persona: string; detalle: string; estado: string; monto: number | null; fecha: string; documentoProtegido?: string | null; modalidad?: string | null; operacion?: string | null; responsable?: string | null }
 export type ReporteTipo = 'pagos' | 'socios' | 'membresias' | 'ingresos'
 export type PlanReporte = { id: number; nombre: string }
+export type DetalleIngresoCliente = {
+  idIngreso: number
+  modalidad: 'MEMBRESIA' | 'PASE_DIARIO'
+  planNombre: string | null
+  importePagado: number | null
+  mensajeSinDato: string | null
+}
+export type PaginaHistorialIngresos = { contenido: ReporteFila[]; pagina: number; tamano: number; totalElementos: number; totalPaginas: number }
 
 function query(params: Record<string, string | number | undefined>) {
   const search = new URLSearchParams()
@@ -72,6 +80,29 @@ export function obtenerDetalleReporte(auth: AuthenticatedRequestContext, tipo: R
   return apiGet<unknown>(`/api/reportes/detalle?${query({ tipo, desde, hasta, pagina, tamano: 25, planId, ...filtros })}`, auth).then(value => {
     if (!detalle(value)) throw new ApiError('invalid-response')
     return value
+  })
+}
+
+export function obtenerDetalleIngresoCliente(auth: AuthenticatedRequestContext, idIngreso: number) {
+  return apiGet<unknown>(`/api/reportes/ingresos/${idIngreso}`, auth).then(value => {
+    if (!record(value) || !count(value.idIngreso)
+        || (value.modalidad !== 'MEMBRESIA' && value.modalidad !== 'PASE_DIARIO')
+        || (value.planNombre !== null && typeof value.planNombre !== 'string')
+        || (value.importePagado !== null && (typeof value.importePagado !== 'number' || !Number.isFinite(value.importePagado)))
+        || (value.mensajeSinDato !== null && typeof value.mensajeSinDato !== 'string')) throw new ApiError('invalid-response')
+    return value as DetalleIngresoCliente
+  })
+}
+
+export function obtenerHistorialIngresosRecepcion(
+  auth: AuthenticatedRequestContext,
+  filtros: { desde: string; hasta: string; pagina: number; tamano?: number; buscar?: string; modalidad?: string },
+) {
+  const params = query({ ...filtros, tamano: filtros.tamano ?? 25 })
+  return apiGet<unknown>(`/api/ingresos/historial?${params}`, auth).then(value => {
+    if (!record(value) || !detalle(value.contenido) || !count(value.pagina) || !count(value.tamano)
+        || !count(value.totalElementos) || !count(value.totalPaginas)) throw new ApiError('invalid-response')
+    return value as PaginaHistorialIngresos
   })
 }
 export function obtenerPlanesReporte(auth: AuthenticatedRequestContext) {

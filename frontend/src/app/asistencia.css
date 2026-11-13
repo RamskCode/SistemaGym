@@ -57,6 +57,13 @@
 .ingresos-dialog-backdrop { position: fixed; z-index: 85; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 20px; background: rgb(15 20 15 / 55%); }
 .ingresos-dialog { position: relative; width: min(100%, 620px); padding: 27px; border: 1px solid #dce4dc; border-radius: 14px; background: #fff; box-shadow: 0 20px 55px rgb(19 31 20 / 22%); }
 .ingresos-dialog h2 { margin: 0 42px 18px 0; color: #202720; font-size: var(--type-dialog-title, 20px); font-weight: 700; }
+.ingresos-dialog h3 { margin: 18px 0 10px; color: #344a36; font-size: var(--type-body, 14px); font-weight: 700; }
+.ingresos-dialog .ingresos-detail-section-title { padding-top: 13px; border-top: 1px solid #e4ebe4; }
+.ingresos-detail-modality { margin-top: 14px; padding: 1px 14px 8px; border: 1px solid #dce7dc; border-radius: 10px; background: #f7faf7; }
+.ingresos-detail-modality h3 { margin-top: 11px; }
+.ingresos-detail-modality p { margin: 0; color: #526052; font-size: var(--type-label, 13px); line-height: 1.5; overflow-wrap: anywhere; }
+.ingresos-detail-grid--modality { grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 0; }
+.ingresos-detail-grid--modality > div { padding: 8px 0; border-bottom: 0; }
 .ingresos-dialog-close { position: absolute; top: 16px; right: 16px; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #dce4dc; border-radius: 8px; background: #fff; color: #344a36; cursor: pointer; }
 .ingresos-dialog-close:focus-visible { outline: 3px solid rgb(8 125 32 / 35%); outline-offset: 2px; }
 .ingresos-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin: 0; border-top: 1px solid #e4ebe4; }
@@ -93,11 +100,13 @@
 .laboral-report-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 15px; }
 .laboral-report-heading p { margin: 0; color: #526052; font-size: var(--type-label, 13px); line-height: 1.5; }
 .laboral-report-icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #eef5ee; color: #32653a; }
-.laboral-report-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 14px; }
+.laboral-report-controls { display: grid; grid-template-columns: minmax(180px, 1.3fr) repeat(2, minmax(145px, .8fr)) auto; align-items: end; gap: 14px; }
 .laboral-report-controls > div { display: grid; min-width: 0; gap: 5px; }
 .laboral-report-controls > div > span { color: #526052; font-size: var(--type-help, 12px); font-weight: 600; }
 .laboral-report-controls strong { display: flex; min-height: 40px; align-items: center; gap: 7px; color: #202720; font-size: var(--type-label, 13px); font-weight: 550; overflow-wrap: anywhere; }
 .laboral-report-controls > .button { min-height: 40px; }
+.laboral-report-result { margin: 16px 0 0; padding: 11px 13px; border-left: 3px solid #6b8e2f; border-radius: 4px; background: #f5f8f2; color: #344035; font-size: var(--type-label, 13px); line-height: 1.5; }
+.laboral-report-hint { margin: 10px 0 0; color: #526052; font-size: var(--type-help, 12px); }
 
 .asistencia-controls { display: grid; grid-template-columns: minmax(240px, 1fr) auto; align-items: end; gap: 10px 14px; }
 .asistencia-field { grid-column: 1 / -1; color: #435044; font-size: var(--type-label, 13px); font-weight: var(--weight-label, 600); }
@@ -141,13 +150,21 @@
 .asistencia-reload { min-height: 38px; }
 .asistencia-message { margin: 0; padding: 24px 10px; color: #435044; font-size: var(--type-body, 14px); line-height: 1.55; text-align: center; }
 .pase-diario-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.pase-diario-summary > div { min-width: 0; }
+.pase-diario-summary > div > strong { color: #263729; font-size: var(--type-body, 14px); }
 .pase-diario-summary p { margin: 5px 0 0; color: #526052; font-size: var(--type-label, 13px); line-height: 1.5; }
-.pase-diario-price { flex: 0 0 auto; color: var(--color-ink, #171b18); font-size: clamp(20px, 3vw, 26px); }
+.pase-diario-price { flex: 0 0 auto; padding: 9px 13px; border: 1px solid #d6e5d6; border-radius: 10px; background: #f3f8f2; color: #245e2c; font-size: clamp(20px, 3vw, 26px); font-variant-numeric: tabular-nums; }
+.pase-diario-loading, .pase-diario-unavailable { margin: 0; padding: 15px 16px; border: 1px solid #dce4dc; border-radius: 10px; background: #f8faf8; color: #435044; font-size: var(--type-label, 13px); line-height: 1.55; }
+.pase-diario-unavailable { border-color: #eadab7; background: #fffaf0; }
+.pase-diario-unavailable strong { display: block; margin-bottom: 4px; color: #684b13; font-size: var(--type-body, 14px); }
+.pase-diario-unavailable p { margin: 0; }
+.pase-diario-unavailable p + p { margin-top: 5px; color: #655d4d; }
 .pase-diario-form, .pase-diario-person-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 12px; }
 .pase-diario-form > label, .pase-diario-person-form > label, .pase-diario-payment > label { display: grid; min-width: 0; gap: 6px; color: #435044; font-size: var(--type-label, 13px); font-weight: var(--weight-label, 600); }
 .pase-diario-panel :is(input, select) { box-sizing: border-box; width: 100%; min-width: 0; min-height: var(--field-height, 42px); padding: 8px 11px; border: 1px solid #bdc9be; border-radius: var(--radius-control, 8px); background: #fff; color: #202720; font: inherit; font-size: var(--type-body, 14px); }
 .pase-diario-form > .button { min-height: 42px; }
 .pase-diario-person { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border: 1px solid #dce4dc; border-radius: var(--radius-control, 8px); background: #fbfcfb; }
+.pase-diario-person > div > strong { color: #202720; font-size: var(--type-body, 14px); }
 .pase-diario-person > div { display: grid; gap: 4px; min-width: 0; }
 .pase-diario-person span { color: #526052; font-size: var(--type-label, 13px); }
 .pase-diario-person-form { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; padding-top: 14px; border-top: 1px solid #e7ece7; }
@@ -279,7 +296,6 @@
   .ingresos-search { grid-column: span 2; }
   .ingresos-filter-actions { justify-content: flex-start; }
   .laboral-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .laboral-search { grid-column: span 2; }
   .laboral-actions { justify-content: flex-start; }
   .asistencia-filters { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
   .asistencia-filters > .button { justify-self: start; }
@@ -291,13 +307,13 @@
   .ingresos-search { grid-column: 1 / -1; }
   .ingresos-filter-actions { grid-column: 1 / -1; }
   .laboral-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .laboral-search, .laboral-actions { grid-column: 1 / -1; }
+  .laboral-actions { grid-column: 1 / -1; }
   .laboral-table-wrap { overflow: visible; border: 0; }
   .laboral-table { display: block; min-width: 0; }
   .laboral-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
   .laboral-table tbody { display: grid; gap: 10px; }
   .laboral-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px; border: 1px solid #dce4dc; border-radius: 10px; background: #fff; }
-  .laboral-table td { display: grid; min-width: 0; align-content: start; gap: 4px; padding: 8px; border: 0; overflow-wrap: anywhere; }
+  .laboral-table td { display: grid; min-width: 0; align-content: start; gap: 4px; padding: 8px; border: 0; overflow-wrap: normal; word-break: normal; }
   .laboral-table td::before { content: attr(data-label); color: #526052; font-size: var(--type-help, 12px); font-weight: 600; }
   .laboral-table td:last-child { grid-column: 1 / -1; border-top: 1px solid #e8ede8; }
   .laboral-report-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -327,6 +343,9 @@
   .asistencia-table td:last-child .button { min-height: 40px; }
 }
 @media (max-width: 520px) {
+  .laboral-toolbar, .laboral-report-controls { grid-template-columns: minmax(0, 1fr); }
+  .laboral-actions { flex-wrap: wrap; }
+  .laboral-actions .button, .laboral-report-controls > .button { width: 100%; }
   .asistencia-subtabs [role="tab"] { flex: 1 1 0; padding-inline: 7px; font-size: 12px; }
   .ingreso-miembro-filters { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .ingreso-miembro-table-wrap { overflow: visible; border: 0; }
@@ -397,4 +416,212 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .asistencia-page *, .asistencia-page *::before, .asistencia-page *::after, .asistencia-dialog *, .asistencia-dialog *::before, .asistencia-dialog *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Reception-only workflow redesign. Other roles retain the existing attendance UI. */
+.app-shell--reception .asistencia-page { gap: 17px; }
+.app-shell--reception .asistencia-page > .page-title { min-height: 62px; margin: 0; }
+.app-shell--reception .asistencia-page > .page-title .page-title__eyebrow { color: #326442; }
+.app-shell--reception .asistencia-page > .page-title h1 { font-size: clamp(25px, 2vw, 30px); letter-spacing: -.04em; }
+.app-shell--reception .asistencia-page > .page-title .page-title__description { margin-top: 5px; }
+
+/* Primary navigation uses a filled active state; the nested choice remains lighter. */
+.app-shell--reception .asistencia-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid #dce5dc;
+  border-radius: 12px;
+  background: #eef2ee;
+}
+.app-shell--reception .asistencia-tabs [role="tab"] {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #435044;
+  font-size: 14px;
+  font-weight: 650;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.app-shell--reception .asistencia-tabs [role="tab"]:hover:not([aria-selected="true"]) { background: #e5ebe5; color: #263a2a; }
+.app-shell--reception .asistencia-tabs [role="tab"][aria-selected="true"] {
+  border-color: #245c35;
+  background: #245c35;
+  color: #fff;
+  box-shadow: 0 2px 5px rgb(27 61 37 / 16%);
+}
+.app-shell--reception .asistencia-tabs [role="tab"]:focus-visible,
+.app-shell--reception .asistencia-subtabs [role="tab"]:focus-visible { outline: 3px solid #47734a; outline-offset: 2px; }
+.app-shell--reception .asistencia-main-panel { display: grid; min-width: 0; gap: 14px; }
+.app-shell--reception .asistencia-subtabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid #e0e7e0;
+  border-radius: 10px;
+  background: #f7f9f7;
+}
+.app-shell--reception .asistencia-subtabs [role="tab"] {
+  min-height: 38px;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #526052;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.app-shell--reception .asistencia-subtabs [role="tab"]:hover:not([aria-selected="true"]) { background: #edf2ed; color: #263a2a; }
+.app-shell--reception .asistencia-subtabs [role="tab"][aria-selected="true"] { border-color: #c9ddcb; background: #eaf4eb; color: #245c35; font-weight: 700; }
+.app-shell--reception .asistencia-subpanel { min-width: 0; }
+
+/* Reception panels: clearer section headings and tighter information density. */
+.app-shell--reception .asistencia-card {
+  padding: clamp(18px, 2.2vw, 25px);
+  border-color: #dfe7df;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgb(25 40 26 / 5%), 0 1px 2px rgb(25 40 26 / 3%);
+}
+.app-shell--reception .asistencia-card > .card__header { margin-bottom: 13px; }
+.app-shell--reception .asistencia-card .card__title { color: #263329; font-size: 17px; font-weight: 680; letter-spacing: -.02em; }
+.app-shell--reception .asistencia-description { margin-bottom: 14px !important; color: #526052; }
+
+/* Membership lookup: name/document are the primary row; type/order are secondary filters. */
+.app-shell--reception .ingreso-miembro-filters {
+  grid-template-columns: minmax(0, 1.55fr) minmax(190px, 1fr);
+  grid-template-areas: "name document" "type sort";
+  gap: 12px 14px;
+  margin: 0 0 16px;
+  padding: 15px;
+  border: 1px solid #e1e8e1;
+  border-radius: 11px;
+  background: #f8faf8;
+}
+.app-shell--reception .ingreso-miembro-filter:nth-child(1) { grid-area: name; }
+.app-shell--reception .ingreso-miembro-filter:nth-child(2) { grid-area: type; }
+.app-shell--reception .ingreso-miembro-filter:nth-child(3) { grid-area: document; }
+.app-shell--reception .ingreso-miembro-filter:nth-child(4) { grid-area: sort; }
+.app-shell--reception .ingreso-miembro-filter { gap: 6px; color: #3d4a3e; font-size: 12px; }
+.app-shell--reception .ingreso-miembro-search__control,
+.app-shell--reception .ingreso-miembro-filter > input,
+.app-shell--reception .ingreso-miembro-filter > select { min-height: 44px; background: #fff; }
+.app-shell--reception .ingreso-miembro-directory { gap: 11px; margin-top: 0; }
+.app-shell--reception .ingreso-miembro-directory__heading { margin: 0; padding: 0 2px; }
+.app-shell--reception .ingreso-miembro-directory__heading h3 { color: #263329; font-size: 15px; }
+.app-shell--reception .ingreso-miembro-directory__heading span { color: #59675a; }
+.app-shell--reception .ingreso-miembro-table-wrap { overflow-x: auto; border-color: #dce5dc; border-radius: 10px; }
+.app-shell--reception .ingreso-miembro-table { min-width: 720px; }
+.app-shell--reception .ingreso-miembro-table th { height: 44px; background: #f3f6f3; color: #445246; font-weight: 650; }
+.app-shell--reception .ingreso-miembro-table td { height: 58px; padding-block: 10px; }
+.app-shell--reception .ingreso-miembro-table tbody tr { transition: background-color .14s ease; }
+.app-shell--reception .ingreso-miembro-table tbody tr:hover { background: #f8fbf8; }
+.app-shell--reception .ingreso-miembro-table td:last-child .button { min-height: 38px; border-color: #245c35; background: #245c35; color: #fff; font-weight: 650; }
+.app-shell--reception .ingreso-miembro-table td:last-child .button:hover:not(:disabled) { border-color: #194b2b; background: #194b2b; }
+.app-shell--reception .ingreso-miembro-state--activo { border-color: #c4ddc8; background: #eaf4eb; color: #245c35; }
+.app-shell--reception .ingreso-miembro-pagination { padding-top: 3px; }
+.app-shell--reception .ingreso-miembro-profile { gap: 12px; margin-top: 17px; padding: 16px; border: 1px solid #dce5dc; border-radius: 11px; background: #fbfcfb; }
+.app-shell--reception .ingreso-miembro-profile__header { padding-bottom: 12px; border-bottom: 1px solid #e3eae3; }
+.app-shell--reception .ingreso-miembro-profile h3 { font-size: 18px; }
+.app-shell--reception .ingreso-miembro-decision { border-radius: 9px; }
+.app-shell--reception .ingreso-miembro-decision--allowed { border-color: #c4ddc8; background: #eff7f0; color: #245c35; }
+
+/* Daily pass is presented as a short, grouped lookup → details → confirmation flow. */
+.app-shell--reception .pase-diario-panel { display: grid; gap: 15px; }
+.app-shell--reception .pase-diario-summary {
+  margin: 0;
+  padding: 15px 17px;
+  border: 1px solid #d5e4d6;
+  border-radius: 11px;
+  background: #f2f7f2;
+}
+.app-shell--reception .pase-diario-summary > div > strong { color: #263a2a; font-size: 14px; }
+.app-shell--reception .pase-diario-summary p { max-width: 620px; }
+.app-shell--reception .pase-diario-price { border-color: #c8ddcb; background: #fff; color: #245c35; font-size: 25px; font-weight: 750; }
+.app-shell--reception .pase-diario-form {
+  grid-template-columns: minmax(180px, .9fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid #e1e8e1;
+  border-radius: 11px;
+  background: #f8faf8;
+}
+.app-shell--reception .pase-diario-form > label { position: relative; gap: 7px; }
+.app-shell--reception .pase-diario-form > label > :is(select, input) { height: 44px; }
+.app-shell--reception .pase-diario-form > label > small { display: block; box-sizing: border-box; width: max-content; max-width: 100%; min-height: 18px; margin-top: -1px; padding: 1px 8px; border: 1px solid transparent; border-radius: 999px; color: transparent; font-size: 11px; line-height: 14px; }
+.app-shell--reception .pase-diario-form > label > .pase-document-help { border-color: #e1e9e1; background: #f0f5f0; color: #59695b; }
+.app-shell--reception .pase-diario-form > .button { min-height: 44px; align-self: end; margin-bottom: 17px; white-space: nowrap; }
+.app-shell--reception .pase-diario-person { margin: 0; padding: 13px 15px; border-color: #cfe0d0; background: #f5f9f5; }
+.app-shell--reception .pase-diario-person-form { gap: 14px; margin: 0; padding: 17px; border: 1px solid #e1e8e1; border-radius: 11px; background: #fff; }
+.app-shell--reception .pase-diario-person-form > .asistencia-description { margin: 0 !important; padding: 11px 13px; border-left: 3px solid #739d79; border-radius: 0 7px 7px 0; background: #f5f8f5; }
+.app-shell--reception .pase-diario-payment { gap: 14px; }
+.app-shell--reception .pase-diario-amount { padding-top: 12px; border-top: 1px solid #e7ece7; color: #3d4a3e; }
+.app-shell--reception .pase-diario-amount strong { color: #245c35; font-size: 16px; }
+.app-shell--reception .pase-diario-confirm { padding: 11px 13px; border: 1px solid #e1e8e1; border-radius: 8px; background: #f8faf8; }
+.app-shell--reception .pase-diario-person-form > .button { min-height: 46px; }
+.app-shell--reception .pase-diario-receipt { gap: 10px; margin: 0; }
+.app-shell--reception .pase-diario-receipt > div { padding: 12px; border-color: #dce7dc; background: #f8faf8; }
+
+/* Labor attendance is organized into employee action, own attendance, then history. */
+.app-shell--reception .asistencia-main-panel--laboral > .asistencia-page {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 15px;
+}
+.app-shell--reception .asistencia-main-panel--laboral > .asistencia-page > .asistencia-card:nth-of-type(3) { grid-column: 1 / -1; }
+.app-shell--reception .asistencia-main-panel--laboral > .asistencia-page > [role="alert"],
+.app-shell--reception .asistencia-main-panel--laboral > .asistencia-page > [role="status"] { grid-column: 1 / -1; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-controls { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-field { grid-column: auto; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-actions { justify-content: flex-start; gap: 8px; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-self-card .asistencia-actions { flex-wrap: wrap; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-filters { grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto; gap: 10px; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-filters > .button { justify-self: stretch; white-space: nowrap; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-table { min-width: 620px; }
+.app-shell--reception .asistencia-main-panel--laboral .asistencia-pagination { padding-top: 10px; }
+
+@media (max-width: 980px) {
+  .app-shell--reception .asistencia-main-panel--laboral > .asistencia-page { grid-template-columns: minmax(0, 1fr); }
+  .app-shell--reception .asistencia-main-panel--laboral > .asistencia-page > .asistencia-card:nth-of-type(3) { grid-column: auto; }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .app-shell--reception .asistencia-page { gap: 13px; }
+  .app-shell--reception .asistencia-page > .page-title { min-height: 0; }
+  .app-shell--reception .asistencia-tabs { gap: 5px; padding: 4px; }
+  .app-shell--reception .asistencia-tabs [role="tab"] { min-height: 46px; padding-inline: 8px; font-size: 13px; }
+  .app-shell--reception .asistencia-subtabs { width: 100%; }
+  .app-shell--reception .asistencia-subtabs [role="tab"] { flex: 1 1 0; min-width: 0; padding-inline: 8px; }
+  .app-shell--reception .asistencia-card { padding: 16px; }
+  .app-shell--reception .ingreso-miembro-filters { grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "document" "type" "sort"; gap: 10px; padding: 12px; }
+  .app-shell--reception .ingreso-miembro-table-wrap { overflow: visible; border: 0; }
+  .app-shell--reception .ingreso-miembro-table { min-width: 0; }
+  .app-shell--reception .ingreso-miembro-table tbody tr { padding: 9px; border-color: #dce5dc; }
+  .app-shell--reception .ingreso-miembro-table td:last-child .button { width: 100%; min-height: 42px; }
+  .app-shell--reception .pase-diario-form { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  .app-shell--reception .pase-diario-form > .button { width: 100%; margin-bottom: 0; }
+  .app-shell--reception .pase-diario-person-form { padding: 13px; }
+  .app-shell--reception .pase-diario-summary { align-items: flex-start; }
+  .app-shell--reception .pase-diario-price { align-self: flex-start; }
+  .app-shell--reception .asistencia-main-panel--laboral > .asistencia-page { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-filters { grid-template-columns: minmax(0, 1fr); }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-filters > .button { width: 100%; }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-actions .button { min-height: 42px; }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-table { min-width: 0; }
+  .app-shell--reception .asistencia-main-panel--laboral .asistencia-table td { overflow-wrap: anywhere; }
+}
+@media (max-width: 380px) {
+  .app-shell--reception .asistencia-tabs [role="tab"] { font-size: 12px; }
+  .app-shell--reception .asistencia-card { padding: 13px; }
+  .app-shell--reception .ingreso-miembro-directory__heading { align-items: flex-start; flex-direction: column; }
+  .app-shell--reception .ingreso-miembro-pagination { flex-wrap: wrap; justify-content: center; }
 }

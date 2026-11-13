@@ -1,6 +1,8 @@
 package com.gimnasio.sistemagym.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +18,9 @@ public class InvitacionUsuario {
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
 
-    @Column(name = "token_hash", nullable = false, length = 64)
+    @Column(name = "token_hash", nullable = false, length = 64,
+            columnDefinition = "char(64)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String tokenHash;
 
     @Column(name = "fecha_creacion", nullable = false)

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { ApiError } from '../api/http'
 import {
   crearReporteIncidencia,
@@ -15,7 +14,6 @@ import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { PageTitle } from '../components/PageTitle'
-import './mis-reportes.css'
 import './mis-reportes.css'
 import { addUncertainWriteLock, isSessionCurrent, readUncertainWriteLocks, removeUncertainWriteLock, uncertainWriteResult } from './uncertainWriteLocks'
 
@@ -37,8 +35,10 @@ function resultadoIncierto(error: unknown) {
 }
 
 const estados: Record<string, string> = {
-  PENDIENTE: 'Pendiente', EN_REVISION: 'En revisión', SOLUCIONADO: 'Solucionado',
+  PENDIENTE: 'Pendiente', EN_REVISION: 'En proceso', SOLUCIONADO: 'Resuelta',
 }
+
+const prioridades: Record<PrioridadIncidencia, string> = { BAJA: 'Baja', MEDIA: 'Media', ALTA: 'Alta' }
 
 export function MisReportesPage() {
   const auth = useAuth()
@@ -200,18 +200,19 @@ export function MisReportesPage() {
   }
 
   if (!entrenador) {
-    return <div className="dashboard mis-reportes-page"><PageTitle eyebrow="PORTAL DEL PERSONAL" title="Mis reportes" /><Card><p>Esta funcionalidad está disponible únicamente para entrenadores.</p></Card></div>
+    return <div className="dashboard mis-reportes-page"><PageTitle eyebrow="PORTAL DEL PERSONAL" title="Mis incidencias" /><Card><p>Esta funcionalidad está disponible únicamente para entrenadores.</p></Card></div>
   }
 
   if (reporte) {
     return <div className="dashboard mis-reportes-page">
-      <PageTitle description={`Creado ${fechaLima(reporte.fechaReporte)}`} eyebrow="ENTRENAMIENTO · INCIDENCIAS" title="Detalle del reporte" actions={<Link className="button button--secondary" to="/entrenamiento">Nueva revisión</Link>} />
+      <PageTitle description={`Registrada ${fechaLima(reporte.fechaReporte)}`} eyebrow="ENTRENAMIENTO · MIS INCIDENCIAS" title={`Incidencia #${reporte.idReporte}`} />
       {exito && <p className="report-feedback report-feedback--success" role="status">Incidencia #{exito.idReporte} registrada. Estado: {estados[exito.estado] ?? exito.estado}.</p>}
-      <div className="report-nav-actions"><Button onClick={() => setReporte(null)} type="button" variant="secondary">Volver a mis reportes</Button><Link className="button button--secondary" to="/mis-checklists">Mis checklists</Link></div>
+      <div className="report-nav-actions"><Button onClick={() => setReporte(null)} type="button" variant="secondary">Volver a mis incidencias</Button></div>
       <Card className="report-detail-card" title="Incidencia">
         <dl className="report-main-data">
           <div><dt>Elemento afectado</dt><dd>{reporte.nombreElemento}</dd></div>
-          <div><dt>Prioridad</dt><dd>{reporte.prioridad}</dd></div>
+          <div><dt>Origen</dt><dd><span className={`report-origin ${reporte.idChecklist !== null ? 'report-origin--checklist' : 'report-origin--direct'}`}>{reporte.idChecklist !== null ? `Revisión #${reporte.idChecklist}` : 'Registro directo'}</span></dd></div>
+          <div><dt>Prioridad</dt><dd>{prioridades[reporte.prioridad] ?? reporte.prioridad}</dd></div>
           <div><dt>Estado actual</dt><dd><span className={`report-state report-state--${reporte.estado.toLowerCase()}`}>{estados[reporte.estado] ?? reporte.estado}</span></dd></div>
           <div><dt>Fecha de creación</dt><dd>{fechaLima(reporte.fechaReporte)}</dd></div>
           <div><dt>Última actualización</dt><dd>{fechaLima(reporte.fechaActualizacion)}</dd></div>
@@ -236,21 +237,20 @@ export function MisReportesPage() {
   }
 
   return <div className="dashboard mis-reportes-page">
-    <PageTitle description="Consulta el estado y el historial de tus incidencias." eyebrow="ENTRENAMIENTO · INCIDENCIAS" title="Mis reportes" actions={<>
-      <Link className="button button--secondary" to="/entrenamiento">Nueva revisión</Link>
-      <Link className="button button--secondary" to="/mis-checklists">Mis checklists</Link>
+    <PageTitle description="Sigue los problemas que reportaste, su prioridad y el avance de atención." eyebrow="ENTRENAMIENTO · SEGUIMIENTO" title="Mis incidencias" actions={<>
       <Button disabled={!bloqueoListo || incierto || errorBloqueo} onClick={() => { setFormulario(true); setExito(null); setErrorFormulario('') }} type="button">Nueva incidencia</Button>
     </>} />
     {exito && <div className="report-feedback report-feedback--success" role="status"><strong>Incidencia #{exito.idReporte} registrada.</strong> Estado: {estados[exito.estado] ?? exito.estado}. <Button onClick={() => setReporte(exito)} type="button" variant="secondary">Ver reporte</Button></div>}
     {incierto && <div className="report-feedback report-feedback--error" role="alert">{errorBloqueo ? 'Escrituras bloqueadas: no se pudo leer el almacenamiento de seguridad.' : 'Creación de reporte bloqueada por resultado incierto. Pudo registrarse; hay riesgo de duplicación. No reintentes. Solicita revisión administrativa; el listado no permite reconciliarlo inequívocamente.'}</div>}
     {errorLista && <div className="report-feedback report-feedback--error" role="alert"><span>{errorLista}</span><Button disabled={cargando} onClick={() => void cargarLista()} type="button" variant="secondary">Reintentar</Button></div>}
-    {cargando ? <p aria-live="polite" className="report-empty">Cargando tus reportes…</p>
+    {cargando ? <p aria-live="polite" className="report-empty">Cargando tus incidencias…</p>
       : errorLista ? null
-        : reportes.length === 0 ? <Card><p className="report-empty">Aún no has registrado reportes de incidencias.</p></Card>
-          : <section aria-label="Lista de mis reportes" className="report-list">{reportes.map((item) => <Card className="report-record" key={item.idReporte}>
-            <div className="report-record__top"><div><p className="report-record__eyebrow">REPORTE #{item.idReporte}</p><h2>{item.nombreElemento}</h2></div><span className={`report-state report-state--${item.estado.toLowerCase()}`}>{estados[item.estado] ?? item.estado}</span></div>
+        : reportes.length === 0 ? <Card><p className="report-empty">Aún no has registrado incidencias.</p></Card>
+          : <section aria-label="Lista de mis incidencias" className="report-list">{reportes.map((item) => <Card className="report-record" key={item.idReporte}>
+            <div className="report-record__top"><div><p className="report-record__eyebrow">INCIDENCIA #{item.idReporte}</p><h2>{item.nombreElemento}</h2></div><span className={`report-state report-state--${item.estado.toLowerCase()}`}>{estados[item.estado] ?? item.estado}</span></div>
+            <span className={`report-origin ${item.idChecklist !== null ? 'report-origin--checklist' : 'report-origin--direct'}`}>{item.idChecklist !== null ? `Generada en revisión #${item.idChecklist}` : 'Registrada directamente'}</span>
             <p className="report-record__description">{item.descripcion}</p>
-            <dl className="report-record__meta"><div><dt>Prioridad</dt><dd>{item.prioridad}</dd></div><div><dt>Fecha</dt><dd>{fechaLima(item.fechaReporte)}</dd></div></dl>
+            <dl className="report-record__meta"><div><dt>Prioridad</dt><dd>{prioridades[item.prioridad] ?? item.prioridad}</dd></div><div><dt>Fecha</dt><dd>{fechaLima(item.fechaReporte)}</dd></div></dl>
             <Button disabled={idCargando !== null} onClick={() => void verDetalle(item.idReporte)} type="button" variant="secondary">{idCargando === item.idReporte ? 'Cargando…' : 'Ver detalle e historial'}</Button>
           </Card>)}</section>}
     {errorElementos && formulario && <div className="report-feedback report-feedback--error" role="alert">{errorElementos} <Button onClick={() => void cargarElementos()} type="button" variant="secondary">Reintentar elementos</Button></div>}

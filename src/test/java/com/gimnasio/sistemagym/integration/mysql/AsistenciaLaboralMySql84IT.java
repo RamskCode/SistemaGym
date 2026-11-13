@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.gimnasio.sistemagym.repository.AsistenciaLaboralRepository;
+import org.springframework.data.domain.PageRequest;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +22,9 @@ class AsistenciaLaboralMySql84IT extends MySql84IntegrationTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private AsistenciaLaboralRepository asistenciaLaboralRepository;
 
     private long idEmpleado;
     private long idRegistrador;
@@ -42,6 +47,8 @@ class AsistenciaLaboralMySql84IT extends MySql84IntegrationTestSupport {
                 idRol, REGISTRADOR);
         idEmpleado = idUsuario(EMPLEADO);
         idRegistrador = idUsuario(REGISTRADOR);
+        jdbcTemplate.update("UPDATE usuarios SET estado = 'INACTIVO' WHERE id_usuario = ?",
+                idEmpleado);
     }
 
     @AfterEach
@@ -92,6 +99,23 @@ class AsistenciaLaboralMySql84IT extends MySql84IntegrationTestSupport {
                 String.class, idEmpleado);
 
         assertTrue(almacenado.endsWith(".123456"));
+    }
+
+    @Test
+    void historialPaginadoIncluyeNombreAunqueElRolNoSeaSeleccionable() {
+        insertarAsistenciaAbierta();
+
+        var resultado = asistenciaLaboralRepository.consultarHistorial(
+                idEmpleado, null, null, null, PageRequest.of(0, 20));
+
+        assertEquals(1, resultado.getTotalElements());
+        assertEquals("Empleado", resultado.getContent().getFirst().getNombresEmpleado());
+        assertEquals("Prueba", resultado.getContent().getFirst().getApellidosEmpleado());
+        assertEquals("ASISTENCIA_PERSIST_IT", resultado.getContent().getFirst().getRolEmpleado());
+        var empleadosConHistorial = asistenciaLaboralRepository.listarEmpleadosConHistorial();
+        assertEquals(1, empleadosConHistorial.size());
+        assertEquals(idEmpleado, empleadosConHistorial.getFirst().getIdEmpleado());
+        assertEquals("ASISTENCIA_PERSIST_IT", empleadosConHistorial.getFirst().getRol());
     }
 
     private void insertarAsistenciaAbierta() {

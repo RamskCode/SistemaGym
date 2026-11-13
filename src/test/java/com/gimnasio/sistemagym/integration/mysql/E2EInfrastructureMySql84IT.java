@@ -97,16 +97,14 @@ class E2EInfrastructureMySql84IT extends MySql84IntegrationTestSupport {
         String testUsername = "e2e-" + UUID.randomUUID().toString().substring(0, 12)
                 + "@example.test";
         String testPassword = UUID.randomUUID() + "-E2E";
-        jdbc.update("INSERT INTO roles (nombre, descripcion) VALUES (?, ?)",
-                "RECEPCIONISTA", "Rol temporal para smoke E2E");
+        asegurarRol("RECEPCIONISTA", "Rol temporal para smoke E2E");
         jdbc.update("INSERT INTO usuarios (id_rol, nombres, apellidos, correo, "
                         + "contrasena_hash, estado) "
                         + "SELECT id_rol, ?, ?, ?, ?, 'ACTIVO' FROM roles WHERE nombre = ?",
                 "Usuario", "E2E Temporal", testUsername, passwordEncoder.encode(testPassword),
                 "RECEPCIONISTA");
 
-        jdbc.update("INSERT INTO roles (nombre, descripcion) VALUES (?, ?)",
-                "ADMINISTRADOR", "Rol temporal para comprobar límites E2E");
+        asegurarRol("ADMINISTRADOR", "Rol temporal para comprobar límites E2E");
         String adminUsername = "admin-e2e-" + UUID.randomUUID().toString().substring(0, 8)
                 + "@example.test";
         String adminPassword = UUID.randomUUID() + "-E2E";
@@ -128,11 +126,40 @@ class E2EInfrastructureMySql84IT extends MySql84IntegrationTestSupport {
             esperarEstado(vite, viteBase + "/", 200);
             assertEquals(405, obtenerEstado(viteBase + "/api/auth/login"),
                     "Vite debe reenviar /api al backend aislado, no a localhost:8080");
-            ejecutarPruebaPlaywright(vite, viteBase, testUsername, testPassword);
+            ejecutarPruebaPlaywright(vite, viteBase, testUsername, testPassword, "RECEPCIONISTA");
         } finally {
             detenerProcesoYDescendientes(vite);
         }
         assertFalse(vite.isAlive(), "Vite debe quedar detenido al finalizar incluso si falla una aserción");
+    }
+
+    @Test
+    void restauraSesionAdministradorEnRutasDirectasRecargaNavegacionYLogout() throws Exception {
+        assertEquals("127.0.0.1", environment.getRequiredProperty("server.address"));
+        assertTrue(port > 0 && port <= 65535);
+
+        String correo = "admin-auth-" + UUID.randomUUID().toString().substring(0, 8)
+                + "@example.test";
+        String contrasena = UUID.randomUUID() + "-AuthE2E";
+        asegurarRol("ADMINISTRADOR", "Cuenta temporal aislada para E2E de autenticación");
+        jdbc.update("INSERT INTO usuarios (id_rol, nombres, apellidos, correo, "
+                        + "contrasena_hash, estado) "
+                        + "SELECT id_rol, ?, ?, ?, ?, 'ACTIVO' FROM roles WHERE nombre = ?",
+                "Administrador", "Auth E2E", correo, passwordEncoder.encode(contrasena),
+                "ADMINISTRADOR");
+
+        int vitePort = puertoLoopbackDisponible();
+        Process vite = iniciarVite(vitePort, port);
+        try {
+            String viteBase = "http://127.0.0.1:" + vitePort;
+            esperarEstado(vite, viteBase + "/", 200);
+            assertEquals(405, obtenerEstado(viteBase + "/api/auth/login"),
+                    "Vite debe reenviar autenticación al backend aislado");
+            ejecutarPruebaPlaywright(vite, viteBase, correo, contrasena, "ADMINISTRADOR");
+        } finally {
+            detenerProcesoYDescendientes(vite);
+        }
+        assertFalse(vite.isAlive(), "Vite debe detenerse al finalizar la prueba de autenticación");
     }
 
     private long insertarSocioVigenteDePrueba(String nombres, String apellidos) {
@@ -152,6 +179,15 @@ class E2EInfrastructureMySql84IT extends MySql84IntegrationTestSupport {
                         + "DATE_SUB(CURRENT_DATE, INTERVAL 1 DAY), "
                         + "DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY), 'ACTIVA')", idSocio, idPlan);
         return idSocio;
+    }
+
+    private void asegurarRol(String nombre, String descripcion) {
+        Integer existentes = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM roles WHERE nombre = ?", Integer.class, nombre);
+        if (existentes == null || existentes == 0) {
+            jdbc.update("INSERT INTO roles (nombre, descripcion) VALUES (?, ?)",
+                    nombre, descripcion);
+        }
     }
 
     private void verificarDirectorioYRegistroAutenticados(String receptionist, String receptionistPassword,
@@ -242,7 +278,7 @@ class E2EInfrastructureMySql84IT extends MySql84IntegrationTestSupport {
     }
 
     private static void ejecutarPruebaPlaywright(Process vite, String frontendBase,
-            String username, String password) throws Exception {
+            String username, String password, String role) throws Exception {
         Path frontend = Path.of(System.getProperty("user.dir"), "frontend").toAbsolutePath();
         Path playwrightCli = frontend.resolve("node_modules/@playwright/test/cli.js");
         ProcessBuilder builder = new ProcessBuilder("node", playwrightCli.toString(),
@@ -253,6 +289,7 @@ class E2EInfrastructureMySql84IT extends MySql84IntegrationTestSupport {
         builder.environment().put("SISTEMAGYM_E2E_FRONTEND", frontendBase);
         builder.environment().put("SISTEMAGYM_E2E_USERNAME", username);
         builder.environment().put("SISTEMAGYM_E2E_PASSWORD", password);
+        builder.environment().put("SISTEMAGYM_E2E_ROLE", role);
         Process playwright = builder.start();
         try {
             if (!playwright.waitFor(90, java.util.concurrent.TimeUnit.SECONDS)) {

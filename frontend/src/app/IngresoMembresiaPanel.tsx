@@ -13,6 +13,7 @@ import type { AuthContextValue } from '../auth/AuthContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { uncertainWriteResult } from './uncertainWriteLocks'
+import { normalizeDocumentInput } from '../utils/documentIdentity'
 
 const HISTORY_SIZE = 10
 const DIRECTORY_SIZE = 20
@@ -184,7 +185,7 @@ export function IngresoMembresiaPanel({ auth }: { auth: AuthContextValue }) {
         <select id="tipo-documento-ingreso" onChange={(event) => {
           const nextType = event.target.value as 'DNI' | 'CE' | ''
           setDocumentType(nextType)
-          setDocumentNumber((value) => value.slice(0, nextType === 'DNI' ? 8 : 12))
+          setDocumentNumber((value) => normalizeDocumentInput(nextType, value))
           setPage(0); resetFilterState()
         }} value={documentType}>
           <option value="">Todos</option><option value="DNI">DNI</option><option value="CE">CE</option>
@@ -192,8 +193,7 @@ export function IngresoMembresiaPanel({ auth }: { auth: AuthContextValue }) {
       </label>
       <label className="ingreso-miembro-filter" htmlFor="numero-documento-ingreso"><span>Número de documento</span>
         <input autoComplete="off" id="numero-documento-ingreso" inputMode="numeric" maxLength={documentType === 'DNI' ? 8 : 12} onChange={(event) => {
-          const maxDigits = documentType === 'DNI' ? 8 : 12
-          setDocumentNumber(event.target.value.replace(/\D/g, '').slice(0, maxDigits))
+          setDocumentNumber(normalizeDocumentInput(documentType, event.target.value))
           setPage(0); resetFilterState()
         }} pattern="[0-9]*" placeholder={documentType === 'DNI' ? 'Hasta 8 dígitos' : 'Hasta 12 dígitos'} type="text" value={documentNumber} />
       </label>

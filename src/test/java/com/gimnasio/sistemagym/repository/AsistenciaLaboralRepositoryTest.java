@@ -121,6 +121,9 @@ class AsistenciaLaboralRepositoryTest {
         assertEquals(2, pagina.getTotalElements());
         assertEquals(segunda.getIdAsistencia(), pagina.getContent().getFirst().getIdAsistencia());
         assertEquals(empleado.getIdUsuario(), pagina.getContent().getFirst().getIdEmpleado());
+        assertEquals("Usuario", pagina.getContent().getFirst().getNombresEmpleado());
+        assertEquals("Prueba", pagina.getContent().getFirst().getApellidosEmpleado());
+        assertEquals("RECEPCIONISTA", pagina.getContent().getFirst().getRolEmpleado());
         assertEquals(0, asistenciaRepository.consultarHistorial(
                 empleado.getIdUsuario(), LocalDate.of(2026, 11, 5),
                 LocalDate.of(2026, 11, 5), null, pageable).getTotalElements());
@@ -129,6 +132,20 @@ class AsistenciaLaboralRepositoryTest {
         assertEquals(1, asistenciaRepository.consultarHistorial(
                 empleado.getIdUsuario(), null, null,
                 EstadoAsistenciaLaboral.ANULADA, pageable).getTotalElements());
+    }
+
+    @Test
+    void empleadosConHistorialIncluyeInactivosYSoloUsuariosConAsistencias() {
+        empleado.setEstado("INACTIVO");
+        usuarioRepository.saveAndFlush(empleado);
+        guardarAsistencia(Instant.parse("2026-11-05T04:30:00Z"));
+
+        var empleados = asistenciaRepository.listarEmpleadosConHistorial();
+
+        assertEquals(1, empleados.size());
+        assertEquals(empleado.getIdUsuario(), empleados.getFirst().getIdEmpleado());
+        assertEquals("Usuario", empleados.getFirst().getNombres());
+        assertEquals("RECEPCIONISTA", empleados.getFirst().getRol());
     }
 
     @Test

@@ -57,7 +57,7 @@ public class Usuario {
 
     @Size(max = 20, message = "El documento no puede superar los 20 caracteres.")
     @Pattern(regexp = "[0-9]{1,12}",
-            message = "El documento debe contener solo números.")
+            message = "El documento debe contener de 1 a 12 dígitos.")
     @Column(name = "numero_documento", length = 20)
     private String numeroDocumento;
 
@@ -154,7 +154,7 @@ public class Usuario {
         }
         return switch (tipoDocumento) {
             case DNI -> numeroDocumento.matches("\\d{8}");
-            case CE -> numeroDocumento.matches("\\d{1,12}");
+            case CE -> numeroDocumento.matches("[0-9]{1,12}");
         };
     }
 

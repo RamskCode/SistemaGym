@@ -13,6 +13,7 @@ import com.gimnasio.sistemagym.entity.Membresia;
 import com.gimnasio.sistemagym.entity.Pago;
 import com.gimnasio.sistemagym.entity.Socio;
 import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 import com.gimnasio.sistemagym.entity.TipoIngreso;
 import com.gimnasio.sistemagym.entity.Usuario;
 import com.gimnasio.sistemagym.exception.ConflictoException;
@@ -603,27 +604,9 @@ public class IngresoService {
                     "El número de documento es obligatorio.");
         }
 
-        String numeroNormalizado = numero.trim();
-        if (contieneEspacios(numeroNormalizado)) {
-            throw new IllegalArgumentException(
-                    "El número de documento no puede contener espacios internos.");
-        }
-
-        if (TipoDocumento.DNI.name().equals(tipoNormalizado)) {
-            if (!numeroNormalizado.matches("\\d{8}")) {
-                throw new IllegalArgumentException(
-                        "El DNI debe tener exactamente 8 dígitos.");
-            }
-            return new Documento(TipoDocumento.DNI, numeroNormalizado);
-        }
-
-        String ce = numeroNormalizado.toUpperCase(Locale.ROOT);
-        if (!ce.matches("\\d{1,12}")) {
-            throw new IllegalArgumentException(
-                    "El carné de extranjería debe tener entre 1 y 12 dígitos.");
-        }
-
-        return new Documento(TipoDocumento.CE, ce);
+        TipoDocumento tipoNormalizadoEnum = TipoDocumento.valueOf(tipoNormalizado);
+        return new Documento(tipoNormalizadoEnum,
+                DocumentoIdentidad.normalizar(tipoNormalizadoEnum, numero));
     }
 
     private boolean esUuid(String value) {

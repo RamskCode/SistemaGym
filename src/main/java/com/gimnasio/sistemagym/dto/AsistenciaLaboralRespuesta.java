@@ -12,6 +12,9 @@ import java.time.ZoneOffset;
 public record AsistenciaLaboralRespuesta(
         Long idAsistencia,
         Long idEmpleado,
+        String nombresEmpleado,
+        String apellidosEmpleado,
+        String rolEmpleado,
         Instant fechaEntradaUtc,
         Instant fechaSalidaUtc,
         LocalDate fechaLaboral,
@@ -22,6 +25,10 @@ public record AsistenciaLaboralRespuesta(
         return new AsistenciaLaboralRespuesta(
                 asistencia.getIdAsistencia(),
                 idEmpleado,
+                asistencia.getUsuario().getNombres(),
+                asistencia.getUsuario().getApellidos(),
+                asistencia.getUsuario().getRol() == null
+                        ? null : asistencia.getUsuario().getRol().getNombre(),
                 asistencia.getFechaEntradaUtc().toInstant(ZoneOffset.UTC),
                 asistencia.getFechaSalidaUtc() == null
                         ? null
@@ -33,6 +40,9 @@ public record AsistenciaLaboralRespuesta(
         return new AsistenciaLaboralRespuesta(
                 asistencia.getIdAsistencia(),
                 asistencia.getIdEmpleado(),
+                asistencia.getNombresEmpleado(),
+                asistencia.getApellidosEmpleado(),
+                asistencia.getRolEmpleado(),
                 asistencia.getFechaEntradaUtc().toInstant(ZoneOffset.UTC),
                 asistencia.getFechaSalidaUtc() == null
                         ? null

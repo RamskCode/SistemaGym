@@ -83,3 +83,24 @@
   .checklist-detail-item__header { flex-direction: column; }
   .checklist-incidence dl { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Compact inspection-history presentation */
+.mis-checklists-page { gap: var(--space-5, 20px); }
+.checklist-list { gap: 10px; }
+.checklist-record, .checklist-summary-card, .checklist-details-card { padding: 17px 19px; }
+.checklist-record__heading h2 { margin-top: 5px; font-size: var(--type-body, 14px); }
+.checklist-record__eyebrow { font-size: var(--type-help, 12px); color: #526052; }
+.checklist-record__counts, .checklist-summary-grid { gap: 8px; margin-top: 12px; }
+.checklist-record__counts div, .checklist-summary-grid div { gap: 3px; padding: 8px 11px; background: #fafbfa; }
+.checklist-record__counts dt, .checklist-summary-grid dt { font-size: var(--type-help, 12px); }
+.checklist-record__counts dd, .checklist-summary-grid dd { font-size: 17px; line-height: 1.25; }
+.checklist-record__observations { margin-top: 10px; padding-top: 9px; border-top: 1px solid #e8ede8; }
+.checklist-record__heading > .button { min-height: 36px; }
+.checklist-summary-card > .card__header, .checklist-details-card > .card__header { margin-bottom: 13px; }
+.checklist-detail-list { gap: 9px; }
+.checklist-detail-item { padding: 13px 15px; }
+.checklist-general-observations { margin-top: 13px; }
+.checklist-detail-actions { margin-top: -5px; }
+.checklist-feedback { border-radius: 10px; }
+@media (max-width: 600px) { .checklist-record, .checklist-summary-card, .checklist-details-card { padding: 15px; } }
+@media (max-width: 420px) { .checklist-record__counts, .checklist-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .checklist-record__counts div, .checklist-summary-grid div { padding: 8px 6px; } }

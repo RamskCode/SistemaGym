@@ -8,6 +8,7 @@ import com.gimnasio.sistemagym.dto.AnularAsistenciaLaboralRequest;
 import com.gimnasio.sistemagym.dto.CorreccionAsistenciaLaboralRequest;
 import com.gimnasio.sistemagym.dto.RegistrarAsistenciaLaboralRequest;
 import com.gimnasio.sistemagym.dto.PersonalSeleccionableRespuesta;
+import com.gimnasio.sistemagym.dto.EmpleadoConHistorialRespuesta;
 import com.gimnasio.sistemagym.entity.AsistenciaLaboral;
 import com.gimnasio.sistemagym.entity.EstadoAsistenciaLaboral;
 import com.gimnasio.sistemagym.service.AsistenciaLaboralService;
@@ -40,6 +41,12 @@ public class AsistenciaLaboralController {
     @GetMapping("/personal-seleccionable")
     public List<PersonalSeleccionableRespuesta> listarPersonalSeleccionable() {
         return asistenciaLaboralService.listarPersonalSeleccionable();
+    }
+
+    @GetMapping("/empleados-con-historial")
+    public List<EmpleadoConHistorialRespuesta> listarEmpleadosConHistorial(
+            Authentication autenticacion) {
+        return asistenciaLaboralService.listarEmpleadosConHistorial(autenticacion.getName());
     }
 
     @PostMapping("/mi-entrada")
@@ -155,6 +162,19 @@ public class AsistenciaLaboralController {
             @RequestParam(required = false) EstadoAsistenciaLaboral estado) {
         return pagina(asistenciaLaboralService.consultarTodas(
                 autenticacion.getName(), page, size, fechaDesde, fechaHasta, estado));
+    }
+
+    @GetMapping("/consulta-recepcionista")
+    public AsistenciaLaboralPaginaRespuesta consultarHistorialRecepcionista(
+            Authentication autenticacion,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) LocalDate fechaDesde,
+            @RequestParam(required = false) LocalDate fechaHasta,
+            @RequestParam(required = false) EstadoAsistenciaLaboral estado,
+            @RequestParam(required = false) Long idEmpleado) {
+        return pagina(asistenciaLaboralService.consultarHistorialRecepcionista(
+                autenticacion.getName(), idEmpleado, page, size, fechaDesde, fechaHasta, estado));
     }
 
     @GetMapping("/empleado/{idEmpleado}")

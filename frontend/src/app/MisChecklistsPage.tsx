@@ -89,22 +89,22 @@ export function MisChecklistsPage() {
   }
 
   if (!entrenador) {
-    return <div className="dashboard mis-checklists-page"><PageTitle eyebrow="PORTAL DEL PERSONAL" title="Mis checklists" /><Card><p>Esta funcionalidad está disponible únicamente para entrenadores.</p></Card></div>
+    return <div className="dashboard mis-checklists-page"><PageTitle eyebrow="PORTAL DEL PERSONAL" title="Mis revisiones" /><Card><p>Esta funcionalidad está disponible únicamente para entrenadores.</p></Card></div>
   }
 
   if (detalle) {
     const correctos = detalle.detalles.filter((item) => item.resultado === 'CORRECTO').length
     const problemas = detalle.detalles.filter((item) => item.resultado === 'CON_PROBLEMA').length
     return <div className="dashboard mis-checklists-page">
-      <PageTitle description={`Registrado ${fechaLima(detalle.fechaHora)}`} eyebrow="ENTRENAMIENTO · HISTORIAL" title="Detalle de revisión" actions={<Link className="button button--secondary" to="/entrenamiento">Nueva revisión</Link>} />
-      <div className="checklist-detail-actions"><Button onClick={volverALista} type="button" variant="secondary">Volver a mis checklists</Button></div>
-      <Card className="checklist-summary-card" title="Resumen del checklist">
+      <PageTitle description={`Realizada ${fechaLima(detalle.fechaHora)}`} eyebrow="ENTRENAMIENTO · MIS REVISIONES" title="Detalle de revisión" />
+      <div className="checklist-detail-actions"><Button onClick={volverALista} type="button" variant="secondary">Volver a mis revisiones</Button></div>
+      <Card className="checklist-summary-card" title={`Resumen · Revisión #${detalle.idChecklist}`}>
         <dl className="checklist-summary-grid">
           <div><dt>Elementos revisados</dt><dd>{detalle.detalles.length}</dd></div>
           <div><dt>Correctos</dt><dd>{correctos}</dd></div>
           <div><dt>Con problemas</dt><dd>{problemas}</dd></div>
         </dl>
-        {detalle.observaciones && <div className="checklist-general-observations"><h2>Observaciones generales</h2><p>{detalle.observaciones}</p></div>}
+        <div className="checklist-general-observations"><h2>Observaciones generales</h2><p>{detalle.observaciones || 'No se registraron comentarios generales para esta inspección.'}</p></div>
       </Card>
       <Card className="checklist-details-card" title="Elementos revisados">
         {detalle.detalles.length === 0 ? <p className="checklist-empty">Este checklist no contiene detalles.</p> : <div className="checklist-detail-list">
@@ -126,17 +126,17 @@ export function MisChecklistsPage() {
   }
 
   return <div className="dashboard mis-checklists-page">
-    <PageTitle description="Consulta los checklists registrados desde tu cuenta y revisa sus detalles." eyebrow="ENTRENAMIENTO · HISTORIAL" title="Mis checklists" actions={<Link className="button button--primary" to="/entrenamiento">Nueva revisión</Link>} />
+    <PageTitle description="Consulta tus inspecciones de equipos, sus resultados y los hallazgos registrados." eyebrow="ENTRENAMIENTO · HISTORIAL" title="Mis revisiones" actions={<Link className="button button--primary" to="/entrenamiento">Registrar revisión</Link>} />
     {error && <p className="checklist-feedback checklist-feedback--error" role="alert">{error} <Button disabled={cargando} onClick={() => void cargarChecklists()} type="button" variant="secondary">Reintentar</Button></p>}
-    {cargando ? <p aria-live="polite" className="checklist-empty">Cargando tus checklists…</p>
+    {cargando ? <p aria-live="polite" className="checklist-empty">Cargando tus revisiones…</p>
       : error ? null
-        : checklists.length === 0 ? <Card><p className="checklist-empty">Aún no has registrado checklists.</p><Link className="button button--primary checklist-empty__link" to="/entrenamiento">Registrar una revisión</Link></Card>
-          : <section aria-label="Lista de mis checklists" className="checklist-list">
+        : checklists.length === 0 ? <Card><p className="checklist-empty">Aún no has registrado inspecciones de equipos.</p><Link className="button button--primary checklist-empty__link" to="/entrenamiento">Registrar una revisión</Link></Card>
+          : <section aria-label="Lista de mis revisiones" className="checklist-list">
             {checklists.map((checklist) => {
               const correctos = checklist.detalles.filter((item) => item.resultado === 'CORRECTO').length
               const problemas = checklist.detalles.filter((item) => item.resultado === 'CON_PROBLEMA').length
               return <Card className="checklist-record" key={checklist.idChecklist}>
-                <div className="checklist-record__heading"><div><p className="checklist-record__eyebrow">CHECKLIST #{checklist.idChecklist}</p><h2>{fechaLima(checklist.fechaHora)}</h2></div><Button aria-label={`Ver detalle del checklist ${checklist.idChecklist}`} disabled={idDetalleCargando !== null} onClick={() => void verDetalle(checklist.idChecklist)} type="button" variant="secondary">{idDetalleCargando === checklist.idChecklist ? 'Cargando detalle…' : 'Ver detalle'}</Button></div>
+                <div className="checklist-record__heading"><div><p className="checklist-record__eyebrow">INSPECCIÓN · #{checklist.idChecklist}</p><h2>{fechaLima(checklist.fechaHora)}</h2></div><Button aria-label={`Ver detalle de la revisión ${checklist.idChecklist}`} disabled={idDetalleCargando !== null} onClick={() => void verDetalle(checklist.idChecklist)} type="button" variant="secondary">{idDetalleCargando === checklist.idChecklist ? 'Cargando detalle…' : 'Ver detalle'}</Button></div>
                 <dl className="checklist-record__counts"><div><dt>Revisados</dt><dd>{checklist.detalles.length}</dd></div><div><dt>Correctos</dt><dd>{correctos}</dd></div><div><dt>Con problemas</dt><dd>{problemas}</dd></div></dl>
                 {checklist.observaciones && <p className="checklist-record__observations"><strong>Observaciones generales:</strong> {checklist.observaciones}</p>}
               </Card>

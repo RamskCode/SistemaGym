@@ -56,39 +56,49 @@ export function ActividadPage() {
   const hasFilters = Boolean(query || tipo !== 'TODOS' || desde || hasta)
   const clearFilters = () => { setQuery(''); setTipo('TODOS'); setDesde(''); setHasta('') }
 
-  const metrics = summary ? [
-    { label: 'Entradas hoy', value: summary.ingresosHoy.toLocaleString('es-PE'), Icon: CalendarCheck2 },
-    { label: 'Entradas esta semana', value: summary.ingresosSemana.reduce((sum, day) => sum + day.cantidad, 0).toLocaleString('es-PE'), Icon: Activity },
-    { label: 'Socios nuevos este mes', value: summary.sociosNuevosMes.toLocaleString('es-PE'), Icon: UserRoundPlus },
-    { label: 'Pagos confirmados este mes', value: money.format(summary.ingresosMes), Icon: BadgeDollarSign },
-    { label: 'Ingresos cobrados hoy', value: money.format(summary.ingresosCobradosHoy), Icon: BadgeDollarSign },
+  const metricGroups = summary ? [
+    { label: 'Hoy', metrics: [
+      { label: 'Entradas', value: summary.ingresosHoy.toLocaleString('es-PE'), Icon: CalendarCheck2 },
+      { label: 'Ingresos cobrados', value: money.format(summary.ingresosCobradosHoy), Icon: BadgeDollarSign },
+    ] },
+    { label: 'Esta semana', metrics: [
+      { label: 'Entradas registradas', value: summary.ingresosSemana.reduce((sum, day) => sum + day.cantidad, 0).toLocaleString('es-PE'), Icon: Activity },
+    ] },
+    { label: 'Este mes', metrics: [
+      { label: 'Socios nuevos', value: summary.sociosNuevosMes.toLocaleString('es-PE'), Icon: UserRoundPlus },
+      { label: 'Pagos confirmados', value: money.format(summary.ingresosMes), Icon: BadgeDollarSign },
+    ] },
   ] : []
 
   return <div className="dashboard actividad-page">
     <PageTitle eyebrow="OPERACIÓN DEL GIMNASIO" title="Actividad" description="Entradas recientes e indicadores operativos del gimnasio." />
-    <aside className="actividad-scope"><span className="actividad-scope__mark" aria-hidden="true" /><p>Vista resumida: las entradas recientes no representan el historial completo.</p></aside>
     {error && <div className="actividad-error" role="alert"><span>{error}</span><Button onClick={() => setRetry((value) => value + 1)} type="button" variant="secondary">Reintentar</Button></div>}
     {loading ? <p className="actividad-state" role="status">Cargando actividad…</p> : !error && summary && <>
-      <section aria-label="Indicadores de actividad" aria-busy={loading} className="actividad-metrics">
-        {metrics.map(({ label, value, Icon }) => <Card className="actividad-metric" key={label}>
-          <div className="actividad-metric__top"><span>{label}</span><span className="actividad-metric__icon"><Icon aria-hidden="true" size={19} strokeWidth={1.8} /></span></div>
-          <strong>{value}</strong>
-        </Card>)}
-      </section>
+      <div aria-busy={loading} className="actividad-metric-groups">
+        {metricGroups.map(({ label: period, metrics }) => <section aria-label={`Indicadores: ${period.toLocaleLowerCase('es-PE')}`} className="actividad-metric-group" key={period}>
+          <h2>{period}</h2>
+          <div className="actividad-metrics">{metrics.map(({ label, value, Icon }) => <Card className="actividad-metric" key={label}>
+            <div className="actividad-metric__top"><span>{label}</span><span className="actividad-metric__icon"><Icon aria-hidden="true" size={18} strokeWidth={1.8} /></span></div>
+            <strong>{value}</strong>
+          </Card>)}</div>
+        </section>)}
+      </div>
       <Card className="actividad-card" title="Entradas recientes">
-        <p className="actividad-note">Se muestran las entradas más recientes disponibles.</p>
         <div className="actividad-filters">
           <label className="actividad-search" htmlFor="actividad-search">Buscar persona<input id="actividad-search" onChange={(event) => setQuery(event.target.value)} placeholder="Nombre" type="search" value={query} /></label>
           <label htmlFor="actividad-tipo">Tipo<select id="actividad-tipo" onChange={(event) => setTipo(event.target.value as TipoFiltro)} value={tipo}><option value="TODOS">Todos</option><option value="SOCIO">Socio</option><option value="VISITANTE">Visitante</option></select></label>
           <label htmlFor="actividad-desde">Desde<input id="actividad-desde" onChange={(event) => setDesde(event.target.value)} type="date" value={desde} /></label>
           <label htmlFor="actividad-hasta">Hasta<input id="actividad-hasta" onChange={(event) => setHasta(event.target.value)} type="date" value={hasta} /></label>
-          {hasFilters && events.length > 0 && <Button onClick={clearFilters} type="button" variant="secondary">Limpiar filtros</Button>}
+          {hasFilters && <Button onClick={clearFilters} type="button" variant="secondary">Limpiar filtros</Button>}
         </div>
         {summary.actividadReciente.length === 0 ? <div className="actividad-empty" role="status"><span className="actividad-empty__icon"><UsersRound aria-hidden="true" size={20} /></span><h3>Sin entradas recientes</h3><p>Cuando se registren entradas, aparecerán aquí.</p></div>
-          : events.length === 0 ? <div className="actividad-empty" role="status"><span className="actividad-empty__icon"><SearchX aria-hidden="true" size={20} /></span><h3>Sin resultados</h3><p>No encontramos entradas para estos filtros.</p>{hasFilters && <Button onClick={clearFilters} type="button" variant="secondary">Limpiar filtros</Button>}</div>
-            : <div className="actividad-table-wrap"><table className="actividad-table"><caption className="visually-hidden">Entradas recientes registradas, ordenadas de más nuevas a más antiguas</caption><thead><tr><th scope="col">Persona</th><th scope="col">Tipo</th><th scope="col">Fecha y hora (Lima)</th></tr></thead><tbody>
-              {events.map((event) => <tr key={event.idIngreso}><td data-label="Persona">{event.nombre}</td><td data-label="Tipo">{event.tipo === 'SOCIO' ? 'Socio' : 'Visitante'}</td><td data-label="Fecha y hora (Lima)">{dateTime.format(new Date(event.fechaHora))}</td></tr>)}
-            </tbody></table></div>}
+          : events.length === 0 ? <div className="actividad-empty" role="status"><span className="actividad-empty__icon"><SearchX aria-hidden="true" size={20} /></span><h3>Sin resultados</h3><p>No encontramos entradas que coincidan con los filtros aplicados.</p></div>
+            : <>
+              <p aria-live="polite" className="actividad-results">{events.length.toLocaleString('es-PE')} {events.length === 1 ? 'entrada encontrada' : 'entradas encontradas'}</p>
+              <div className="actividad-table-wrap"><table className="actividad-table"><caption className="actividad-sr-only">Entradas recientes registradas, ordenadas de más nuevas a más antiguas</caption><thead><tr><th scope="col">Persona</th><th scope="col">Tipo</th><th scope="col">Fecha y hora (Lima)</th></tr></thead><tbody>
+              {events.map((event) => <tr key={event.idIngreso}><td data-label="Persona"><strong>{event.nombre}</strong></td><td data-label="Tipo"><span className={`actividad-person-type actividad-person-type--${event.tipo.toLowerCase()}`}>{event.tipo === 'SOCIO' ? 'Socio' : 'Visitante'}</span></td><td data-label="Fecha y hora (Lima)"><time dateTime={event.fechaHora}>{dateTime.format(new Date(event.fechaHora))}</time></td></tr>)}
+            </tbody></table></div>
+            </>}
       </Card>
     </>}
   </div>

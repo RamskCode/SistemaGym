@@ -267,7 +267,7 @@ export function RevisionGimnasioPage() {
   }
 
   return <div className="dashboard revision-page">
-    <PageTitle description="Selecciona los elementos revisados y registra su estado. Los reportes de incidencias se generan automáticamente para los problemas enviados." eyebrow="ENTRENAMIENTO · GIMNASIO" title="Revisión de equipos" />
+    <PageTitle description="Incluye los equipos que inspeccionaste, registra su condición y confirma la revisión. Los equipos con problemas generan una incidencia automáticamente." eyebrow="ENTRENAMIENTO · INSPECCIÓN" title="Revisión de equipos" />
     {error && <p className="revision-feedback revision-feedback--error" role="alert">{error}</p>}
     {resultadoIncierto && <p className="revision-feedback revision-feedback--error" role="alert">{errorBloqueo ? 'Escrituras bloqueadas: no se pudo leer el almacenamiento de seguridad.' : 'Checklist bloqueado por resultado incierto. Pudo registrarse y generar incidencias automáticas. No reintentes; requiere revisión administrativa.'}</p>}
     {exito && <section aria-labelledby="revision-success-title" className="revision-feedback revision-feedback--success" role="status">
@@ -278,7 +278,7 @@ export function RevisionGimnasioPage() {
     </section>}
 
     <form onSubmit={abrirConfirmacion}>
-      <Card className="revision-card" title="Elementos de revisión" action={<span className="revision-count">{seleccionadosIds.length} / 100 seleccionados</span>}>
+      <Card className="revision-card" title="1. Selecciona los equipos" action={<span className="revision-count">{seleccionadosIds.length} de 100 incluidos</span>}>
         {cargando ? <p aria-live="polite" className="revision-empty">Cargando elementos activos…</p>
           : error && elementos.length === 0 ? <Button onClick={() => void cargarElementos()} type="button" variant="secondary">Reintentar carga</Button>
             : elementos.length === 0 ? <p className="revision-empty">No hay elementos activos para revisar.</p>
@@ -288,13 +288,14 @@ export function RevisionGimnasioPage() {
                 return <fieldset className={`revision-item${detalle ? ' revision-item--selected' : ''}`} key={elemento.idElemento}>
                   <legend className="revision-item__legend">
                     <label className="revision-item__select" htmlFor={`${idBase}-seleccionar`}>
-                      <input checked={Boolean(detalle)} disabled={!detalle && seleccionadosIds.length >= 100} id={`${idBase}-seleccionar`} onChange={(event) => alternarElemento(elemento.idElemento, event.target.checked)} type="checkbox" />
+                      <input aria-label={`Incluir ${elemento.nombre} en la revisión`} checked={Boolean(detalle)} disabled={!detalle && seleccionadosIds.length >= 100} id={`${idBase}-seleccionar`} onChange={(event) => alternarElemento(elemento.idElemento, event.target.checked)} type="checkbox" />
                       <span><strong>{elemento.nombre}</strong><small>{elemento.tipo === 'MAQUINA' ? 'Máquina' : 'Área'}{elemento.ubicacion ? ` · ${elemento.ubicacion}` : ''}</small></span>
                     </label>
+                    <span className={`revision-item__selection-state${detalle ? ' revision-item__selection-state--active' : ''}`}>{detalle ? 'Incluido en esta revisión' : 'No incluido'}</span>
                   </legend>
                   {elemento.descripcion && <p className="revision-item__description">{elemento.descripcion}</p>}
                   {detalle && <div className="revision-item__fields">
-                    <label className="revision-field" htmlFor={`${idBase}-resultado`}>Resultado
+                    <label className="revision-field" htmlFor={`${idBase}-resultado`}>Estado del equipo <span className={`revision-result revision-result--${detalle.resultado.toLowerCase()}`}>{detalle.resultado === 'CORRECTO' ? 'Buen estado' : 'Presenta problemas'}</span>
                       <select id={`${idBase}-resultado`} onChange={(event) => {
                         const resultado = event.target.value as ResultadoChecklist
                         actualizarDetalle(elemento.idElemento, {
@@ -305,12 +306,13 @@ export function RevisionGimnasioPage() {
                         <option value="CORRECTO">Correcto</option><option value="CON_PROBLEMA">Con problema</option>
                       </select>
                     </label>
-                    <label className="revision-field" htmlFor={`${idBase}-observaciones`}>Observaciones del elemento
+                    <label className="revision-field" htmlFor={`${idBase}-observaciones`}>Observación de este equipo <span className="revision-optional">Opcional · específica del equipo</span>
                       <textarea id={`${idBase}-observaciones`} maxLength={1000} onChange={(event) => actualizarDetalle(elemento.idElemento, { observaciones: event.target.value })} value={detalle.observaciones} />
                       <small>{detalle.observaciones.length}/1000</small>
                     </label>
                     {detalle.resultado === 'CON_PROBLEMA' && <div className="revision-problem-fields">
-                      <label className="revision-field" htmlFor={`${idBase}-incidencia`}>Descripción de la incidencia <span aria-hidden="true">*</span>
+                      <label className="revision-field" htmlFor={`${idBase}-incidencia`}>Describe la incidencia <span aria-hidden="true">*</span>
+                        <small className="revision-field__hint">Explica qué problema encontraste en este equipo.</small>
                         <textarea aria-required="true" id={`${idBase}-incidencia`} maxLength={4000} onChange={(event) => actualizarDetalle(elemento.idElemento, { descripcionIncidencia: event.target.value })} required value={detalle.descripcionIncidencia} />
                         <small>{detalle.descripcionIncidencia.length}/4000</small>
                       </label>
@@ -325,8 +327,9 @@ export function RevisionGimnasioPage() {
               })}</div>}
       </Card>
 
-      <Card className="revision-card revision-general-card" title="Observaciones generales">
-        <label className="revision-field" htmlFor="observaciones-generales">Observaciones del checklist
+      <Card className="revision-card revision-general-card" title="2. Comentarios de toda la inspección">
+        <p className="revision-general-help">Este comentario es opcional y se aplica a la revisión completa, no a un equipo en particular.</p>
+        <label className="revision-field" htmlFor="observaciones-generales">Observaciones generales <span className="revision-optional">Opcional</span>
           <textarea id="observaciones-generales" maxLength={1000} onChange={(event) => setObservaciones(event.target.value)} value={observaciones} />
           <small>{observaciones.length}/1000</small>
         </label>
@@ -335,7 +338,7 @@ export function RevisionGimnasioPage() {
     </form>
 
     {confirmar && <div className="revision-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !guardando) setConfirmar(false) }}><section ref={confirmDialogRef} aria-labelledby="revision-confirm-title" aria-modal="true" className="revision-dialog" onKeyDown={handleConfirmKeyDown} onClick={(event) => event.stopPropagation()} role="dialog">
-      <h2 id="revision-confirm-title">Confirmar checklist</h2>
+      <h2 id="revision-confirm-title">3. Revisar y confirmar</h2>
       <p>Vas a registrar {seleccionadosIds.length} {seleccionadosIds.length === 1 ? 'elemento' : 'elementos'}: {seleccionadosIds.length - cantidadProblemas} correcto(s) y {cantidadProblemas} con problema.</p>
       <ul>{seleccionadosIds.map((id) => <li key={id}>{elementos.find((item) => item.idElemento === id)?.nombre}: {seleccionados[id].resultado === 'CORRECTO' ? 'Correcto' : `Con problema · prioridad ${seleccionados[id].prioridadIncidencia || 'pendiente'}`}</li>)}</ul>
       {cantidadProblemas > 0 && <p>El servidor creará automáticamente las incidencias correspondientes; no se enviarán solicitudes adicionales.</p>}

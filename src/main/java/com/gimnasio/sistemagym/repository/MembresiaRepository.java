@@ -44,6 +44,9 @@ public interface MembresiaRepository extends JpaRepository<Membresia, Long> {
     long countByEstadoIgnoreCase(String estado);
     List<Membresia> findBySocio_IdSocio(Long idSocio);
 
+    @Query("select m from Membresia m join fetch m.plan where m.socio.idSocio = :socioId")
+    List<Membresia> findWithPlanBySocioId(@Param("socioId") Long socioId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from Membresia m where m.idMembresia = :id")
     Optional<Membresia> findLockedById(@Param("id") Long id);

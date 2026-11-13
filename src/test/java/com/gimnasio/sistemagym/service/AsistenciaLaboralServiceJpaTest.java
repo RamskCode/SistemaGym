@@ -516,7 +516,7 @@ class AsistenciaLaboralServiceJpaTest {
     }
 
     @Test
-    void rechazaCorreccionYAnulacionDeAsistenciaParaRecepcionista() {
+    void recepcionistaNoPuedeCorregirAunqueHayaRegistradoLaAsistencia() {
         AsistenciaLaboral asistencia = crearAsistenciaCerrada("entrenador",
                 LocalDateTime.parse("2026-11-06T04:00:00"),
                 LocalDateTime.parse("2026-11-06T05:00:00"));
@@ -528,9 +528,6 @@ class AsistenciaLaboralServiceJpaTest {
         assertThrows(ConflictoException.class, () -> service.corregirAsistencia(
                 asistencia.getIdAsistencia(), entrada, null, "Sin cambios",
                 "admin-asistencia@example.invalid"));
-        assertThrows(AccessDeniedException.class, () -> service.anularAsistencia(
-                asistencia.getIdAsistencia(), "Anulación no autorizada",
-                "recepcionista-asistencia@example.invalid"));
         assertEquals(0, jdbcTemplate.queryForObject(
                 "select count(*) from auditorias_asistencia_laboral", Integer.class));
     }

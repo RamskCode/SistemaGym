@@ -27,8 +27,8 @@ public class ActualizarUsuarioRequest {
     private TipoDocumento tipoDocumento;
 
     @Size(max = 20, message = "El documento no puede superar los 20 caracteres.")
-    @Pattern(regexp = "[A-Za-z0-9]{1,12}",
-            message = "El documento solo puede contener letras y números, sin espacios ni guiones.")
+    @Pattern(regexp = "[0-9]{1,12}",
+            message = "El documento solo puede contener de 1 a 12 dígitos.")
     private String numeroDocumento;
 
     private boolean tipoDocumentoIncluido;
@@ -108,5 +108,12 @@ public class ActualizarUsuarioRequest {
     @JsonIgnore
     public boolean isDocumentoEnviadoEnPareja() {
         return tipoDocumentoIncluido == numeroDocumentoIncluido;
+    }
+
+    @AssertTrue(message = "El DNI debe contener exactamente 8 dígitos.")
+    @JsonIgnore
+    public boolean isDocumentoCompatible() {
+        return numeroDocumento == null || tipoDocumento == null
+                || tipoDocumento != TipoDocumento.DNI || numeroDocumento.matches("[0-9]{8}");
     }
 }

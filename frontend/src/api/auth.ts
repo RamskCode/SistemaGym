@@ -1,4 +1,4 @@
-import { apiRequest, HttpError } from './http'
+import { apiRequest, apiUrl, HttpError } from './http'
 
 export type LoginRequest = {
   correo: string
@@ -109,9 +109,9 @@ function csrfCookie(): string | null {
 export async function refreshLogin(): Promise<LoginResponse> {
   const csrf = csrfCookie()
   if (!csrf) throw new HttpError('No hay una sesión renovable.', 401)
-  const response = await fetch('/api/auth/refresh', {
+  const response = await fetch(apiUrl('/api/auth/refresh'), {
     method: 'POST',
-    credentials: 'same-origin',
+    credentials: 'include',
     cache: 'no-store',
     headers: { Accept: 'application/json', 'X-CSRF-Token': csrf },
   })
@@ -124,9 +124,9 @@ export async function refreshLogin(): Promise<LoginResponse> {
 export function revokeLogin(): void {
   const csrf = csrfCookie()
   if (!csrf) return
-  void fetch('/api/auth/logout', {
+  void fetch(apiUrl('/api/auth/logout'), {
     method: 'POST',
-    credentials: 'same-origin',
+    credentials: 'include',
     cache: 'no-store',
     headers: { 'X-CSRF-Token': csrf },
     keepalive: true,

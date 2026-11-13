@@ -35,7 +35,7 @@ public record CrearUsuarioRequest(
         @NotBlank(message = "El número de documento es obligatorio.")
         @Size(max = 20, message = "El documento no puede superar los 20 caracteres.")
         @Pattern(regexp = "[0-9]{1,12}",
-                message = "El documento solo puede contener entre 1 y 12 dígitos numéricos.")
+                message = "El documento solo puede contener de 1 a 12 dígitos.")
         String numeroDocumento) {
 
     public CrearUsuarioRequest(String nombres, String apellidos, String correo,
@@ -53,5 +53,12 @@ public record CrearUsuarioRequest(
     @JsonIgnore
     public boolean isDocumentoEnviadoEnPareja() {
         return (tipoDocumento == null) == (numeroDocumento == null);
+    }
+
+    @AssertTrue(message = "El DNI debe contener exactamente 8 dígitos.")
+    @JsonIgnore
+    public boolean isDocumentoCompatible() {
+        return numeroDocumento == null || tipoDocumento == null
+                || tipoDocumento != TipoDocumento.DNI || numeroDocumento.matches("[0-9]{8}");
     }
 }

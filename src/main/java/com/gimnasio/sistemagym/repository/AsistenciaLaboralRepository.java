@@ -13,8 +13,17 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import com.gimnasio.sistemagym.repository.EmpleadoConHistorialConsulta;
 
 public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLaboral, Long> {
+
+    @Query("select distinct empleado.idUsuario as idEmpleado, "
+            + "empleado.nombres as nombres, empleado.apellidos as apellidos, "
+            + "rol.nombre as rol "
+            + "from AsistenciaLaboral asistencia "
+            + "join asistencia.usuario empleado join empleado.rol rol "
+            + "order by empleado.apellidos, empleado.nombres, empleado.idUsuario")
+    List<EmpleadoConHistorialConsulta> listarEmpleadosConHistorial();
 
     @Query("select a.idAsistencia as idAsistencia, "
             + "empleado.idUsuario as idEmpleado, "
@@ -64,6 +73,9 @@ public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLab
 
     @Query(value = "select a.idAsistencia as idAsistencia, "
             + "a.usuario.idUsuario as idEmpleado, "
+            + "a.usuario.nombres as nombresEmpleado, "
+            + "a.usuario.apellidos as apellidosEmpleado, "
+            + "a.usuario.rol.nombre as rolEmpleado, "
             + "a.fechaEntradaUtc as fechaEntradaUtc, "
             + "a.fechaSalidaUtc as fechaSalidaUtc, "
             + "a.fechaLaboral as fechaLaboral, "

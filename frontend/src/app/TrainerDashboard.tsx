@@ -92,15 +92,15 @@ export function TrainerDashboard() {
     <section aria-labelledby="trainer-quick-title" className="trainer-dashboard__quick-section">
       <h2 id="trainer-quick-title">Accesos rápidos</h2>
       <div className="trainer-dashboard__quick-links">
-        <Link className="trainer-dashboard__quick-link" to="/mi-asistencia"><LogIn aria-hidden="true" size={19} /><span>Registrar mi asistencia</span></Link>
+        <Link className="trainer-dashboard__quick-link" to="/mi-asistencia"><LogIn aria-hidden="true" size={19} /><span>Ver mis asistencias</span></Link>
         <Link className="trainer-dashboard__quick-link" to="/entrenamiento"><Dumbbell aria-hidden="true" size={19} /><span>Revisar equipos</span></Link>
-        <Link className="trainer-dashboard__quick-link" to="/mis-checklists"><ListChecks aria-hidden="true" size={19} /><span>Mis checklists</span></Link>
-        <Link className="trainer-dashboard__quick-link" to="/mis-reportes"><FileWarning aria-hidden="true" size={19} /><span>Mis reportes</span></Link>
+        <Link className="trainer-dashboard__quick-link" to="/mis-checklists"><ListChecks aria-hidden="true" size={19} /><span>Mis revisiones</span></Link>
+        <Link className="trainer-dashboard__quick-link" to="/mis-reportes"><FileWarning aria-hidden="true" size={19} /><span>Mis incidencias</span></Link>
       </div>
     </section>
 
     <Card className="trainer-dashboard__recent" title="Actividad reciente">
-      <p className="trainer-dashboard__note">Tus últimas revisiones registradas.</p>
+      <p className="trainer-dashboard__note">Tus últimas inspecciones de equipos.</p>
       {loading ? <p className="trainer-dashboard__state" role="status">Cargando revisiones…</p>
         : error ? null : recentChecks.length === 0 ? <div className="trainer-dashboard__empty" role="status">Todavía no has registrado revisiones.</div>
           : <div className="trainer-dashboard__list">{recentChecks.map((checklist) => {
@@ -115,7 +115,7 @@ export function TrainerDashboard() {
               <Link aria-label={`Ver detalle del checklist ${checklist.idChecklist}`} className="trainer-dashboard__detail-link" to={`/mis-checklists?checklist=${checklist.idChecklist}`}>Ver detalle</Link>
             </article>
           })}</div>}
-      {!loading && !error && recentChecks.length > 0 && <Link className="trainer-dashboard__history-link" to="/mis-checklists">Ver mis checklists</Link>}
+      {!loading && !error && recentChecks.length > 0 && <Link className="trainer-dashboard__history-link" to="/mis-checklists">Ver mis revisiones</Link>}
     </Card>
   </div>
 }

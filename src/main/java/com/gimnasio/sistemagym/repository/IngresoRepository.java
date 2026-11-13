@@ -16,6 +16,11 @@ import org.springframework.data.repository.query.Param;
 public interface IngresoRepository extends JpaRepository<Ingreso, Long> {
 
     @Query("select i from Ingreso i left join fetch i.socio left join fetch i.contacto "
+            + "left join fetch i.pago left join fetch i.paseOrigen po left join fetch po.pago "
+            + "where i.idIngreso = :id")
+    Optional<Ingreso> findForAdministrativeDetail(@Param("id") Long id);
+
+    @Query("select i from Ingreso i left join fetch i.socio left join fetch i.contacto "
             + "left join fetch i.usuario left join fetch i.paseOrigen "
             + "where i.fechaHora >= :desde and i.fechaHora < :hasta order by i.fechaHora desc")
     List<Ingreso> reportBetween(@Param("desde") LocalDateTime desde,

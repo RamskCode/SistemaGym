@@ -7,6 +7,7 @@ import type { AuthContextValue } from '../auth/AuthContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { uncertainWriteResult } from './uncertainWriteLocks'
+import { documentHelp, isValidDocument, normalizeDocumentInput } from '../utils/documentIdentity'
 
 type Documento = 'DNI' | 'CE'
 type Metodo = 'EFECTIVO' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA' | 'TARJETA' | 'OTRO'
@@ -26,7 +27,7 @@ function documentoDe(persona: Persona): { tipo: Documento; numero: string } | nu
 }
 
 function validarDocumento(tipo: Documento, value: string) {
-  return tipo === 'DNI' ? /^\d{8}$/.test(value) : /^\d{1,12}$/.test(value)
+  return isValidDocument(tipo, value)
 }
 
 async function storageKey(account: string, tipo: Documento, numero: string) {
@@ -76,6 +77,7 @@ export function PaseDiarioVentaPanel({ auth }: { auth: AuthContextValue }) {
   const [status, setStatus] = useState('')
   const [receipt, setReceipt] = useState<IngresoResult | null>(null)
   const [uncertainRetry, setUncertainRetry] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState('')
   const requestLock = useRef(false)
 
   useEffect(() => {
@@ -88,15 +90,15 @@ export function PaseDiarioVentaPanel({ auth }: { auth: AuthContextValue }) {
         if (Number.isFinite(amount) && amount > 0) setPrice(amount)
         else setError('La tarifa del pase diario no es válida; consulta Planes con Administración.')
       })
-      .catch((reason: unknown) => { if (active) { setEnabled(false); setError(message(reason)) } })
+      .catch((reason: unknown) => { if (active) { setEnabled(false); setAvailabilityError(message(reason)) } })
     return () => { active = false }
   }, [auth])
 
   async function buscarPersona(event?: FormEvent) {
     event?.preventDefault()
-    const normalized = documentNumber.trim()
+    const normalized = documentNumber
     if (!validarDocumento(documentType, normalized)) {
-      setError(documentType === 'DNI' ? 'El DNI debe tener 8 dígitos.' : 'El CE debe tener entre 1 y 12 dígitos.')
+      setError(documentType === 'DNI' ? 'El DNI debe contener exactamente 8 dígitos.' : 'El CE debe contener entre 1 y 12 dígitos, sin espacios ni símbolos.')
       return
     }
     setSearching(true); setError(''); setStatus(''); setReceipt(null); setPerson(null); setNotFound(false); setConfirmed(false)
@@ -198,16 +200,20 @@ export function PaseDiarioVentaPanel({ auth }: { auth: AuthContextValue }) {
   }
 
   return <Card className="asistencia-card pase-diario-panel" title="Pase diario · acceso">
-    {enabled === null && <p role="status">Consultando disponibilidad y tarifa…</p>}
-    {enabled === false && <p className="asistencia-message">La venta está temporalmente deshabilitada hasta completar y verificar la migración de personas, ingresos e idempotencia. No se consultan ni escriben esos datos todavía.</p>}
+    {enabled === null && <p className="pase-diario-loading" role="status">Consultando disponibilidad y tarifa…</p>}
+    {enabled === false && <div className="pase-diario-unavailable" role={availabilityError ? 'alert' : 'status'}>
+      <strong>{availabilityError ? 'No se pudo habilitar el pase diario' : 'Venta de pase diario no disponible'}</strong>
+      <p>{availabilityError || 'La operación permanece bloqueada hasta que el esquema V2 y la idempotencia estén habilitados en el backend.'}</p>
+      <p>No se registró ningún acceso ni se realizó un cobro.</p>
+    </div>}
     {enabled && <>
       <div className="pase-diario-summary"><div><strong>Tarifa vigente</strong><p>Acceso diario independiente de una membresía; válida según el día calendario de America/Lima.</p></div><strong className="pase-diario-price">{price === null ? 'No disponible' : money(price)}</strong></div>
       {error && <p className="asistencia-feedback asistencia-feedback--error" role="alert">{error}</p>}
       {status && <p className="asistencia-feedback asistencia-feedback--success" role="status">{status}</p>}
       {receipt && <dl className="pase-diario-receipt"><div><dt>Resultado</dt><dd>{receipt.resultado}</dd></div><div><dt>Persona</dt><dd>{receipt.numeroDocumento}</dd></div><div><dt>Cobro de esta operación</dt><dd>{receipt.paseDiarioCobrado ? money(receipt.montoCobrado ?? 0) : 'Sin cobro'}</dd></div><div><dt>Pago registrado</dt><dd>{receipt.idPago ? `#${receipt.idPago}` : 'No aplica'}</dd></div></dl>}
       <form className="pase-diario-form" onSubmit={(event) => void buscarPersona(event)}>
-        <label>Tipo de documento<select disabled={processing || searching || uncertainRetry} onChange={(event) => { setDocumentType(event.target.value as Documento); clearPerson() }} value={documentType}><option value="DNI">DNI</option><option value="CE">CE</option></select></label>
-        <label>Número de documento<input autoComplete="off" disabled={uncertainRetry} inputMode="numeric" maxLength={12} onChange={(event) => { setDocumentNumber(event.target.value.replace(/\s/g, '')); clearPerson() }} value={documentNumber} /></label>
+        <label>Tipo de documento<select disabled={processing || searching || uncertainRetry} onChange={(event) => { const next = event.target.value as Documento; setDocumentType(next); setDocumentNumber((value) => normalizeDocumentInput(next, value)); clearPerson() }} value={documentType}><option value="DNI">DNI</option><option value="CE">CE</option></select><small aria-hidden="true">&nbsp;</small></label>
+        <label>Número de documento<input aria-label="Número de documento" autoComplete="off" aria-describedby="pase-document-help" disabled={uncertainRetry} inputMode="numeric" maxLength={documentType === 'DNI' ? 8 : 12} onChange={(event) => { setDocumentNumber(normalizeDocumentInput(documentType, event.target.value)); clearPerson() }} value={documentNumber} /><small className="pase-document-help" id="pase-document-help">{documentHelp(documentType)}</small></label>
         <Button disabled={searching || processing || uncertainRetry || !documentNumber.trim()} type="submit" variant="secondary">{searching ? 'Buscando…' : 'Buscar persona'}</Button>
       </form>
       {person && <section className="pase-diario-person" aria-label="Persona encontrada"><div><strong>{person.nombres} {person.apellidos}</strong><span>{documentType} {documentNumber} · {person.estado}</span></div><Button disabled={processing || uncertainRetry} onClick={clearPerson} type="button" variant="secondary">Cambiar persona</Button></section>}

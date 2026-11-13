@@ -45,17 +45,17 @@ describe('MisChecklistsPage', () => {
     mockList()
     renderPage()
     await signIn()
-    expect(await screen.findByText('CHECKLIST #42')).toBeInTheDocument()
-    expect(screen.getByText('CHECKLIST #41')).toBeInTheDocument()
+    expect(await screen.findByText('INSPECCIÓN · #42')).toBeInTheDocument()
+    expect(screen.getByText('INSPECCIÓN · #41')).toBeInTheDocument()
     const cards = Array.from(document.querySelectorAll('.checklist-record'))
     expect(cards).toHaveLength(2)
-    expect(cards[0]).toHaveTextContent('CHECKLIST #42')
-    expect(cards[1]).toHaveTextContent('CHECKLIST #41')
+    expect(cards[0]).toHaveTextContent('INSPECCIÓN · #42')
+    expect(cards[1]).toHaveTextContent('INSPECCIÓN · #41')
     expect(cards[0]).toHaveTextContent('Revisión de apertura')
     const counts = within(cards[0] as HTMLElement).getAllByText('1')
     expect(counts).toHaveLength(2)
     expect(within(cards[0] as HTMLElement).getByText('2')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Nueva revisión' })).toHaveAttribute('href', '/entrenamiento')
+    expect(screen.getByRole('link', { name: 'Registrar revisión' })).toHaveAttribute('href', '/entrenamiento')
     expect(screen.queryByRole('button', { name: /Siguiente|Anterior/ })).not.toBeInTheDocument()
     expect(screen.getByText(/6 nov\. 2026, 7:00 a\. m\./)).toBeInTheDocument()
   })
@@ -71,8 +71,8 @@ describe('MisChecklistsPage', () => {
     }))
     renderPage()
     await signIn()
-    const latestCard = (await screen.findByText('CHECKLIST #42')).closest('.checklist-record') as HTMLElement
-    await user.click(within(latestCard).getByRole('button', { name: 'Ver detalle del checklist 42' }))
+    const latestCard = (await screen.findByText('INSPECCIÓN · #42')).closest('.checklist-record') as HTMLElement
+    await user.click(within(latestCard).getByRole('button', { name: 'Ver detalle de la revisión 42' }))
 
     expect(await screen.findByRole('heading', { name: 'Detalle de revisión' })).toBeInTheDocument()
     expect(screen.getByText('Caminadora 1')).toBeInTheDocument()
@@ -88,8 +88,8 @@ describe('MisChecklistsPage', () => {
     expect(screen.queryByText(/historial de cambios/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Editar|Eliminar/ })).not.toBeInTheDocument()
     expect(detailCalls).toBe(1)
-    await user.click(screen.getByRole('button', { name: 'Volver a mis checklists' }))
-    expect(await screen.findByText('CHECKLIST #42')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Volver a mis revisiones' }))
+    expect(await screen.findByText('INSPECCIÓN · #42')).toBeInTheDocument()
   })
 
   it('opens an existing checklist detail from the dashboard deep link', async () => {
@@ -107,7 +107,7 @@ describe('MisChecklistsPage', () => {
     mockList([])
     renderPage()
     await signIn()
-    expect(await screen.findByText('Aún no has registrado checklists.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no has registrado inspecciones de equipos.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar una revisión' })).toHaveAttribute('href', '/entrenamiento')
   })
 
@@ -123,7 +123,7 @@ describe('MisChecklistsPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('permiso')
     expect(calls).toBe(1)
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
-    expect(await screen.findByText('Aún no has registrado checklists.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no has registrado inspecciones de equipos.')).toBeInTheDocument()
     expect(calls).toBe(2)
   })
 

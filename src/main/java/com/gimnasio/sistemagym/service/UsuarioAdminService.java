@@ -6,6 +6,7 @@ import com.gimnasio.sistemagym.dto.CrearUsuarioRequest;
 import com.gimnasio.sistemagym.dto.UsuarioRespuesta;
 import com.gimnasio.sistemagym.entity.Rol;
 import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 import com.gimnasio.sistemagym.entity.Usuario;
 import com.gimnasio.sistemagym.exception.ConflictoException;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
@@ -302,22 +303,12 @@ public class UsuarioAdminService {
                     "El tipo y número de documento deben informarse juntos.");
         }
         if (numeroDocumento.isEmpty() || numeroDocumento.length() > 20
-                || !numeroDocumento.matches("[0-9]{1,12}")) {
+                || !DocumentoIdentidad.esValido(tipoDocumento, numeroDocumento)) {
             throw new IllegalArgumentException(
-                    "El documento solo puede contener entre 1 y 12 dígitos, sin espacios ni guiones.");
+                    "El documento no cumple el formato indicado para DNI o CE.");
         }
 
-        String normalizado = numeroDocumento.toUpperCase(Locale.ROOT);
-        if (tipoDocumento == TipoDocumento.DNI
-                && !normalizado.matches("\\d{8}")) {
-            throw new IllegalArgumentException(
-                    "El DNI debe contener exactamente 8 dígitos numéricos.");
-        }
-        if (tipoDocumento == TipoDocumento.CE
-                && !normalizado.matches("\\d{1,12}")) {
-            throw new IllegalArgumentException(
-                    "El CE debe contener entre 1 y 12 dígitos numéricos.");
-        }
+        String normalizado = DocumentoIdentidad.normalizar(tipoDocumento, numeroDocumento);
         return new Documento(tipoDocumento, normalizado);
     }
 

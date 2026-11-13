@@ -6,8 +6,10 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @Component
+@ConditionalOnProperty(name = "sistemagym.onboarding.startup-check.enabled", havingValue = "true", matchIfMissing = true)
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RequiredArgsConstructor
 public class InitialAdminOnboardingRunner implements ApplicationRunner {

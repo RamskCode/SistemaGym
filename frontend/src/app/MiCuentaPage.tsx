@@ -17,6 +17,7 @@ import { PageTitle } from '../components/PageTitle'
 import './mi-cuenta.css'
 import { formatPersonName } from '../utils/personName'
 import { passwordPolicyError } from '../utils/passwordPolicy'
+import { documentHelp, isValidDocument, normalizeDocumentInput } from '../utils/documentIdentity'
 
 type ProfileDraft = {
   nombres: string
@@ -42,11 +43,7 @@ function draftDesde(profile: MiCuenta): ProfileDraft {
 function perfilValido(draft: ProfileDraft) {
   const namesValid = Boolean(draft.nombres.trim()) && draft.nombres.trim().length <= 100
     && Boolean(draft.apellidos.trim()) && draft.apellidos.trim().length <= 100
-  const docValid = !draft.tipoDocumento
-    ? !draft.numeroDocumento
-    : draft.tipoDocumento === 'DNI'
-      ? /^\d{8}$/.test(draft.numeroDocumento)
-      : /^\d{1,12}$/.test(draft.numeroDocumento)
+  const docValid = !draft.tipoDocumento ? !draft.numeroDocumento : isValidDocument(draft.tipoDocumento, draft.numeroDocumento)
   return namesValid && docValid
 }
 
@@ -201,8 +198,8 @@ export function MiCuentaPage() {
           <div className="mi-cuenta-fields">
             <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-nombres">Nombres</label><input id="mi-cuenta-nombres" aria-describedby="mi-cuenta-name-help" aria-invalid={Boolean(draftError) && (!draft.nombres.trim() || draft.nombres.trim().length > 100)} autoComplete="given-name" maxLength={100} onChange={(event) => { setDraft({ ...draft, nombres: event.target.value }); setDraftError('') }} value={draft.nombres} /><small id="mi-cuenta-name-help">Hasta 100 caracteres.</small></div>
             <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-apellidos">Apellidos</label><input id="mi-cuenta-apellidos" aria-describedby="mi-cuenta-lastname-help" aria-invalid={Boolean(draftError) && (!draft.apellidos.trim() || draft.apellidos.trim().length > 100)} autoComplete="family-name" maxLength={100} onChange={(event) => { setDraft({ ...draft, apellidos: event.target.value }); setDraftError('') }} value={draft.apellidos} /><small id="mi-cuenta-lastname-help">Hasta 100 caracteres.</small></div>
-            <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-tipo-documento">Tipo de documento</label><select id="mi-cuenta-tipo-documento" aria-describedby="mi-cuenta-document-help" onChange={(event) => { setDraft({ ...draft, tipoDocumento: event.target.value as ProfileDraft['tipoDocumento'], numeroDocumento: event.target.value ? draft.numeroDocumento : '' }); setDraftError('') }} value={draft.tipoDocumento}><option value="">Sin documento</option><option value="DNI">DNI</option><option value="CE">Carné de extranjería (CE)</option></select><small id="mi-cuenta-document-help">El tipo y número deben estar completos y cumplir el formato.</small></div>
-            <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-numero-documento">Número de documento</label><input id="mi-cuenta-numero-documento" aria-describedby="mi-cuenta-number-help" aria-invalid={Boolean(draftError) && Boolean(draft.tipoDocumento) && !(/^\d{8}$/.test(draft.numeroDocumento) && draft.tipoDocumento === 'DNI' || /^\d{1,12}$/.test(draft.numeroDocumento) && draft.tipoDocumento === 'CE')} disabled={!draft.tipoDocumento} inputMode="numeric" maxLength={draft.tipoDocumento === 'DNI' ? 8 : 12} onChange={(event) => { if (/^\d*$/.test(event.target.value)) setDraft({ ...draft, numeroDocumento: event.target.value }); setDraftError('') }} value={draft.numeroDocumento} /><small id="mi-cuenta-number-help">{draft.tipoDocumento === 'DNI' ? '8 dígitos.' : draft.tipoDocumento === 'CE' ? 'Entre 1 y 12 dígitos.' : 'Selecciona un tipo de documento primero.'}</small></div>
+            <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-tipo-documento">Tipo de documento</label><select id="mi-cuenta-tipo-documento" aria-describedby="mi-cuenta-document-help" onChange={(event) => { const nextType = event.target.value as ProfileDraft['tipoDocumento']; setDraft({ ...draft, tipoDocumento: nextType, numeroDocumento: nextType ? normalizeDocumentInput(nextType, draft.numeroDocumento) : '' }); setDraftError('') }} value={draft.tipoDocumento}><option value="">Sin documento</option><option value="DNI">DNI</option><option value="CE">Carné de extranjería (CE)</option></select><small id="mi-cuenta-document-help">El tipo y número deben estar completos y cumplir el formato.</small></div>
+            <div className="mi-cuenta-field"><label htmlFor="mi-cuenta-numero-documento">Número de documento</label><input id="mi-cuenta-numero-documento" aria-describedby="mi-cuenta-number-help" aria-invalid={Boolean(draftError) && Boolean(draft.tipoDocumento) && !isValidDocument(draft.tipoDocumento, draft.numeroDocumento)} disabled={!draft.tipoDocumento} inputMode="numeric" maxLength={draft.tipoDocumento === 'DNI' ? 8 : 12} onChange={(event) => { setDraft({ ...draft, numeroDocumento: normalizeDocumentInput(draft.tipoDocumento, event.target.value) }); setDraftError('') }} value={draft.numeroDocumento} /><small id="mi-cuenta-number-help">{documentHelp(draft.tipoDocumento)}</small></div>
           </div>
           {draftError && <p className="mi-cuenta-feedback mi-cuenta-feedback--error" role="alert">{draftError}</p>}
           {profileError && <p className="mi-cuenta-feedback mi-cuenta-feedback--error" role="alert">{profileError}</p>}

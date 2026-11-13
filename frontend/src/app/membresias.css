@@ -126,10 +126,11 @@
   .membresias-clear-button { justify-self: stretch; }
   .membresias-table-wrap { overflow: visible; border: 0; }
   .membresias-table { display: block; min-width: 0; }
+  .membresias-table th, .membresias-table td { width: auto; }
   .membresias-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
   .membresias-table tbody { display: grid; gap: 10px; }
   .membresias-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 13px; border: 1px solid #dfe6df; border-radius: 9px; background: #fff; }
-  .membresias-table td { display: grid; height: auto; min-width: 0; align-content: start; gap: 4px; padding: 8px 6px; border: 0; }
+  .membresias-table td { display: grid; height: auto; min-width: 0; align-content: start; gap: 4px; padding: 8px 6px; border: 0; overflow-wrap: normal; word-break: normal; }
   .membresias-table td::before { content: attr(data-label); color: #526052; font-size: var(--type-help, 12px); font-weight: 600; }
   .membresias-table td:first-child { grid-column: 1 / -1; padding-bottom: 10px; border-bottom: 1px solid #e8ede8; }
   .membresias-table td:last-child { grid-column: 1 / -1; padding-top: 10px; border-top: 1px solid #e8ede8; }

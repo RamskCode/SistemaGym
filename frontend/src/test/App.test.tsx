@@ -678,8 +678,8 @@ describe('role-aware protected navigation', () => {
     renderAt('/mis-checklists')
     await signIn('ENTRENADOR')
 
-    expect(await screen.findByRole('heading', { name: 'Mis checklists' })).toBeInTheDocument()
-    expect(screen.getByText('Aún no has registrado checklists.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mis revisiones' })).toBeInTheDocument()
+    expect(screen.getByText('Aún no has registrado inspecciones de equipos.')).toBeInTheDocument()
   })
 
   it('allows the trainer-only own-reports route inside the protected shell', async () => {
@@ -688,14 +688,14 @@ describe('role-aware protected navigation', () => {
     renderAt('/mis-reportes')
     await signIn('ENTRENADOR')
 
-    expect(await screen.findByRole('heading', { name: 'Mis reportes' })).toBeInTheDocument()
-    expect(await screen.findByText('Aún no has registrado reportes de incidencias.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mis incidencias' })).toBeInTheDocument()
+    expect(await screen.findByText('Aún no has registrado incidencias.')).toBeInTheDocument()
   })
 
   it.each([
     ['ADMINISTRADOR', ['Inicio', 'Socios', 'Membresías', 'Planes y tarifas', 'Usuarios y empleados', 'Asistencia', 'Actividad', 'Reportes', 'Equipos y áreas', 'Incidencias', 'Checklists del gimnasio'], 'Inicio'],
     ['RECEPCIONISTA', ['Inicio', 'Socios', 'Membresías', 'Asistencia'], 'Resumen del día'],
-    ['ENTRENADOR', ['Inicio', 'Mis asistencias', 'Revisión de equipos', 'Mis checklists', 'Mis reportes'], 'Mi jornada'],
+    ['ENTRENADOR', ['Inicio', 'Mis asistencias', 'Revisión de equipos', 'Mis revisiones', 'Mis incidencias'], 'Mi jornada'],
     ['NUTRICIONISTA', ['Inicio', 'Mis asistencias', 'Nutrición'], 'Panel de nutrición'],
   ] as const)('shows only the %s navigation', async (role, expectedItems, homeTitle) => {
     renderAt()

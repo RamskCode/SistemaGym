@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+import { createSameOriginApiProxy } from './src/config/apiProxy.js'
 
 const e2e = process.env.SISTEMAGYM_E2E === '1'
 const backendTarget = e2e ? process.env.SISTEMAGYM_E2E_BACKEND : undefined
@@ -25,8 +26,7 @@ export default defineConfig({
     ...(e2e ? { host: '127.0.0.1' } : {}),
     proxy: {
       '/api': {
-        target: backendTarget ?? 'http://localhost:8080',
-        changeOrigin: true,
+        ...createSameOriginApiProxy(backendTarget ?? 'http://localhost:8080'),
       },
     },
   },

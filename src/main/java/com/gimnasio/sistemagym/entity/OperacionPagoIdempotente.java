@@ -30,7 +30,9 @@ import java.util.UUID;
 public class OperacionPagoIdempotente {
 
     @Id
-    @Column(name = "id_operacion", length = 36, nullable = false, updatable = false)
+    @Column(name = "id_operacion", length = 36, nullable = false, updatable = false,
+            columnDefinition = "char(36)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String idOperacion;
 
     @NotNull
@@ -40,7 +42,9 @@ public class OperacionPagoIdempotente {
     private Usuario usuario;
 
     @NotNull
-    @Column(name = "clave_idempotencia", length = 36, nullable = false, updatable = false)
+    @Column(name = "clave_idempotencia", length = 36, nullable = false, updatable = false,
+            columnDefinition = "char(36)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String claveIdempotencia;
 
     @NotNull
@@ -50,7 +54,9 @@ public class OperacionPagoIdempotente {
 
     @NotNull
     @Pattern(regexp = "[a-f0-9]{64}")
-    @Column(name = "hash_solicitud", length = 64, nullable = false, updatable = false)
+    @Column(name = "hash_solicitud", length = 64, nullable = false, updatable = false,
+            columnDefinition = "char(64)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String hashSolicitud;
 
     @NotNull
@@ -74,7 +80,7 @@ public class OperacionPagoIdempotente {
     private Long idAplicacionResultado;
 
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @Column(name = "resultado_payload", columnDefinition = "LONGTEXT")
+    @Column(name = "resultado_payload")
     private String resultadoPayload;
 
     @Column(name = "rechazo_tipo", length = 40)

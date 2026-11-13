@@ -148,23 +148,14 @@ class SocioServiceTest {
     }
 
     @Test
-    void aceptaCeNumericoDentroDelLimiteYLoNormaliza() throws Exception {
-        when(generadorCodigoSocio.crearConSiguienteCodigo(any())).thenAnswer(invocation -> {
-            java.util.function.Function<String, Socio> registrar = invocation.getArgument(0);
-            return registrar.apply("SOC-0009");
-        });
-        when(socioRepository.saveAndFlush(any(Socio.class))).thenAnswer(invocation -> {
-            Socio saved = invocation.getArgument(0); setId(saved, 32L); return saved;
-        });
+    void rechazaEspaciosEnDocumentoCe() {
         Socio nuevo = new Socio();
         nuevo.setTipoDocumento(" ce ");
         nuevo.setNumeroDocumento(" 12345 ");
         nuevo.setNombres("Eva"); nuevo.setApellidos("Prueba");
 
-        var respuesta = service.registrar(nuevo);
-        assertEquals("CE", respuesta.tipoDocumento());
-        assertEquals("12345", respuesta.numeroDocumento());
-        assertNull(nuevo.getDni());
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.registrar(nuevo));
     }
 
     @Test

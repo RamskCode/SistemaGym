@@ -4,6 +4,7 @@ import com.gimnasio.sistemagym.dto.ActualizarMiCuentaRequest;
 import com.gimnasio.sistemagym.dto.CambiarMiContrasenaRequest;
 import com.gimnasio.sistemagym.dto.MiCuentaRespuesta;
 import com.gimnasio.sistemagym.entity.TipoDocumento;
+import com.gimnasio.sistemagym.util.DocumentoIdentidad;
 import com.gimnasio.sistemagym.entity.Usuario;
 import com.gimnasio.sistemagym.exception.ConflictoException;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
@@ -66,6 +67,7 @@ public class MiCuentaService {
         if (solicitud.tipoDocumentoIncluido()) {
             TipoDocumento tipo = solicitud.tipoDocumento();
             String numero = solicitud.numeroDocumento();
+            if (tipo != null) numero = DocumentoIdentidad.normalizar(tipo, numero);
             if (tipo != null && usuarios.existsByTipoDocumentoAndNumeroDocumentoAndIdUsuarioNot(
                     tipo, numero, usuario.getIdUsuario())) {
                 throw new ConflictoException("Ese documento ya está registrado en otra cuenta.");

@@ -8,6 +8,7 @@ import com.gimnasio.sistemagym.repository.RolRepository;
 import com.gimnasio.sistemagym.repository.SocioRepository;
 import com.gimnasio.sistemagym.repository.UsuarioRepository;
 import com.gimnasio.sistemagym.repository.PlanRepository;
+import com.gimnasio.sistemagym.service.ConfiguracionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,7 @@ class PaseDiarioReingresosMySql84IT extends MySql84IntegrationTestSupport {
     @Autowired private UsuarioRepository usuarios;
     @Autowired private SocioRepository socios;
     @Autowired private PlanRepository planes;
+    @Autowired private ConfiguracionService configuracion;
 
     private Usuario actor;
     private Socio persona;
@@ -88,6 +90,12 @@ class PaseDiarioReingresosMySql84IT extends MySql84IntegrationTestSupport {
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.paseDiarioCobrado").value(true));
         Long ventaId = jdbc.queryForObject("SELECT id_ingreso FROM ingresos WHERE clave_idempotencia = ?", Long.class, primeraClave);
 
+        configuracion.actualizar("PRECIO_PASE_DIARIO", "19.50");
+        mockMvc.perform(get("/api/reportes/ingresos/{id}", ventaId)
+                        .with(user(actor.getCorreo()).roles("ADMINISTRADOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importePagado").value(8.00));
+
         mockMvc.perform(post("/api/ingresos").with(user(actor.getCorreo()).roles("RECEPCIONISTA"))
                         .contentType(APPLICATION_JSON).content(reingresoBody))
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.resultado").value("REINGRESO_AUTORIZADO"))
@@ -99,6 +107,12 @@ class PaseDiarioReingresosMySql84IT extends MySql84IntegrationTestSupport {
         assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM ingresos WHERE id_socio = ?", Integer.class, persona.getIdSocio()));
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM pagos WHERE id_usuario = ?", Integer.class, actor.getIdUsuario()));
         assertEquals(ventaId, jdbc.queryForObject("SELECT id_pase_origen FROM ingresos WHERE clave_idempotencia = ?", Long.class, reingresoClave));
+
+        Long reingresoId = jdbc.queryForObject("SELECT id_ingreso FROM ingresos WHERE clave_idempotencia = ?", Long.class, reingresoClave);
+        mockMvc.perform(get("/api/reportes/ingresos/{id}", reingresoId)
+                        .with(user(actor.getCorreo()).roles("ADMINISTRADOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importePagado").value(8.00));
 
         String hoy = java.time.LocalDate.now(java.time.ZoneId.of("America/Lima")).toString();
         mockMvc.perform(get("/api/reportes/resumen")
@@ -132,6 +146,21 @@ class PaseDiarioReingresosMySql84IT extends MySql84IntegrationTestSupport {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.idMembresia").isNumber());
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM membresias WHERE id_socio = ?", Integer.class, persona.getIdSocio()));
+
+        String ingresoMembresiaClave = java.util.UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/ingresos/membresia")
+                        .with(user(actor.getCorreo()).roles("RECEPCIONISTA"))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"idSocio\":" + persona.getIdSocio()
+                                + ",\"claveIdempotencia\":\"" + ingresoMembresiaClave + "\"}"))
+                .andExpect(status().isCreated());
+        Long ingresoMembresiaId = jdbc.queryForObject(
+                "SELECT id_ingreso FROM ingresos WHERE clave_idempotencia = ?", Long.class, ingresoMembresiaClave);
+        mockMvc.perform(get("/api/reportes/ingresos/{id}", ingresoMembresiaId)
+                        .with(user(actor.getCorreo()).roles("ADMINISTRADOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modalidad").value("MEMBRESIA"))
+                .andExpect(jsonPath("$.planNombre").value(plan.getNombre()));
     }
 
     private String cuerpo(String key) {

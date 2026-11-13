@@ -20,8 +20,8 @@ export const roleRouteDefinitions: readonly RoleRouteDefinition[] = [
   { path: 'mi-cuenta', title: 'Mi cuenta', roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA'] },
   { path: 'mi-asistencia', title: 'Mis asistencias', roles: ['ENTRENADOR', 'NUTRICIONISTA'] },
   { path: 'entrenamiento', title: 'Revisión de equipos', roles: ['ENTRENADOR'] },
-  { path: 'mis-checklists', title: 'Mis checklists', roles: ['ENTRENADOR'] },
-  { path: 'mis-reportes', title: 'Mis reportes', roles: ['ENTRENADOR'] },
+  { path: 'mis-checklists', title: 'Mis revisiones', roles: ['ENTRENADOR'] },
+  { path: 'mis-reportes', title: 'Mis incidencias', roles: ['ENTRENADOR'] },
   { path: 'nutricion', title: 'Nutrición', roles: ['NUTRICIONISTA'] },
 ]
 
@@ -45,8 +45,8 @@ const navigationItems: readonly (NavigationItem & { roles: readonly AuthRole[] }
   { label: 'Checklists del gimnasio', path: '/checklists', roles: ['ADMINISTRADOR'] },
   { label: 'Mis asistencias', path: '/mi-asistencia', roles: ['ENTRENADOR', 'NUTRICIONISTA'] },
   { label: 'Revisión de equipos', path: '/entrenamiento', roles: ['ENTRENADOR'] },
-  { label: 'Mis checklists', path: '/mis-checklists', roles: ['ENTRENADOR'] },
-  { label: 'Mis reportes', path: '/mis-reportes', roles: ['ENTRENADOR'] },
+  { label: 'Mis revisiones', path: '/mis-checklists', roles: ['ENTRENADOR'] },
+  { label: 'Mis incidencias', path: '/mis-reportes', roles: ['ENTRENADOR'] },
   { label: 'Nutrición', path: '/nutricion', roles: ['NUTRICIONISTA'] },
 ]
 

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -20,6 +21,7 @@ import java.util.Locale;
 import java.util.function.Function;
 
 @Component
+@ConditionalOnProperty(name = "app.database.provider", havingValue = "mysql", matchIfMissing = true)
 public class GeneradorCodigoSocioMySql implements GeneradorCodigoSocio {
 
     private static final Logger log = LoggerFactory.getLogger(GeneradorCodigoSocioMySql.class);

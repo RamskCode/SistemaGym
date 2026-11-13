@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,6 +50,24 @@ class IngresoControllerSecurityTest {
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content(solicitud))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void apiIngresoRechazaDniInvalidoYCeConEspaciosSimbolosOLongitudExcesiva() throws Exception {
+        for (String[] documento : new String[][] {
+                {"DNI", "1234567"}, {"DNI", "123456789"}, {"DNI", "12AB5678"},
+                {"CE", "A".repeat(13)}, {"CE", "AB C"}, {"CE", "AB-C"}, {"CE", "AB!C"}
+        }) {
+            String body = "{\"tipoDocumento\":\"" + documento[0]
+                    + "\",\"numeroDocumento\":\"" + documento[1]
+                    + "\",\"metodoPago\":\"EFECTIVO\"}";
+            mockMvc.perform(post("/api/ingresos")
+                            .with(user("recepcion@example.test").roles("RECEPCIONISTA"))
+                            .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        verifyNoInteractions(ingresoService);
     }
 
     @Test

@@ -96,6 +96,21 @@ class RefreshSessionServiceTest {
     }
 
     @Test
+    void rechazaSesionRefreshExpiradaSinRotarla() {
+        when(sessions.save(any(SesionRefresh.class))).thenAnswer(call -> call.getArgument(0));
+        var issued = service.crear(user);
+        when(sessions.buscarBloqueadaPorHash(digest(issued.refreshToken())))
+                .thenAnswer(call -> Optional.of(new SesionRefresh("expired-session", user,
+                        digest(issued.refreshToken()), digest(issued.csrfToken()), 0,
+                        Instant.now().minusSeconds(7200), Instant.now().minusSeconds(1))));
+
+        assertThrows(RefreshSessionService.SesionInvalidaException.class,
+                () -> service.renovar(issued.refreshToken(), issued.csrfToken()));
+        org.mockito.Mockito.verify(sessions, org.mockito.Mockito.never())
+                .saveAndFlush(any(SesionRefresh.class));
+    }
+
+    @Test
     void logoutRevocaSoloLaSesionConCsrfValido() {
         when(sessions.save(any(SesionRefresh.class))).thenAnswer(call -> call.getArgument(0));
         var issued = service.crear(user);

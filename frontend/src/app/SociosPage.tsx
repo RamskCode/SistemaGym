@@ -14,6 +14,7 @@ import { listarMembresias, listarMembresiasPorSocio, type Membresia } from '../a
 import { listarPasesDiariosPorSocio, type PaseDiarioHistorial } from '../api/ingresos'
 import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/Button'
+import { documentHelp, isValidDocument, normalizeDocumentInput } from '../utils/documentIdentity'
 import { Card } from '../components/Card'
 import { PageTitle } from '../components/PageTitle'
 import './socios.css'
@@ -74,7 +75,7 @@ function validate(values: FormValues): string | null {
   if (values.nombres.trim().length > 100 || values.apellidos.trim().length > 100) {
     return 'Los nombres y apellidos no pueden superar 100 caracteres.'
   }
-  if (values.numeroDocumento && !(values.tipoDocumento === 'DNI' ? /^[0-9]{8}$/.test(values.numeroDocumento) : /^[0-9]{1,12}$/.test(values.numeroDocumento))) return values.tipoDocumento === 'DNI' ? 'El DNI debe tener exactamente 8 dígitos.' : 'El CE debe tener entre 1 y 12 dígitos.'
+  if (values.numeroDocumento && !isValidDocument(values.tipoDocumento, values.numeroDocumento)) return values.tipoDocumento === 'DNI' ? 'El DNI debe tener exactamente 8 dígitos.' : 'El CE debe tener entre 1 y 12 dígitos.'
   if (values.fechaNacimiento && values.fechaNacimiento > TODAY) {
     return 'La fecha de nacimiento no puede ser futura.'
   }
@@ -414,7 +415,7 @@ export function SociosPage() {
                   <span>Apellidos <b aria-hidden="true">*</b></span>
                   <input aria-invalid={errorFormulario.includes('nombres') || errorFormulario.includes('apellidos')} autoComplete="family-name" maxLength={100} name="apellidos" onChange={(event) => actualizarCampo('apellidos', event.target.value)} required value={values.apellidos} />
                 </label>
-                <fieldset className="socios-document-field"><legend>Documento de identidad</legend><label className="socios-field"><span>Tipo de documento</span><select aria-label="Tipo de documento" onChange={(event) => setValues((current) => ({ ...current, tipoDocumento: event.target.value as 'DNI' | 'CE', numeroDocumento: '' }))} value={values.tipoDocumento}><option value="DNI">DNI</option><option value="CE">Carné de Extranjería (CE)</option></select></label><label className="socios-field"><span>Número de documento</span><input aria-label="Número de documento" aria-describedby="socios-document-help" aria-invalid={Boolean(errorFormulario.includes('DNI') || errorFormulario.includes('CE'))} autoComplete="off" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} onChange={(event) => actualizarCampo('numeroDocumento', event.target.value.replace(/\D/g, '').slice(0, values.tipoDocumento === 'DNI' ? 8 : 12))} value={values.numeroDocumento} /><small id="socios-document-help">Opcional · {values.tipoDocumento === 'DNI' ? '8 dígitos' : '1–12 dígitos'} · {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12}</small></label></fieldset>
+                <fieldset className="socios-document-field"><legend>Documento de identidad</legend><label className="socios-field"><span>Tipo de documento</span><select aria-label="Tipo de documento" onChange={(event) => setValues((current) => ({ ...current, tipoDocumento: event.target.value as 'DNI' | 'CE', numeroDocumento: normalizeDocumentInput(event.target.value as 'DNI' | 'CE', current.numeroDocumento) }))} value={values.tipoDocumento}><option value="DNI">DNI</option><option value="CE">Carné de Extranjería (CE)</option></select></label><label className="socios-field"><span>Número de documento</span><input aria-label="Número de documento" aria-describedby="socios-document-help" aria-invalid={Boolean(values.numeroDocumento) && !isValidDocument(values.tipoDocumento, values.numeroDocumento)} autoComplete="off" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} onChange={(event) => actualizarCampo('numeroDocumento', normalizeDocumentInput(values.tipoDocumento, event.target.value))} value={values.numeroDocumento} /><small id="socios-document-help">Opcional · {documentHelp(values.tipoDocumento)} · {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12}</small></label></fieldset>
                 <label className="socios-field">
                   <span>Fecha de nacimiento</span>
                   <input max={TODAY} name="fechaNacimiento" onChange={(event) => actualizarCampo('fechaNacimiento', event.target.value)} type="date" value={values.fechaNacimiento} />

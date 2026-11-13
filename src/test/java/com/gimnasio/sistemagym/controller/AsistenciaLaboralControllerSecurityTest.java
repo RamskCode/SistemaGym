@@ -12,6 +12,7 @@ import com.gimnasio.sistemagym.dto.AsistenciaLaboralRespuesta;
 import com.gimnasio.sistemagym.dto.AsistenciaLaboralHistorialRespuesta;
 import com.gimnasio.sistemagym.dto.ReporteAsistenciaLaboralEmpleadoRespuesta;
 import com.gimnasio.sistemagym.dto.PersonalSeleccionableRespuesta;
+import com.gimnasio.sistemagym.dto.EmpleadoConHistorialRespuesta;
 import com.gimnasio.sistemagym.entity.TipoEventoAsistenciaLaboral;
 import com.gimnasio.sistemagym.entity.TipoOperacionAuditoriaAsistenciaLaboral;
 import com.gimnasio.sistemagym.exception.ConflictoException;
@@ -140,6 +141,63 @@ class AsistenciaLaboralControllerSecurityTest {
     }
 
     @Test
+    void empleadosConHistorialEsConsultaProtegidaParaAdministradorYRecepcionista() throws Exception {
+        when(asistenciaLaboralService.listarEmpleadosConHistorial("admin@test"))
+                .thenReturn(List.of(new EmpleadoConHistorialRespuesta(
+                        44L, "Maricarmen", "Santos", "RECEPCIONISTA")));
+
+        mockMvc.perform(get("/api/asistencias-laborales/empleados-con-historial")
+                        .with(user("admin@test").roles("ADMINISTRADOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idEmpleado").value(44))
+                .andExpect(jsonPath("$[0].nombres").value("Maricarmen"))
+                .andExpect(jsonPath("$[0].rol").value("RECEPCIONISTA"));
+
+        mockMvc.perform(get("/api/asistencias-laborales/empleados-con-historial")
+                        .with(user("recepcion@test").roles("RECEPCIONISTA")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/asistencias-laborales/empleados-con-historial"))
+                .andExpect(status().isUnauthorized());
+
+        verify(asistenciaLaboralService).listarEmpleadosConHistorial("admin@test");
+        verify(asistenciaLaboralService).listarEmpleadosConHistorial("recepcion@test");
+        verifyNoMoreInteractions(asistenciaLaboralService);
+    }
+
+    @Test
+    void historialRecepcionistaEsLecturaProtegidaYAdmiteFiltrosYPaginacion() throws Exception {
+        var attendance = new AsistenciaLaboralRespuesta(18L, 44L, "Maricarmen", "Santos",
+                "RECEPCIONISTA", Instant.parse("2026-11-12T14:00:00Z"), null,
+                LocalDate.parse("2026-11-12"), EstadoAsistenciaLaboral.ACTIVA);
+        when(asistenciaLaboralService.consultarHistorialRecepcionista(
+                "recepcion@test", 44L, 1, 10, LocalDate.parse("2026-11-10"),
+                LocalDate.parse("2026-11-12"), EstadoAsistenciaLaboral.ACTIVA))
+                .thenReturn(new PageImpl<>(List.of(attendance), PageRequest.of(1, 10), 11));
+
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista")
+                        .with(user("recepcion@test").roles("RECEPCIONISTA"))
+                        .param("page", "1").param("size", "10")
+                        .param("fechaDesde", "2026-11-10").param("fechaHasta", "2026-11-12")
+                        .param("estado", "ACTIVA").param("idEmpleado", "44"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido[0].nombresEmpleado").value("Maricarmen"))
+                .andExpect(jsonPath("$.contenido[0].rolEmpleado").value("RECEPCIONISTA"))
+                .andExpect(jsonPath("$.contenido[0].fechaSalidaUtc").doesNotExist())
+                .andExpect(jsonPath("$.pagina").value(1))
+                .andExpect(jsonPath("$.totalElementos").value(11));
+
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista")
+                        .with(user("admin@test").roles("ADMINISTRADOR")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista"))
+                .andExpect(status().isUnauthorized());
+        verify(asistenciaLaboralService).consultarHistorialRecepcionista(
+                "recepcion@test", 44L, 1, 10, LocalDate.parse("2026-11-10"),
+                LocalDate.parse("2026-11-12"), EstadoAsistenciaLaboral.ACTIVA);
+        verifyNoMoreInteractions(asistenciaLaboralService);
+    }
+
+    @Test
     void entradaDevuelve201YUsaSubjectJwtComoRegistrador() throws Exception {
         var principal = User.withUsername(CORREO_RECEPCIONISTA)
                 .password("unused").roles("RECEPCIONISTA").build();
@@ -207,9 +265,11 @@ class AsistenciaLaboralControllerSecurityTest {
     }
 
     @Test
-    void soloAdminPuedeAnularYUsaElSubjectAutenticado() throws Exception {
+    void administradorYRecepcionistaPuedenSolicitarAnulacionYUsaElSubjectAutenticado() throws Exception {
         AsistenciaLaboral anulada = asistencia(81L, null);
         when(asistenciaLaboralService.anularAsistencia(81L, "Duplicado", "admin@test"))
+                .thenReturn(anulada);
+        when(asistenciaLaboralService.anularAsistencia(81L, "Duplicado", CORREO_RECEPCIONISTA))
                 .thenReturn(anulada);
         mockMvc.perform(patch("/api/asistencias-laborales/81/anulacion")
                         .with(user("admin@test").roles("ADMINISTRADOR"))
@@ -220,9 +280,10 @@ class AsistenciaLaboralControllerSecurityTest {
                         .with(user(CORREO_RECEPCIONISTA).roles("RECEPCIONISTA"))
                         .contentType(APPLICATION_JSON)
                         .content("{\"motivo\":\"Duplicado\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
 
         verify(asistenciaLaboralService).anularAsistencia(81L, "Duplicado", "admin@test");
+        verify(asistenciaLaboralService).anularAsistencia(81L, "Duplicado", CORREO_RECEPCIONISTA);
         org.mockito.Mockito.verifyNoMoreInteractions(asistenciaLaboralService);
     }
 
@@ -236,7 +297,7 @@ class AsistenciaLaboralControllerSecurityTest {
                                     + "\"motivo\":\"Corrección\"}"))
                     .andExpect(status().isForbidden());
         }
-        for (String rol : new String[] {"RECEPCIONISTA", "ENTRENADOR", "NUTRICIONISTA"}) {
+        for (String rol : new String[] {"ENTRENADOR", "NUTRICIONISTA"}) {
             mockMvc.perform(patch("/api/asistencias-laborales/81/anulacion")
                             .with(user("usuario@test").roles(rol))
                             .contentType(APPLICATION_JSON)
@@ -439,7 +500,7 @@ class AsistenciaLaboralControllerSecurityTest {
 
     @Test
     void aceptaTamanoPermitidoYSerializaContenidoEnUtcSinExponerJpa() throws Exception {
-        var respuesta = new AsistenciaLaboralRespuesta(8L, 25L,
+        var respuesta = new AsistenciaLaboralRespuesta(8L, 25L, "Ana", "Díaz", "ENTRENADOR",
                 Instant.parse("2026-11-06T04:59:00Z"), null,
                 LocalDate.of(2026, 11, 5), EstadoAsistenciaLaboral.ACTIVA);
         when(asistenciaLaboralService.consultarTodas(eq("admin"), eq(0), eq(50),

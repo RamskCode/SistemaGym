@@ -147,7 +147,7 @@ describe('SociosPage', () => {
     })
   })
 
-  it('creates a CE member with numeric-only optional document fields', async () => {
+  it('creates a CE member using digits only and strips pasted letters', async () => {
     const user = userEvent.setup()
     let submitted: Record<string, unknown> | undefined
     server.use(http.get('/api/socios', () => HttpResponse.json([])))

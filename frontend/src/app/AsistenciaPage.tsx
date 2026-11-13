@@ -19,6 +19,8 @@ import { useSearchParams } from 'react-router-dom'
 import './asistencia.css'
 import { AsistenciaAdminView } from './AsistenciaAdminView'
 import { IngresosClientesAdminView } from './IngresosClientesAdminView'
+import { IngresosClientesHistorialRecepcion } from './IngresosClientesHistorialRecepcion'
+import { AsistenciaLaboralHistorialRecepcion } from './AsistenciaLaboralHistorialRecepcion'
 import { IngresoMembresiaPanel } from './IngresoMembresiaPanel'
 import { PaseDiarioVentaPanel } from './PaseDiarioVentaPanel'
 import { addUncertainWriteLock, isSessionCurrent, readUncertainWriteLocks, removeUncertainWriteLock, uncertainWriteResult } from './uncertainWriteLocks'
@@ -66,22 +68,13 @@ export function AsistenciaPage() {
 
 function AsistenciaAdminPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [pestana, setPestana] = useState<'ingresos' | 'laboral'>('ingresos')
-  const [modalidad, setModalidad] = useState<'MEMBRESIA' | 'PASE_DIARIO'>('MEMBRESIA')
   const tabsRef = useRef<Array<HTMLButtonElement | null>>([])
-  const subtabsRef = useRef<Array<HTMLButtonElement | null>>([])
   function teclado(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return
     event.preventDefault()
     const destino = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : index === 0 ? 1 : 0
     setPestana(destino === 0 ? 'ingresos' : 'laboral')
     tabsRef.current[destino]?.focus()
-  }
-  function tecladoModalidad(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : index === 0 ? 1 : 0
-    const value = next === 0 ? 'MEMBRESIA' : 'PASE_DIARIO'
-    setModalidad(value); subtabsRef.current[next]?.focus()
   }
   return <div className="dashboard asistencia-page">
     <PageTitle description="Supervisa los ingresos de clientes y la asistencia del personal." eyebrow="OPERACIÓN DEL GIMNASIO" title="Asistencia" />
@@ -90,23 +83,15 @@ function AsistenciaAdminPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
       <button ref={(node) => { tabsRef.current[1] = node }} id="asistencia-tab-laboral" aria-controls="asistencia-panel-laboral" aria-selected={pestana === 'laboral'} role="tab" tabIndex={pestana === 'laboral' ? 0 : -1} onClick={() => setPestana('laboral')} onKeyDown={(event) => teclado(event, 1)} type="button">Asistencia laboral</button>
     </div>
     <section id={pestana === 'ingresos' ? 'asistencia-panel-ingresos' : 'asistencia-panel-laboral'} aria-labelledby={pestana === 'ingresos' ? 'asistencia-tab-ingresos' : 'asistencia-tab-laboral'} role="tabpanel" tabIndex={0}>
-      {pestana === 'ingresos' ? <>
-        <div aria-label="Modalidad de ingreso" className="asistencia-subtabs" role="tablist">
-          <button aria-controls="admin-ingreso-membership" aria-selected={modalidad === 'MEMBRESIA'} id="admin-ingreso-tab-membership" onClick={() => setModalidad('MEMBRESIA')} onKeyDown={(event) => tecladoModalidad(event, 0)} ref={(node) => { subtabsRef.current[0] = node }} role="tab" tabIndex={modalidad === 'MEMBRESIA' ? 0 : -1} type="button">Con membresía</button>
-          <button aria-controls="admin-ingreso-pass" aria-selected={modalidad === 'PASE_DIARIO'} id="admin-ingreso-tab-pass" onClick={() => setModalidad('PASE_DIARIO')} onKeyDown={(event) => tecladoModalidad(event, 1)} ref={(node) => { subtabsRef.current[1] = node }} role="tab" tabIndex={modalidad === 'PASE_DIARIO' ? 0 : -1} type="button">Pase diario</button>
-        </div>
-        <div aria-labelledby={modalidad === 'MEMBRESIA' ? 'admin-ingreso-tab-membership' : 'admin-ingreso-tab-pass'} id={modalidad === 'MEMBRESIA' ? 'admin-ingreso-membership' : 'admin-ingreso-pass'} role="tabpanel" tabIndex={0}>
-          <IngresosClientesAdminView auth={auth} key={modalidad} modalidadFija modalidadInicial={modalidad} />
-        </div>
-      </> : <AsistenciaAdminView auth={auth} />}
+      {pestana === 'ingresos' ? <IngresosClientesAdminView auth={auth} /> : <AsistenciaAdminView auth={auth} />}
     </section>
   </div>
 }
 
 function AsistenciaRecepcionPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [searchParams] = useSearchParams()
-  const [pestana, setPestana] = useState<'ingresos' | 'laboral'>(
-    searchParams.get('seccion') === 'laboral' ? 'laboral' : 'ingresos',
+  const [pestana, setPestana] = useState<'ingresos' | 'ingresos-historial' | 'laboral' | 'laboral-historial'>(
+    searchParams.get('seccion') === 'laboral' ? 'laboral' : searchParams.get('seccion') === 'laboral-historial' ? 'laboral-historial' : 'ingresos',
   )
   const [modalidad, setModalidad] = useState<'MEMBRESIA' | 'PASE_DIARIO'>(
     searchParams.get('modalidad') === 'PASE_DIARIO' ? 'PASE_DIARIO' : 'MEMBRESIA',
@@ -116,22 +101,29 @@ function AsistenciaRecepcionPage({ auth }: { auth: ReturnType<typeof useAuth> })
   function moveFocus(event: ReactKeyboardEvent<HTMLButtonElement>, index: number, inner = false) {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
     event.preventDefault()
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : index === 0 ? 1 : 0
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? (inner ? 1 : 3)
+      : inner ? (index === 0 ? 1 : 0) : (index + (event.key === 'ArrowRight' ? 1 : 3)) % 4
     if (inner) {
       setModalidad(next === 0 ? 'MEMBRESIA' : 'PASE_DIARIO')
       subtabsRef.current[next]?.focus()
     } else {
-      setPestana(next === 0 ? 'ingresos' : 'laboral')
+      setPestana((['ingresos', 'ingresos-historial', 'laboral', 'laboral-historial'] as const)[next])
       tabsRef.current[next]?.focus()
     }
   }
+  const sections = [
+    { key: 'ingresos', label: 'Ingresos de clientes', id: 'ingresos' },
+    { key: 'ingresos-historial', label: 'Historial de ingresos', id: 'ingresos-historial' },
+    { key: 'laboral', label: 'Asistencia laboral', id: 'laboral' },
+    { key: 'laboral-historial', label: 'Historial laboral', id: 'laboral-historial' },
+  ] as const
+  const panelId = `recepcion-panel-${pestana}`
   return <div className="dashboard asistencia-page">
     <PageTitle description="Registra accesos de clientes y consulta las asistencias del personal." eyebrow="RECEPCIÓN" title="Asistencia" />
     <div aria-label="Secciones de asistencia" className="asistencia-tabs" role="tablist">
-      <button aria-controls="recepcion-panel-ingresos" aria-selected={pestana === 'ingresos'} id="recepcion-tab-ingresos" onClick={() => setPestana('ingresos')} onKeyDown={(event) => moveFocus(event, 0)} ref={(node) => { tabsRef.current[0] = node }} role="tab" tabIndex={pestana === 'ingresos' ? 0 : -1} type="button">Ingresos de clientes</button>
-      <button aria-controls="recepcion-panel-laboral" aria-selected={pestana === 'laboral'} id="recepcion-tab-laboral" onClick={() => setPestana('laboral')} onKeyDown={(event) => moveFocus(event, 1)} ref={(node) => { tabsRef.current[1] = node }} role="tab" tabIndex={pestana === 'laboral' ? 0 : -1} type="button">Asistencia laboral</button>
+      {sections.map((section, index) => <button aria-controls={`recepcion-panel-${section.key}`} aria-selected={pestana === section.key} id={`recepcion-tab-${section.id}`} key={section.key} onClick={() => setPestana(section.key)} onKeyDown={(event) => moveFocus(event, index)} ref={(node) => { tabsRef.current[index] = node }} role="tab" tabIndex={pestana === section.key ? 0 : -1} type="button">{section.label}</button>)}
     </div>
-    <section aria-labelledby={pestana === 'ingresos' ? 'recepcion-tab-ingresos' : 'recepcion-tab-laboral'} className="asistencia-main-panel" id={pestana === 'ingresos' ? 'recepcion-panel-ingresos' : 'recepcion-panel-laboral'} role="tabpanel" tabIndex={0}>
+    <section aria-labelledby={`recepcion-tab-${sections.find((section) => section.key === pestana)?.id}`} className={`asistencia-main-panel${pestana.startsWith('laboral') ? ' asistencia-main-panel--laboral' : ''}`} id={panelId} role="tabpanel" tabIndex={0}>
       {pestana === 'ingresos' ? <>
         <div aria-label="Tipo de ingreso de clientes" className="asistencia-subtabs" role="tablist">
           <button aria-controls="recepcion-ingreso-membership" aria-selected={modalidad === 'MEMBRESIA'} id="recepcion-ingreso-tab-membership" onClick={() => setModalidad('MEMBRESIA')} onKeyDown={(event) => moveFocus(event, 0, true)} ref={(node) => { subtabsRef.current[0] = node }} role="tab" tabIndex={modalidad === 'MEMBRESIA' ? 0 : -1} type="button">Con membresía</button>
@@ -140,15 +132,18 @@ function AsistenciaRecepcionPage({ auth }: { auth: ReturnType<typeof useAuth> })
         <div aria-labelledby={modalidad === 'MEMBRESIA' ? 'recepcion-ingreso-tab-membership' : 'recepcion-ingreso-tab-pass'} className="asistencia-subpanel" id={modalidad === 'MEMBRESIA' ? 'recepcion-ingreso-membership' : 'recepcion-ingreso-pass'} role="tabpanel" tabIndex={0}>
           {modalidad === 'MEMBRESIA' ? <IngresoMembresiaPanel auth={auth} /> : <PaseDiarioVentaPanel auth={auth} />}
         </div>
-      </> : <AsistenciaLaboralView auth={auth} esRecepcionista mostrarTitulo={false} />}
+      </> : pestana === 'ingresos-historial' ? <IngresosClientesHistorialRecepcion auth={auth} />
+        : pestana === 'laboral' ? <AsistenciaLaboralView auth={auth} esRecepcionista mostrarTitulo={false} mostrarHistorialPropio={false} />
+          : <AsistenciaLaboralHistorialRecepcion auth={auth} />}
     </section>
   </div>
 }
 
-function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: {
+function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true, mostrarHistorialPropio = true }: {
   auth: ReturnType<typeof useAuth>
   esRecepcionista: boolean
   mostrarTitulo?: boolean
+  mostrarHistorialPropio?: boolean
 }) {
   const [personal, setPersonal] = useState<PersonalSeleccionable[]>([])
   const [idSeleccionado, setIdSeleccionado] = useState('')
@@ -272,9 +267,10 @@ function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: 
   }, [cargarPersonal, esRecepcionista])
 
   useEffect(() => {
+    if (!mostrarHistorialPropio) { setPagina(null); setCargando(false); return }
     setPaginaActual(0)
     void cargarAsistencias(0)
-  }, [cargarAsistencias])
+  }, [cargarAsistencias, mostrarHistorialPropio])
 
   async function confirmarMarcacion() {
     if (!confirmacion || lock.current || !locksLoaded || lockReadFailed || estaBloqueado(confirmacion.destino)) return
@@ -311,7 +307,7 @@ function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: 
       if (isSessionCurrent(auth, sessionVersion)) {
         setExito(`${quien}: ${confirmacion.accion === 'entrada' ? 'entrada' : 'salida'} registrada a las ${horaLima(momento)} (hora de Lima).`)
         setConfirmacion(null)
-        await Promise.all([cargarAsistencias(paginaActual, true), cargarPersonal()])
+        await Promise.all([...(mostrarHistorialPropio ? [cargarAsistencias(paginaActual, true)] : []), cargarPersonal()])
       }
       try {
         await removeUncertainWriteLock(account, 'staff-attendance', operation)
@@ -330,7 +326,7 @@ function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: 
           : uncertainWriteResult(reason) ? '' : explicarError(reason, true))
         setConfirmacion(null)
         if (persisted && uncertainWriteResult(reason)) {
-          if (confirmacion.destino.tipo === 'propio') void cargarAsistencias(paginaActual, true)
+          if (confirmacion.destino.tipo === 'propio' && mostrarHistorialPropio) void cargarAsistencias(paginaActual, true)
           else void cargarPersonal()
         }
       }
@@ -377,7 +373,7 @@ function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: 
       </div>
     </Card>}
 
-    <Card className="asistencia-card" title="Mis asistencias">
+     {mostrarHistorialPropio && <Card className="asistencia-card" title="Mis asistencias">
       <form className="asistencia-filters" onSubmit={(event) => { event.preventDefault(); setPaginaActual(0); void cargarAsistencias(0) }}>
         <label className="asistencia-date-field">Desde<input aria-label="Fecha desde" onChange={(event) => setFechaDesde(event.target.value)} type="date" value={fechaDesde} /></label>
         <label className="asistencia-date-field">Hasta<input aria-label="Fecha hasta" onChange={(event) => setFechaHasta(event.target.value)} type="date" value={fechaHasta} /></label>
@@ -389,7 +385,7 @@ function AsistenciaLaboralView({ auth, esRecepcionista, mostrarTitulo = true }: 
         <div className="table-wrap"><table className="activity-table asistencia-table asistencia-self-table"><thead><tr><th scope="col">FECHA LABORAL</th><th scope="col">ENTRADA (LIMA)</th><th scope="col">SALIDA (LIMA)</th><th scope="col">ESTADO</th></tr></thead><tbody>{pagina.contenido.map((fila) => <tr key={fila.idAsistencia}><td>{fila.fechaLaboral}</td><td>{horaLima(fila.fechaEntradaUtc)}</td><td>{horaLima(fila.fechaSalidaUtc)}</td><td><span className={`asistencia-state asistencia-state--${fila.estado.toLowerCase()}`}>{fila.estado === 'ACTIVA' ? 'Activa' : 'Anulada'}</span></td></tr>)}</tbody></table></div>
         <nav aria-label="Paginación de mis asistencias" className="asistencia-pagination"><button disabled={paginaActual <= 0 || actualizando} onClick={() => void cargarAsistencias(paginaActual - 1, true)} type="button">Anterior</button><span>Página {paginaActual + 1} de {Math.max(1, pagina.totalPaginas)} · {pagina.totalElementos} registros</span><button disabled={paginaActual + 1 >= pagina.totalPaginas || actualizando} onClick={() => void cargarAsistencias(paginaActual + 1, true)} type="button">Siguiente</button></nav>
       </>}
-    </Card>
+     </Card>}
 
     {confirmacion && <div className="asistencia-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !procesando) setConfirmacion(null) }}><section ref={confirmationDialogRef} tabIndex={-1} aria-labelledby="asistencia-confirm-title" aria-modal="true" className="asistencia-dialog" onKeyDown={handleConfirmationKeyDown} onClick={(event) => event.stopPropagation()} role="dialog"><p className="asistencia-dialog-eyebrow">CONFIRMACIÓN DE MARCACIÓN</p><h2 id="asistencia-confirm-title">Confirmar {confirmacion.accion === 'entrada' ? 'entrada' : 'salida'}</h2><p>{confirmacion.destino.tipo === 'propio' ? 'Se registrará tu propia' : `Se registrará la ${confirmacion.accion} de ${confirmacion.destino.empleado.nombres} ${confirmacion.destino.empleado.apellidos}`} asistencia.</p><p className="asistencia-dialog-time">Hora local actual: {horaLima(new Date().toISOString())} (America/Lima)</p><div className="asistencia-actions"><Button disabled={procesando} onClick={() => setConfirmacion(null)} type="button" variant="secondary">Cancelar</Button><Button disabled={procesando} onClick={() => void confirmarMarcacion()} type="button">{procesando ? 'Registrando…' : 'Confirmar marcación'}</Button></div></section></div>}
   </div>

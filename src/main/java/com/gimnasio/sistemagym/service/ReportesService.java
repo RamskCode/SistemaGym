@@ -4,7 +4,9 @@ import com.gimnasio.sistemagym.dto.ReporteFilaRespuesta;
 import com.gimnasio.sistemagym.dto.ReporteResumenRespuesta;
 import com.gimnasio.sistemagym.dto.ReporteResumenRespuesta.PuntoReporte;
 import com.gimnasio.sistemagym.dto.PlanReporteRespuesta;
+import com.gimnasio.sistemagym.dto.DetalleIngresoClienteRespuesta;
 import com.gimnasio.sistemagym.entity.Ingreso;
+import com.gimnasio.sistemagym.entity.Pago;
 import com.gimnasio.sistemagym.entity.Membresia;
 import com.gimnasio.sistemagym.entity.Pago;
 import com.gimnasio.sistemagym.entity.Socio;
@@ -106,6 +108,57 @@ public class ReportesService {
     public List<ReporteFilaRespuesta> detalle(String tipo, LocalDate desde, LocalDate hasta,
             Long planId, int pagina, int tamano) {
         return detalle(tipo, desde, hasta, planId, pagina, tamano, "", "");
+    }
+
+    public org.springframework.data.domain.Page<ReporteFilaRespuesta> historialIngresos(
+            LocalDate desde, LocalDate hasta, int pagina, int tamano,
+            String buscar, String modalidad) {
+        validar(desde, hasta);
+        if (pagina < 0 || tamano < 1 || tamano > 100) {
+            throw new IllegalArgumentException("Paginación inválida.");
+        }
+        if (buscar == null || buscar.length() > 100 || modalidad == null
+                || !java.util.Set.of("", "MEMBRESIA", "PASE_DIARIO").contains(modalidad)) {
+            throw new IllegalArgumentException("Filtro de ingresos inválido.");
+        }
+        LocalDateTime inicio = inicio(desde);
+        LocalDateTime fin = inicio(hasta.plusDays(1));
+        PageRequest page = PageRequest.of(pagina, tamano, Sort.unsorted());
+        return ingresos.reportPageFiltered(inicio, fin, buscar.trim().toLowerCase(),
+                modalidad, null, page).map(this::filaIngreso);
+    }
+
+    public DetalleIngresoClienteRespuesta detalleIngresoCliente(Long idIngreso) {
+        Ingreso ingreso = ingresos.findForAdministrativeDetail(idIngreso)
+                .orElseThrow(() -> new com.gimnasio.sistemagym.exception.RecursoNoEncontradoException(
+                        "No se encontró el acceso solicitado."));
+        if (ingreso.getTipoIngreso() == com.gimnasio.sistemagym.entity.TipoIngreso.SOCIO) {
+            LocalDate fechaAcceso = lima(ingreso.getFechaHora()).toLocalDate();
+            List<Membresia> posibles = ingreso.getSocio() == null ? List.of()
+                    : membresias.findWithPlanBySocioId(ingreso.getSocio().getIdSocio()).stream()
+                            .filter(m -> m.getFechaCreacion() != null
+                                    && !m.getFechaCreacion().isAfter(ingreso.getFechaHora()))
+                            .filter(m -> m.getFechaInicio() != null && m.getFechaVencimiento() != null)
+                            .filter(m -> !fechaAcceso.isBefore(m.getFechaInicio())
+                                    && !fechaAcceso.isAfter(m.getFechaVencimiento()))
+                            .toList();
+            String plan = posibles.size() == 1 && posibles.get(0).getPlan() != null
+                    ? posibles.get(0).getPlan().getNombre() : null;
+            String mensaje = plan == null
+                    ? "No se puede determinar el plan con seguridad: el ingreso no guarda un vínculo directo con la membresía específica."
+                    : null;
+            return new DetalleIngresoClienteRespuesta(idIngreso, "MEMBRESIA", plan, null, mensaje);
+        }
+
+        Ingreso ventaOriginal = ingreso.getPaseOrigen() == null ? ingreso : ingreso.getPaseOrigen();
+        Pago pagoOriginal = ventaOriginal.getPago();
+        if (pagoOriginal == null || !"CONFIRMADO".equalsIgnoreCase(pagoOriginal.getEstado())
+                || pagoOriginal.getMonto() == null) {
+            return new DetalleIngresoClienteRespuesta(idIngreso, "PASE_DIARIO", null, null,
+                    "No hay un pago confirmado vinculado a la venta original de este pase.");
+        }
+        return new DetalleIngresoClienteRespuesta(idIngreso, "PASE_DIARIO", null,
+                pagoOriginal.getMonto(), null);
     }
 
     public List<ReporteFilaRespuesta> detalle(String tipo, LocalDate desde, LocalDate hasta,

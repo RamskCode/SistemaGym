@@ -11,10 +11,12 @@ import com.gimnasio.sistemagym.dto.AsistenciaLaboralHistorialRespuesta;
 import com.gimnasio.sistemagym.dto.ReporteAsistenciaLaboralEmpleadoRespuesta;
 import com.gimnasio.sistemagym.dto.AsistenciaLaboralRespuesta;
 import com.gimnasio.sistemagym.dto.PersonalSeleccionableRespuesta;
+import com.gimnasio.sistemagym.dto.EmpleadoConHistorialRespuesta;
 import com.gimnasio.sistemagym.exception.ConflictoException;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralRepository;
 import com.gimnasio.sistemagym.repository.PersonalSeleccionableConsulta;
+import com.gimnasio.sistemagym.repository.EmpleadoConHistorialConsulta;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralDetalleConsulta;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralReporteConsulta;
 import com.gimnasio.sistemagym.repository.AuditoriaAsistenciaHistorialConsulta;
@@ -115,6 +117,19 @@ public class AsistenciaLaboralService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<EmpleadoConHistorialRespuesta> listarEmpleadosConHistorial(
+            String correoAutenticado) {
+        Usuario usuario = obtenerUsuarioAutenticado(correoAutenticado);
+        String rol = nombreRol(usuario);
+        if (!ROL_ADMINISTRADOR.equals(rol) && !ROL_RECEPCIONISTA.equals(rol)) {
+            throw new AccessDeniedException("El rol no puede consultar empleados con historial.");
+        }
+        return asistenciaRepository.listarEmpleadosConHistorial().stream()
+                .map(this::mapearEmpleadoConHistorial)
+                .toList();
+    }
+
     @Transactional
     public AsistenciaLaboral registrarMiEntradaAutenticada(String correoAutenticado) {
         Long idUsuario = obtenerIdRegistradorAutenticado(correoAutenticado);
@@ -132,6 +147,12 @@ public class AsistenciaLaboralService {
         return new PersonalSeleccionableRespuesta(
                 consulta.getIdEmpleado(), consulta.getNombres(),
                 consulta.getApellidos(), consulta.getRol());
+    }
+
+    private EmpleadoConHistorialRespuesta mapearEmpleadoConHistorial(
+            EmpleadoConHistorialConsulta consulta) {
+        return new EmpleadoConHistorialRespuesta(consulta.getIdEmpleado(),
+                consulta.getNombres(), consulta.getApellidos(), consulta.getRol());
     }
 
     /** Resolves the authenticated JWT subject server-side, then reuses the ID-based operation. */
@@ -245,12 +266,27 @@ public class AsistenciaLaboralService {
     public AsistenciaLaboral anularAsistencia(
             Long idAsistencia, String motivo, String correoActorAutenticado) {
         Usuario actor = obtenerUsuarioAutenticado(correoActorAutenticado);
-        if (!ROL_ADMINISTRADOR.equals(nombreRol(actor))) {
+        String rolActor = nombreRol(actor);
+        boolean administrador = ROL_ADMINISTRADOR.equals(rolActor);
+        boolean recepcionista = ROL_RECEPCIONISTA.equals(rolActor);
+        if (!administrador && !recepcionista) {
             throw new AccessDeniedException(
-                    "Solo un administrador puede anular asistencias laborales.");
+                    "El rol no puede anular asistencias laborales.");
         }
 
         AsistenciaLaboral asistencia = obtenerAsistenciaBloqueada(idAsistencia);
+        if (recepcionista) {
+            boolean registradaPorActor = asistencia.getRegistradoEntrada() != null
+                    && actor.getIdUsuario().equals(
+                            asistencia.getRegistradoEntrada().getIdUsuario());
+            boolean corregidaPorAdministrador = auditoriaRepository
+                    .existsByAsistencia_IdAsistenciaAndTipoOperacion(idAsistencia,
+                            TipoOperacionAuditoriaAsistenciaLaboral.CORRECCION);
+            if (!registradaPorActor || corregidaPorAdministrador) {
+                throw new AccessDeniedException(
+                        "Recepción solo puede anular registros propios que no hayan sido corregidos.");
+            }
+        }
         validarAsistenciaActiva(asistencia);
         String motivoValidado = validarMotivo(motivo);
         LocalDateTime entrada = asistencia.getFechaEntradaUtc();
@@ -436,6 +472,20 @@ public class AsistenciaLaboralService {
         if (idEmpleado == null || idEmpleado <= 0 || !usuarioRepository.existsById(idEmpleado)) {
             throw new RecursoNoEncontradoException(
                     "No se encontró el usuario con id " + idEmpleado + ".");
+        }
+        return consultar(idEmpleado, pagina, tamano, fechaDesde, fechaHasta, estado);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AsistenciaLaboralRespuesta> consultarHistorialRecepcionista(
+            String correoAutenticado, Long idEmpleado, int pagina, int tamano,
+            LocalDate fechaDesde, LocalDate fechaHasta, EstadoAsistenciaLaboral estado) {
+        Usuario usuario = obtenerUsuarioAutenticado(correoAutenticado);
+        if (!ROL_RECEPCIONISTA.equals(nombreRol(usuario))) {
+            throw new AccessDeniedException("Esta consulta está disponible solo para recepción.");
+        }
+        if (idEmpleado != null && (idEmpleado <= 0 || !usuarioRepository.existsById(idEmpleado))) {
+            throw new RecursoNoEncontradoException("No se encontró el usuario seleccionado.");
         }
         return consultar(idEmpleado, pagina, tamano, fechaDesde, fechaHasta, estado);
     }

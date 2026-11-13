@@ -86,3 +86,42 @@
 @media (prefers-reduced-motion: reduce) {
   .revision-page *, .revision-page *::before, .revision-page *::after, .revision-dialog *, .revision-dialog *::before, .revision-dialog *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Trainer equipment-inspection flow */
+.revision-page { gap: var(--space-5, 20px); }
+.revision-page > .page-title { align-items: center; }
+.revision-page > form { gap: 16px; }
+.revision-card { padding: clamp(17px, 2vw, 23px); }
+.revision-card > .card__header { margin-bottom: 16px; }
+.revision-card .card__title { color: #202720; font-size: var(--type-section-title, 17px); letter-spacing: -.02em; }
+.revision-count { display: inline-flex; min-height: 28px; align-items: center; padding: 0 10px; border: 1px solid #dce4dc; border-radius: 999px; background: #f7f9f7; color: #435044; }
+.revision-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.revision-item { position: relative; padding: 15px; border-color: #dce4dc; border-radius: 10px; background: #fff; transition: border-color 140ms ease, background 140ms ease; }
+.revision-item--selected { border-color: #82ad86; background: #f8fbf8; box-shadow: inset 3px 0 #398047; }
+.revision-item__legend { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; }
+.revision-item__select { align-items: flex-start; gap: 12px; }
+.revision-item__select input { flex: 0 0 auto; margin-top: 3px; accent-color: #087d20; }
+.revision-item__select span { gap: 4px; }
+.revision-item__select strong { font-size: var(--type-body, 14px); line-height: 1.4; }
+.revision-item__selection-state { flex: none; padding: 4px 8px; border: 1px solid #dce4dc; border-radius: 999px; background: #f7f9f7; color: #526052; font-size: var(--type-help, 12px); line-height: 1.35; }
+.revision-item__selection-state--active { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.revision-item__description { margin: 9px 0 0 32px; }
+.revision-item__fields { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); gap: 14px; padding: 15px 0 0; }
+.revision-field { gap: 7px; font-size: var(--type-label, 13px); }
+.revision-field textarea, .revision-field select { min-height: var(--field-height, 42px); border-color: #bdc9be; border-radius: var(--radius-control, 8px); font-size: var(--type-body, 14px); }
+.revision-field textarea { min-height: 80px; }
+.revision-field > span:not(.revision-result):not(.revision-optional) { color: #a53c36; }
+.revision-field__hint { justify-self: start !important; color: #526052 !important; font-size: var(--type-help, 12px) !important; font-weight: 400 !important; }
+.revision-result { width: fit-content; padding: 3px 8px; border: 1px solid transparent; border-radius: 999px; font-size: var(--type-help, 12px); font-weight: 650; }
+.revision-result--correcto { border-color: #cce4ce; background: #eff8ef; color: #245e2c; }
+.revision-result--con_problema { border-color: #ecd2ba; background: #fff6ed; color: #754115; }
+.revision-optional { color: #526052 !important; font-size: var(--type-help, 12px); font-weight: 500; }
+.revision-problem-fields { grid-template-columns: minmax(0, 1fr) minmax(170px, .42fr); gap: 14px; padding-top: 2px; }
+.revision-general-help { margin: -3px 0 15px; color: #526052; font-size: var(--type-label, 13px); line-height: 1.5; }
+.revision-general-card > .revision-field { max-width: 100%; }
+.revision-general-card textarea { min-height: 92px; }
+.revision-submit { margin-top: 16px; padding-top: 15px; border-top: 1px solid #e6ebe6; }
+.revision-page :is(button, input, select, textarea):focus-visible, .revision-dialog :is(button, input, select, textarea):focus-visible { outline: 3px solid rgb(8 125 32 / 30%); outline-offset: 2px; }
+@media (max-width: 900px) { .revision-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 680px) { .revision-item__fields { grid-template-columns: minmax(0, 1fr); } .revision-problem-fields { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .revision-item__legend { flex-direction: column; } .revision-item__selection-state { margin-left: 32px; } .revision-item__description { margin-left: 0; } }

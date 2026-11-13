@@ -6,6 +6,8 @@ import com.gimnasio.sistemagym.service.RefreshSessionService;
 import com.gimnasio.sistemagym.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import java.util.Locale;
+import java.util.Set;
+import java.util.Arrays;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -31,15 +33,31 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final RefreshSessionService refreshSessions;
     private final boolean secureCookies;
+    private final String cookieSameSite;
+    private final Set<String> allowedOrigins;
 
     public AuthController(AuthenticationManager authenticationManager,
             UsuarioRepository usuarioRepository,
             RefreshSessionService refreshSessions,
-            @Value("${app.auth.cookie-secure:false}") boolean secureCookies) {
+            @Value("${app.auth.cookie-secure:false}") boolean secureCookies,
+            @Value("${app.auth.cookie-same-site:Strict}") String cookieSameSite,
+            @Value("${app.cors.allowed-origins:http://localhost:5173}") String corsOrigins) {
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
         this.refreshSessions = refreshSessions;
         this.secureCookies = secureCookies;
+        if (!Set.of("Strict", "Lax", "None").contains(cookieSameSite)) {
+            throw new IllegalArgumentException("AUTH_COOKIE_SAME_SITE debe ser Strict, Lax o None.");
+        }
+        if ("None".equals(cookieSameSite) && !secureCookies) {
+            throw new IllegalArgumentException("SameSite=None requiere cookies Secure.");
+        }
+        this.cookieSameSite = cookieSameSite;
+        this.allowedOrigins = Arrays.stream(corsOrigins.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(this::normalizeOrigin)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     @PostMapping("/login")
@@ -103,9 +121,9 @@ public class AuthController {
     private String[] cookies(RefreshSessionService.Tokens tokens, boolean secure) {
         return new String[] {
             ResponseCookie.from("SG_REFRESH", tokens.refreshToken()).httpOnly(true).secure(secure)
-                    .sameSite("Strict").path("/api/auth").maxAge(tokens.refreshLifetime()).build().toString(),
+                    .sameSite(cookieSameSite).path("/api/auth").maxAge(tokens.refreshLifetime()).build().toString(),
             ResponseCookie.from("SG_CSRF", tokens.csrfToken()).httpOnly(false).secure(secure)
-                    .sameSite("Strict").path("/").maxAge(tokens.refreshLifetime()).build().toString()
+                    .sameSite(cookieSameSite).path("/").maxAge(tokens.refreshLifetime()).build().toString()
         };
     }
 
@@ -113,9 +131,9 @@ public class AuthController {
         HttpHeaders headers = new HttpHeaders();
         boolean secure = requestSecure(request);
         headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("SG_REFRESH", "").httpOnly(true)
-                .secure(secure).sameSite("Strict").path("/api/auth").maxAge(0).build().toString());
+                .secure(secure).sameSite(cookieSameSite).path("/api/auth").maxAge(0).build().toString());
         headers.add(HttpHeaders.SET_COOKIE, ResponseCookie.from("SG_CSRF", "").secure(secure)
-                .sameSite("Strict").path("/").maxAge(0).build().toString());
+                .sameSite(cookieSameSite).path("/").maxAge(0).build().toString());
         return headers;
     }
 
@@ -124,12 +142,24 @@ public class AuthController {
         try {
             java.net.URI parsed = java.net.URI.create(origin);
             String scheme = parsed.getScheme();
-            return ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme))
-                    && parsed.getRawUserInfo() == null && parsed.getRawPath().isEmpty()
-                    && parsed.getRawQuery() == null && parsed.getRawFragment() == null
-                    && parsed.getRawAuthority().equalsIgnoreCase(request.getHeader("Host"));
+            String path = parsed.getRawPath();
+            if (!("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme))
+                    || parsed.getRawUserInfo() != null || (path != null && !path.isEmpty() && !"/".equals(path))
+                    || parsed.getRawQuery() != null || parsed.getRawFragment() != null
+                    || parsed.getRawAuthority() == null) {
+                return false;
+            }
+            String normalized = normalizeOrigin(parsed.getScheme() + "://" + parsed.getRawAuthority());
+            return allowedOrigins.contains(normalized)
+                    || parsed.getRawAuthority().equalsIgnoreCase(request.getHeader("Host"));
         } catch (RuntimeException ex) {
             return false;
         }
+    }
+
+    private String normalizeOrigin(String origin) {
+        java.net.URI parsed = java.net.URI.create(origin);
+        return parsed.getScheme().toLowerCase(Locale.ROOT) + "://"
+                + parsed.getRawAuthority().toLowerCase(Locale.ROOT);
     }
 }

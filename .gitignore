@@ -9,6 +9,7 @@ frontend/test-results/
 .env
 .env.*
 *private*
+src/main/resources/application-local.properties
 
 frontend/screenshots/
 pruebas.http
