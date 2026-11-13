@@ -484,8 +484,6 @@ export function SociosPage() {
           <span><strong>{sociosOrdenados.length} {sociosOrdenados.length === 1 ? 'resultado' : 'resultados'}</strong><span className="socios-summary-range">{sociosOrdenados.length ? `Mostrando ${(pagina - 1) * tamanoPagina + 1}–${Math.min(pagina * tamanoPagina, sociosOrdenados.length)}` : 'No hay registros para mostrar'}</span></span>
           <label>Registros por página <select aria-label="Registros por página" onChange={(event) => setTamanoPagina(Number(event.target.value))} value={tamanoPagina}><option value={10}>10</option><option value={20}>20</option><option value={50}>50</option></select></label>
         </div>
-        {puedeConsultarMembresias && <p className="socios-history-note">“Sin membresía registrada” no clasifica a la persona como visitante. El historial de pases diarios se mostrará cuando exista una fuente vinculada y verificada.</p>}
-
         {cargando ? (
           <p aria-live="polite" className="socios-list-message"><LoaderCircle className="socios-spinner" size={18} aria-hidden="true"/>Cargando socios…</p>
         ) : error ? null : sociosOrdenados.length === 0 ? (

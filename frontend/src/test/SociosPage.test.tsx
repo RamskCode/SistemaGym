@@ -351,6 +351,6 @@ describe('SociosPage', () => {
     await user.selectOptions(filter, 'CON_MEMBRESIA')
     expect(await screen.findByRole('row', { name: /SOC-0012/ })).toBeInTheDocument()
     expect(screen.queryByRole('row', { name: /SOC-0013/ })).not.toBeInTheDocument()
-    expect(screen.getByText(/no clasifica a la persona como visitante/i)).toBeInTheDocument()
+    expect(screen.queryByText(/no clasifica a la persona como visitante/i)).not.toBeInTheDocument()
   })
 })
