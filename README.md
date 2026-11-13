@@ -1,12 +1,27 @@
 # SistemaGym
 
-## Entorno de demostración
+Sistema web para la gestión de gimnasios, desarrollado con **Java, Spring Boot, React y TypeScript**.
 
-La demostración pública, cuando esté habilitada, utiliza datos independientes y
-ficticios. Solicita credenciales temporales al responsable del entorno por un
-canal privado; no se publican usuarios ni contraseñas en este repositorio. No
-reutilices credenciales de demostración en producción.
+**Acceso:** https://sistema-gym-virid.vercel.app
+- **Usuario:** admin@sistemagym.com
+- **Contraseña:** admin123
 
-Para producción, provisiona cuentas individuales mediante el flujo de
-administración/onboarding y entrega secretos a través del gestor de secretos del
-entorno, nunca en documentación, código fuente o variables versionadas.
+### Funcionalidades
+
+- Gestión de socios y membresías.
+- Registro de pagos y pases diarios.
+- Administración de usuarios y empleados.
+- Control de asistencia del personal.
+- Reportes y control de acceso por roles.
+
+### Tecnologías
+
+- **Backend:** Java 21, Spring Boot, Spring Security y JPA.
+- **Frontend:** React, TypeScript y Vite.
+- **Base de datos:** PostgreSQL.
+- **Despliegue:** Vercel, Render y Supabase.
+
+### Autor
+
+**Jhonatan Ricaldi**  
+[GitHub - RamskCode](https://github.com/RamskCode)
