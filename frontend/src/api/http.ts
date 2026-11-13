@@ -114,7 +114,7 @@ export async function authenticatedApiRequest<T>(
     const headers = new Headers(init.headers)
     headers.set('Accept', 'application/json')
     headers.set('Authorization', `Bearer ${accessToken}`)
-    return fetch(path, { ...init, cache: 'no-store', headers })
+    return fetch(apiUrl(path), { ...init, cache: 'no-store', headers })
   }
 
   let response: Response
