@@ -87,6 +87,15 @@ function roleLabel(role: RolUsuario) {
   return role.charAt(0) + role.slice(1).toLocaleLowerCase('es-PE')
 }
 
+function roleDescription(role: RolUsuario) {
+  const descriptions: Record<Exclude<RolUsuario, 'ADMINISTRADOR'>, string> = {
+    RECEPCIONISTA: 'Socios, membresías y asistencia.',
+    ENTRENADOR: 'Asistencia, equipos, checklists e incidencias.',
+    NUTRICIONISTA: 'Asistencia y módulo de nutrición.',
+  }
+  return descriptions[role as keyof typeof descriptions] ?? ''
+}
+
 function formatCreatedAt(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? 'No disponible'
@@ -143,11 +152,14 @@ export function UsuariosPage() {
   const [roleDraft, setRoleDraft] = useState<RolUsuario>('ENTRENADOR')
   const [confirmDeactivation, setConfirmDeactivation] = useState(false)
   const [createdCredentials, setCreatedCredentials] = useState<CredencialesIniciales | null>(null)
+  const [credentialsAction, setCredentialsAction] = useState<'created' | 'reset'>('created')
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
   const lock = useRef(false)
   const detailCloseRef = useRef<HTMLButtonElement>(null)
   const formCloseRef = useRef<HTMLButtonElement>(null)
+  const credentialsDialogRef = useRef<HTMLElement>(null)
+  const credentialsTriggerRef = useRef<HTMLButtonElement | null>(null)
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null)
   const formTriggerRef = useRef<HTMLButtonElement | null>(null)
   const formTriggerUserId = useRef<number | null>(null)
@@ -167,7 +179,7 @@ export function UsuariosPage() {
   // Any credential remains only in component memory and is discarded when the authenticated identity changes.
   useEffect(() => {
     setPending(null); setFormOpen(false); setDetail(null); setCreatedCredentials(null)
-    setPasswordVisible(false); setCopyStatus('')
+    setCredentialsAction('created'); setPasswordVisible(false); setCopyStatus('')
   }, [auth.user?.correo, auth.user?.issuedAt])
 
   useLayoutEffect(() => {
@@ -192,9 +204,33 @@ export function UsuariosPage() {
     }
   }, [formOpen])
 
+  const credentialsWereOpen = useRef(false)
+  useLayoutEffect(() => {
+    if (createdCredentials) {
+      credentialsWereOpen.current = true
+      credentialsDialogRef.current?.focus()
+    } else if (credentialsWereOpen.current) {
+      credentialsWereOpen.current = false
+      const trigger = credentialsTriggerRef.current
+      if (trigger?.isConnected) trigger.focus()
+      credentialsTriggerRef.current = null
+    }
+  }, [createdCredentials])
+
+  function closeCredentials() {
+    setCreatedCredentials(null)
+    setPasswordVisible(false)
+    setCopyStatus('')
+  }
+
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
+      if (createdCredentials) {
+        event.stopPropagation()
+        closeCredentials()
+        return
+      }
       if (pending) { event.stopPropagation(); if (!saving) cancelPending(); return }
       if (formOpen) {
         event.stopPropagation()
@@ -207,7 +243,7 @@ export function UsuariosPage() {
     }
     document.addEventListener('keydown', handleEscape, true)
     return () => document.removeEventListener('keydown', handleEscape, true)
-  }, [detail, formOpen, pending, saving])
+  }, [createdCredentials, detail, formOpen, pending, saving])
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase()
@@ -292,6 +328,7 @@ export function UsuariosPage() {
       if (auth.getSessionVersion() !== sessionVersion) return
       if (credentialsToDisplay) {
         setCreatedCredentials(credentialsToDisplay)
+        setCredentialsAction('created')
         setPasswordVisible(false)
         setCopyStatus('')
       }
@@ -326,6 +363,7 @@ export function UsuariosPage() {
       setUsers((current) => current.map((item) => item.idUsuario === user.idUsuario ? credentials.usuario : item))
       if (detail?.idUsuario === user.idUsuario) setDetail(credentials.usuario)
       setCreatedCredentials(credentials)
+      setCredentialsAction('reset')
       setPasswordVisible(false); setCopyStatus('')
     } catch (reason) {
       if (auth.getSessionVersion() === sessionVersion) setError(apiError(reason))
@@ -338,12 +376,10 @@ export function UsuariosPage() {
   async function copyCredentials() {
     if (!createdCredentials) return
     try {
-      await navigator.clipboard.writeText(
-        `Nombre: ${createdCredentials.usuario.nombres} ${createdCredentials.usuario.apellidos}\nCorreo: ${createdCredentials.usuario.correo}\nRol: ${roleLabel(createdCredentials.usuario.rol)}\nContraseña inicial: ${createdCredentials.contrasenaInicial}`,
-      )
-      setCopyStatus('Credenciales copiadas. Compártelas únicamente con el titular.')
+      await navigator.clipboard.writeText(createdCredentials.contrasenaInicial)
+      setCopyStatus('Contraseña copiada')
     } catch {
-      setCopyStatus('No se pudo copiar automáticamente. Copia los datos manualmente y cierra esta ventana al terminar.')
+      setCopyStatus('No se pudo copiar la contraseña. Inténtalo de nuevo o cópiala manualmente.')
     }
   }
 
@@ -474,7 +510,7 @@ export function UsuariosPage() {
   }
 
   return <div className="dashboard usuarios-page">
-    <PageTitle description="Administra el acceso, los roles y el estado del personal. Las cuentas nuevas quedan activas y reciben una contraseña inicial segura." eyebrow="ADMINISTRACIÓN DEL PERSONAL" title="Usuarios y empleados" actions={<Button className="usuarios-create-button" type="button" disabled={Boolean(uncertain) || saving} onClick={(event) => { formTriggerRef.current = event.currentTarget; openCreate() }} icon={<UserPlus size={17} aria-hidden="true"/>}>Nuevo usuario</Button>} />
+    <PageTitle description="Administra el acceso, los roles y el estado del personal. Las cuentas nuevas quedan activas y reciben una contraseña inicial segura." eyebrow="ADMINISTRACIÓN DEL PERSONAL" title="Usuarios y empleados" actions={<Button className="usuarios-create-button" type="button" disabled={Boolean(uncertain) || saving} onClick={(event) => { formTriggerRef.current = event.currentTarget; credentialsTriggerRef.current = event.currentTarget; openCreate() }} icon={<UserPlus size={17} aria-hidden="true"/>}>Nuevo usuario</Button>} />
     {feedback && <p className={`usuarios-feedback usuarios-feedback--${feedbackTone}`} role={feedbackTone === 'error' ? 'alert' : 'status'}>{feedback}</p>}
     {uncertain && <section className="usuarios-uncertain" role="alert"><div><strong>Operación pendiente de verificación</strong><p>{uncertain.type === 'crear' ? 'Alta de usuario sin confirmación.' : uncertain.type === 'editar' ? `Edición del usuario #${uncertain.id} sin confirmación.` : `${uncertain.action} del usuario #${uncertain.userId} sin confirmación.`} No se reintentará automáticamente; las escrituras permanecen bloqueadas.</p>{uncertain.type === 'account-action' && uncertain.action === 'contrasena' ? <><p>El perfil no expone ni permite verificar contraseñas. Contacta al titular por un canal seguro y solicita que pruebe iniciar sesión con la contraseña que recibió. No compartas contraseñas por esta interfaz.</p>{verificationLoaded && <label className="usuarios-check usuarios-out-of-band"><input type="checkbox" checked={passwordVerifiedOutOfBand} onChange={(event) => setPasswordVerifiedOutOfBand(event.target.checked)}/>Confirmo que el titular verificó el acceso por un canal independiente.</label>}</> : <p>Actualiza el listado/detalle, compara el estado real y confirma explícitamente la verificación.</p>}{uncertain.type === 'crear' && <label className="usuarios-verify-email">Correo utilizado para el alta<input type="email" aria-label="Correo para verificar alta incierta" autoComplete="off" value={verificationEmail} onChange={(event) => setVerificationEmail(event.target.value)}/></label>}</div><div className="usuarios-uncertain-actions"><Button type="button" variant="secondary" disabled={loading} onClick={() => void refreshForVerification()}>Consultar usuario</Button>{verificationLoaded && (uncertain.type !== 'account-action' || uncertain.action !== 'contrasena' || passwordVerifiedOutOfBand) && <Button type="button" disabled={loading} onClick={acknowledgeVerification}>Confirmo; habilitar operaciones</Button>}</div></section>}
     <Card className="usuarios-card" title="Directorio del personal" action={<span className="usuarios-total">{users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</span>}>
@@ -502,22 +538,29 @@ export function UsuariosPage() {
           <label className="usuarios-form-field"><span>Nombres <b>*</b></span><input aria-label="Nombres" required maxLength={100} value={values.nombres} onChange={(event) => setValues({ ...values, nombres: event.target.value })}/></label>
           <label className="usuarios-form-field"><span>Apellidos <b>*</b></span><input aria-label="Apellidos" required maxLength={100} value={values.apellidos} onChange={(event) => setValues({ ...values, apellidos: event.target.value })}/></label>
         </section>}
-        {!editing && <>
-          <label className="usuarios-form-field"><span>Nombres <b>*</b></span><input aria-label="Nombres" required maxLength={100} value={values.nombres} onChange={(event) => setValues({ ...values, nombres: event.target.value })}/></label>
-          <label className="usuarios-form-field"><span>Apellidos <b>*</b></span><input aria-label="Apellidos" required maxLength={100} value={values.apellidos} onChange={(event) => setValues({ ...values, apellidos: event.target.value })}/></label>
-        </>}
         {editing && <section className="usuarios-form-section usuarios-form-section--account" aria-labelledby="usuarios-edit-account-title"><h3 id="usuarios-edit-account-title">Datos de cuenta</h3>
           <label className="usuarios-form-field usuarios-form-field--wide"><span>Correo electrónico <b>*</b></span><input aria-label="Correo" type="email" required maxLength={150} autoComplete="email" value={values.correo} onChange={(event) => setValues({ ...values, correo: event.target.value })}/></label>
         </section>}
-        {!editing && <label className="usuarios-form-field usuarios-form-field--wide"><span>Correo electrónico <b>*</b></span><input aria-label="Correo" type="email" required maxLength={150} autoComplete="email" value={values.correo} onChange={(event) => setValues({ ...values, correo: event.target.value })}/></label>}
-        {!editing && <>
-           <p className="usuarios-invitation-note"><KeyRound size={18} aria-hidden="true"/><span><strong>Acceso inmediato</strong><small>Se generará una contraseña aleatoria segura. Podrás verla una sola vez al confirmar.</small></span></p>
-           <label className="usuarios-form-field"><span>Rol <b>*</b></span><select aria-label="Rol del usuario" required value={values.rol} onChange={(event) => setValues({ ...values, rol: event.target.value as RolUsuario })}>{ROLES_CREABLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label>
-        </>}
+        {!editing && <section className="usuarios-form-section usuarios-form-section--personal" aria-labelledby="usuarios-create-personal-title">
+          <h3 id="usuarios-create-personal-title">Datos personales</h3>
+          <label className="usuarios-form-field"><span>Nombres <b>*</b></span><input aria-label="Nombres" required maxLength={100} autoComplete="given-name" value={values.nombres} onChange={(event) => setValues({ ...values, nombres: event.target.value })}/></label>
+          <label className="usuarios-form-field"><span>Apellidos <b>*</b></span><input aria-label="Apellidos" required maxLength={100} autoComplete="family-name" value={values.apellidos} onChange={(event) => setValues({ ...values, apellidos: event.target.value })}/></label>
+          <div className="usuarios-document usuarios-form-field--wide">
+            <div className="usuarios-document__intro"><strong>Documento de identidad</strong><p>Selecciona DNI o CE e ingresa el número correspondiente.</p></div>
+            <div className="usuarios-document-types" role="group" aria-label="Tipo de documento">{(['DNI', 'CE'] as const).map((type) => <button aria-pressed={values.tipoDocumento === type} className={values.tipoDocumento === type ? 'usuarios-document-type usuarios-document-type--selected' : 'usuarios-document-type'} key={type} onClick={() => setValues({ ...values, tipoDocumento: type, numeroDocumento: normalizeDocumentInput(type, values.numeroDocumento) })} type="button">{type}</button>)}</div>
+            <label className="usuarios-form-field"><span>Número de documento <b>*</b></span><input aria-label="Número de documento" type="text" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} autoComplete="off" aria-describedby="usuarios-document-help" aria-invalid={Boolean(values.numeroDocumento && !isValidDocument(values.tipoDocumento, values.numeroDocumento))} value={values.numeroDocumento} onChange={(event) => setValues({ ...values, numeroDocumento: normalizeDocumentInput(values.tipoDocumento, event.target.value) })}/><small id="usuarios-document-help" aria-live="polite">{documentHelp(values.tipoDocumento)} {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12} dígitos</small></label>
+          </div>
+        </section>}
+        {!editing && <section className="usuarios-form-section usuarios-form-section--account" aria-labelledby="usuarios-create-access-title">
+          <h3 id="usuarios-create-access-title">Acceso al sistema</h3>
+          <label className="usuarios-form-field"><span>Correo electrónico <b>*</b></span><input aria-label="Correo" type="email" required maxLength={150} autoComplete="email" value={values.correo} onChange={(event) => setValues({ ...values, correo: event.target.value })}/></label>
+          <label className="usuarios-form-field"><span>Rol del trabajador <b>*</b></span><select aria-label="Rol del usuario" aria-describedby="usuarios-role-help" required value={values.rol} onChange={(event) => setValues({ ...values, rol: event.target.value as RolUsuario })}>{ROLES_CREABLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select><small id="usuarios-role-help">{roleDescription(values.rol)}</small></label>
+          <p className="usuarios-invitation-note"><KeyRound size={17} aria-hidden="true"/><span><strong>Contraseña automática</strong><small>Se generará una contraseña segura y se mostrará una sola vez al finalizar.</small></span></p>
+        </section>}
         {editing && <section className="usuarios-form-section usuarios-form-section--document" aria-labelledby="usuarios-edit-document-title"><h3 id="usuarios-edit-document-title">Documento de identidad</h3>
           <label className="usuarios-check"><input type="checkbox" checked={values.editarDocumento} onChange={(event) => setValues((old) => ({ ...old, editarDocumento: event.target.checked, tipoDocumento: event.target.checked ? editing.tipoDocumento ?? '' : '', numeroDocumento: event.target.checked ? editing.numeroDocumento ?? '' : '' }))}/>Actualizar documento de identidad</label>
         </section>}
-          {(!editing || values.editarDocumento) && <div className={`usuarios-document ${editing ? 'usuarios-document--edit usuarios-form-field--wide' : ''}`}><div className="usuarios-document__intro"><strong>Documento de identidad</strong><p>Se utiliza para identificar de forma única a cada empleado.</p></div><div className="usuarios-document-types" role="group" aria-label="Tipo de documento">{(['DNI', 'CE'] as const).map((type) => <button aria-pressed={values.tipoDocumento === type} className={values.tipoDocumento === type ? 'usuarios-document-type usuarios-document-type--selected' : 'usuarios-document-type'} key={type} onClick={() => setValues({ ...values, tipoDocumento: type, numeroDocumento: normalizeDocumentInput(type, values.numeroDocumento) })} type="button">{type}</button>)}</div><label className="usuarios-form-field"><span>Número de documento <b>*</b></span><input aria-label="Número de documento" type="text" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} autoComplete="off" aria-describedby="usuarios-document-help" aria-invalid={Boolean(values.numeroDocumento && !isValidDocument(values.tipoDocumento, values.numeroDocumento))} value={values.numeroDocumento} onChange={(event) => setValues({ ...values, numeroDocumento: normalizeDocumentInput(values.tipoDocumento, event.target.value) })}/><small id="usuarios-document-help" aria-live="polite">{documentHelp(values.tipoDocumento)} {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12} dígitos</small></label></div>}
+          {editing && values.editarDocumento && <div className="usuarios-document usuarios-document--edit usuarios-form-field--wide"><div className="usuarios-document__intro"><strong>Documento de identidad</strong><p>Se utiliza para identificar de forma única a cada empleado.</p></div><div className="usuarios-document-types" role="group" aria-label="Tipo de documento">{(['DNI', 'CE'] as const).map((type) => <button aria-pressed={values.tipoDocumento === type} className={values.tipoDocumento === type ? 'usuarios-document-type usuarios-document-type--selected' : 'usuarios-document-type'} key={type} onClick={() => setValues({ ...values, tipoDocumento: type, numeroDocumento: normalizeDocumentInput(type, values.numeroDocumento) })} type="button">{type}</button>)}</div><label className="usuarios-form-field"><span>Número de documento <b>*</b></span><input aria-label="Número de documento" type="text" inputMode="numeric" maxLength={values.tipoDocumento === 'DNI' ? 8 : 12} autoComplete="off" aria-describedby="usuarios-document-help" aria-invalid={Boolean(values.numeroDocumento && !isValidDocument(values.tipoDocumento, values.numeroDocumento))} value={values.numeroDocumento} onChange={(event) => setValues({ ...values, numeroDocumento: normalizeDocumentInput(values.tipoDocumento, event.target.value) })}/><small id="usuarios-document-help" aria-live="polite">{documentHelp(values.tipoDocumento)} {values.numeroDocumento.length}/{values.tipoDocumento === 'DNI' ? 8 : 12} dígitos</small></label></div>}
         {formError && <p className="usuarios-inline-error" role="alert">{formError}</p>}
         <div className="usuarios-actions usuarios-form-actions"><Button type="button" variant="secondary" disabled={saving} onClick={closeForm}>Cancelar</Button><Button type="submit" disabled={Boolean(uncertain) || saving || (editing ? !hasEditedUserChanges(values, editing) : false)}>{editing ? 'Guardar cambios' : 'Revisar datos'}</Button></div>
       </form>
@@ -530,22 +573,19 @@ export function UsuariosPage() {
       <section className="usuarios-detail-section" aria-labelledby="usuarios-personal-title"><h3 id="usuarios-personal-title">Información personal</h3><dl className="usuarios-detail"><div><dt>Nombre completo</dt><dd>{detail.nombres} {detail.apellidos}</dd></div><div><dt>Documento de identidad</dt><dd>{detail.tipoDocumento && detail.numeroDocumento ? `${detail.tipoDocumento} · ${detail.numeroDocumento}` : 'Sin documento registrado'}</dd></div></dl></section>
       <section className="usuarios-detail-section" aria-labelledby="usuarios-access-title"><h3 id="usuarios-access-title">Datos de acceso</h3><dl className="usuarios-detail"><div><dt>Correo electrónico</dt><dd>{detail.correo}</dd></div><div><dt>Rol</dt><dd>{roleLabel(detail.rol)}</dd></div><div><dt>Fecha de registro</dt><dd>{formatCreatedAt(detail.fechaCreacion)}</dd></div></dl></section>
        <section className="usuarios-account-actions" aria-label="Administrar rol del empleado"><h3>Rol del empleado</h3><div className="usuarios-role-change"><label>Rol<select aria-label="Nuevo rol" value={roleDraft} onChange={(event) => setRoleDraft(event.target.value as RolUsuario)}>{ROLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label><Button type="button" variant="secondary" disabled={roleDraft === detail.rol || Boolean(uncertain) || saving} onClick={() => beginRoleChange(detail, roleDraft)}>Cambiar rol</Button></div></section>
-       {detail.estado !== 'INACTIVO' && <section className="usuarios-account-actions" aria-label="Administrar acceso"><h3>Acceso a la cuenta</h3><p>Genera una nueva contraseña inicial de un solo uso. La contraseña vigente dejará de funcionar inmediatamente.</p><Button type="button" variant="secondary" disabled={Boolean(uncertain) || saving} onClick={() => void resetAccess(detail)} icon={<KeyRound size={15} aria-hidden="true"/>}>Restablecer acceso</Button></section>}
+        {detail.estado !== 'INACTIVO' && <section className="usuarios-account-actions" aria-label="Administrar acceso"><h3>Acceso a la cuenta</h3><p>Genera una nueva contraseña inicial de un solo uso. La contraseña vigente dejará de funcionar inmediatamente.</p><Button type="button" variant="secondary" disabled={Boolean(uncertain) || saving} onClick={(event) => { credentialsTriggerRef.current = event.currentTarget; void resetAccess(detail) }} icon={<KeyRound size={15} aria-hidden="true"/>}>Restablecer acceso</Button></section>}
      </section></div>}
 
-     {createdCredentials && <div className="usuarios-backdrop usuarios-backdrop--credentials"><section className="usuarios-dialog usuarios-credentials-dialog" role="dialog" aria-modal="true" aria-labelledby="usuarios-credentials-title" onKeyDown={trapDialogFocus}>
-       <p className="usuarios-dialog__eyebrow">ACCESO GENERADO</p>
-       <h2 id="usuarios-credentials-title">Credenciales iniciales</h2>
-       <p>Guárdalas ahora y compártelas únicamente con su titular. La contraseña no volverá a mostrarse.</p>
-       <dl className="usuarios-detail">
-         <div><dt>Nombre</dt><dd>{createdCredentials.usuario.nombres} {createdCredentials.usuario.apellidos}</dd></div>
-         <div><dt>Correo electrónico</dt><dd>{createdCredentials.usuario.correo}</dd></div>
-         <div><dt>Rol</dt><dd>{roleLabel(createdCredentials.usuario.rol)}</dd></div>
-       </dl>
-       <label className="usuarios-generated-password"><span>Contraseña inicial</span><span className="usuarios-generated-password__control"><input aria-label="Contraseña inicial generada" readOnly type={passwordVisible ? 'text' : 'password'} value={createdCredentials.contrasenaInicial}/><button type="button" aria-label={passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setPasswordVisible((visible) => !visible)}>{passwordVisible ? <EyeOff size={17}/> : <Eye size={17}/>}</button></span></label>
-       {copyStatus && <p className="usuarios-copy-status" role="status">{copyStatus}</p>}
-       <div className="usuarios-actions usuarios-credentials-actions"><Button type="button" variant="secondary" onClick={() => void copyCredentials()} icon={<Copy size={15} aria-hidden="true"/>}>Copiar credenciales</Button><Button type="button" onClick={() => { setCreatedCredentials(null); setPasswordVisible(false); setCopyStatus('') }}>Entendido</Button></div>
-     </section></div>}
+      {createdCredentials && <div className="usuarios-backdrop usuarios-backdrop--credentials" onClick={(event) => { if (event.target === event.currentTarget) closeCredentials() }}><section ref={credentialsDialogRef} tabIndex={-1} className="usuarios-dialog usuarios-credentials-dialog" role="dialog" aria-modal="true" aria-labelledby="usuarios-credentials-title" onKeyDown={trapDialogFocus}>
+        <p className="usuarios-dialog__eyebrow">{credentialsAction === 'created' ? 'CUENTA ACTIVA' : 'ACCESO ACTUALIZADO'}</p>
+        <h2 id="usuarios-credentials-title">{credentialsAction === 'created' ? 'Usuario creado correctamente' : 'Acceso restablecido'}</h2>
+        <p className="usuarios-credentials-name">{createdCredentials.usuario.nombres} {createdCredentials.usuario.apellidos}</p>
+        <p className="usuarios-credentials-meta"><span>{createdCredentials.usuario.correo}</span><span aria-hidden="true">·</span><span>{roleLabel(createdCredentials.usuario.rol)}</span></p>
+        <label className="usuarios-generated-password"><span>Contraseña inicial</span><span className="usuarios-generated-password__control"><input aria-label="Contraseña inicial generada" readOnly type={passwordVisible ? 'text' : 'password'} value={createdCredentials.contrasenaInicial}/><button type="button" aria-label={passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setPasswordVisible((visible) => !visible)}>{passwordVisible ? <EyeOff size={17} aria-hidden="true"/> : <Eye size={17} aria-hidden="true"/>}</button></span></label>
+        <p className="usuarios-credentials-warning">Por seguridad, la contraseña se muestra una sola vez. Cópiala y compártela con su titular.</p>
+        {copyStatus && <p className="usuarios-copy-status" role="status">{copyStatus}</p>}
+        <div className="usuarios-actions usuarios-credentials-actions"><Button type="button" onClick={() => void copyCredentials()} icon={<Copy size={15} aria-hidden="true"/>}>Copiar contraseña</Button><Button type="button" variant="secondary" onClick={closeCredentials}>Entendido</Button></div>
+      </section></div>}
 
 
     {pending && <div className="usuarios-backdrop" onClick={() => { if (!saving) cancelPending() }}><section className="usuarios-dialog" role="dialog" aria-modal="true" aria-labelledby="usuarios-confirm-title" onKeyDown={trapDialogFocus} onClick={(event) => event.stopPropagation()}>
