@@ -14,7 +14,7 @@ const auth = {
 
 const row = {
   id: 14, tipo: 'VISITANTE', persona: 'María Torres', detalle: 'Pase diario', estado: 'REGISTRADO',
-  monto: null, fecha: '2026-11-10T10:30:00', documentoProtegido: 'DNI · ••••1234',
+  monto: null, fecha: '2026-11-10T17:20:00', documentoProtegido: 'DNI · ••••1234',
   modalidad: 'PASE_DIARIO', operacion: 'REINGRESO', responsable: 'Ana Recepción',
 }
 const membershipRow = {
@@ -52,6 +52,7 @@ describe('IngresosClientesAdminView', () => {
     expect(screen.getByText(/4 personas únicas/)).toBeInTheDocument()
     expect(within(screen.getByRole('table')).getAllByText('DNI · ••••1234')).toHaveLength(2)
     expect(within(screen.getByRole('table')).getAllByText('Ana Recepción')).toHaveLength(2)
+    expect(within(screen.getByRole('table')).getAllByText(/17:20|5:20 p\. m\./i).length).toBeGreaterThan(0)
     expect(within(screen.getByRole('table')).getByText('Pedro Ríos')).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Con membresía' })).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Pase diario' })).not.toBeInTheDocument()

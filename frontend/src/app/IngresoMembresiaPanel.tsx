@@ -14,6 +14,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { uncertainWriteResult } from './uncertainWriteLocks'
 import { normalizeDocumentInput } from '../utils/documentIdentity'
+import { parseLimaDateTime } from '../utils/limaDateTime'
 
 const HISTORY_SIZE = 10
 const DIRECTORY_SIZE = 20
@@ -41,7 +42,7 @@ function dateLabel(value: string) {
 }
 
 function dateTimeLabel(value: string) {
-  const parsed = new Date(`${value}-05:00`)
+  const parsed = parseLimaDateTime(value)
   return Number.isNaN(parsed.getTime()) ? 'Fecha no disponible' : new Intl.DateTimeFormat('es-PE', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Lima',
   }).format(parsed)

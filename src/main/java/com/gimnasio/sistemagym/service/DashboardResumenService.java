@@ -41,13 +41,15 @@ public class DashboardResumenService {
         LocalDate primerDia = hoy.minusDays(6);
         LocalDateTime inicioHoy = inicioSistema(hoy);
         LocalDateTime inicioManana = inicioSistema(hoy.plusDays(1));
+        LocalDateTime inicioHoyLima = hoy.atStartOfDay();
+        LocalDateTime inicioMananaLima = hoy.plusDays(1).atStartOfDay();
         LocalDateTime inicioMesDateTime = inicioSistema(inicioMes);
 
         List<DashboardResumenRespuesta.IngresoDiario> porDia = new ArrayList<>(7);
         for (int day = 0; day < 7; day++) {
             LocalDate fecha = primerDia.plusDays(day);
             porDia.add(new DashboardResumenRespuesta.IngresoDiario(fecha,
-                    ingresos.countBetween(inicioSistema(fecha), inicioSistema(fecha.plusDays(1)))));
+                    ingresos.countBetween(fecha.atStartOfDay(), fecha.plusDays(1).atStartOfDay())));
         }
 
         List<DashboardResumenRespuesta.ActividadReciente> actividad = ingresos
@@ -60,11 +62,11 @@ public class DashboardResumenService {
                 pagos.sumConfirmedBetween(inicioMesDateTime, inicioManana)
                         .max(BigDecimal.ZERO),
                 pagos.sumConfirmedBetween(inicioHoy, inicioManana).max(BigDecimal.ZERO),
-                ingresos.countByFechaHoraGreaterThanEqualAndFechaHoraLessThan(inicioHoy, inicioManana),
+                ingresos.countByFechaHoraGreaterThanEqualAndFechaHoraLessThan(inicioHoyLima, inicioMananaLima),
                 ingresos.countByTipoIngresoAndFechaHoraGreaterThanEqualAndFechaHoraLessThan(
-                        TipoIngreso.SOCIO, inicioHoy, inicioManana),
+                        TipoIngreso.SOCIO, inicioHoyLima, inicioMananaLima),
                 ingresos.countByTipoIngresoAndFechaHoraGreaterThanEqualAndFechaHoraLessThan(
-                        TipoIngreso.VISITANTE, inicioHoy, inicioManana),
+                        TipoIngreso.VISITANTE, inicioHoyLima, inicioMananaLima),
                 socios.countByFechaRegistroGreaterThanEqualAndFechaRegistroLessThan(
                         inicioMesDateTime, inicioManana),
                 List.copyOf(porDia),
@@ -82,8 +84,7 @@ public class DashboardResumenService {
                 : ingreso.getContacto() != null ? ingreso.getContacto().getNombre() : "Nombre no disponible";
         return new DashboardResumenRespuesta.ActividadReciente(
                 ingreso.getIdIngreso(), nombre, ingreso.getTipoIngreso().name(),
-                ingreso.getFechaHora().atZone(ZoneId.systemDefault())
-                        .withZoneSameInstant(ZONA_GIMNASIO).toOffsetDateTime());
+                ingreso.getFechaHora().atZone(ZONA_GIMNASIO).toOffsetDateTime());
     }
 
     private LocalDateTime inicioSistema(LocalDate fechaGimnasio) {

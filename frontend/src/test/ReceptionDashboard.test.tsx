@@ -31,7 +31,7 @@ const summary = (overrides: Record<string, unknown> = {}) => ({
   ingresosMembresiaHoy: 2, ingresosPaseDiarioHoy: 1, sociosNuevosMes: 1,
   ingresosSemana: [],
   actividadReciente: [
-    { idIngreso: 10, nombre: 'Ana Socia', tipo: 'SOCIO', fechaHora: '2026-11-10T11:00:00-05:00' },
+    { idIngreso: 10, nombre: 'Ana Socia', tipo: 'SOCIO', fechaHora: '2026-11-10T17:20:00-05:00' },
     { idIngreso: 9, nombre: 'Luis Visitante', tipo: 'VISITANTE', fechaHora: '2026-11-10T09:00:00-05:00' },
   ],
   membresias: { activas: 2, porPagar: 0, vencidas: 0, canceladas: 0 },
@@ -53,6 +53,7 @@ describe('Inicio de RECEPCIONISTA', () => {
     const rows = within(screen.getByRole('table')).getAllByRole('row')
     expect(rows[1]).toHaveTextContent('Ana Socia')
     expect(rows[1]).toHaveTextContent('Con membresía')
+    expect(rows[1]).toHaveTextContent(/17:20|5:20 p\. m\./i)
     expect(rows[2]).toHaveTextContent('Luis Visitante')
     expect(rows[2]).toHaveTextContent('Pase diario')
     expect(screen.queryByRole('link', { name: 'Actividad' })).not.toBeInTheDocument()

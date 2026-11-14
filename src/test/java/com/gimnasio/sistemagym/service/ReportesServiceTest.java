@@ -7,8 +7,15 @@ import com.gimnasio.sistemagym.repository.SocioRepository;
 import com.gimnasio.sistemagym.repository.PlanRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.TimeZone;
 import java.util.List;
+import com.gimnasio.sistemagym.entity.Ingreso;
+import com.gimnasio.sistemagym.entity.TipoIngreso;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -61,5 +68,39 @@ class ReportesServiceTest {
                 mock(MembresiaRepository.class), mock(IngresoRepository.class), mock(PlanRepository.class));
         assertThrows(IllegalArgumentException.class, () -> service.resumen(LocalDate.parse("2026-02-02"), LocalDate.parse("2026-02-01"), null));
         assertThrows(IllegalArgumentException.class, () -> service.resumen(LocalDate.parse("2020-01-01"), LocalDate.parse("2026-01-01"), null));
+    }
+
+    @Test
+    void historialDeIngresosPreservaLas1720EnServidorUtc() {
+        var pagos = mock(PagoRepository.class);
+        var socios = mock(SocioRepository.class);
+        var membresias = mock(MembresiaRepository.class);
+        var ingresos = mock(IngresoRepository.class);
+        var planes = mock(PlanRepository.class);
+        Ingreso ingreso = new Ingreso();
+        ReflectionTestUtils.setField(ingreso, "idIngreso", 17L);
+        ingreso.setTipoIngreso(TipoIngreso.VISITANTE);
+        ingreso.setFechaHora(LocalDateTime.of(2026, 11, 10, 17, 20));
+        when(ingresos.reportPageFiltered(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(""),
+                org.mockito.ArgumentMatchers.eq(""), org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(ingreso)));
+
+        TimeZone original = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+            var result = new ReportesService(pagos, socios, membresias, ingresos, planes)
+                    .historialIngresos(LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 10),
+                            0, 25, "", "");
+            assertEquals(LocalDateTime.of(2026, 11, 10, 17, 20), result.getContent().getFirst().fecha());
+            org.mockito.Mockito.verify(ingresos).reportPageFiltered(
+                    org.mockito.ArgumentMatchers.eq(LocalDate.of(2026, 11, 10).atStartOfDay()),
+                    org.mockito.ArgumentMatchers.eq(LocalDate.of(2026, 11, 11).atStartOfDay()),
+                    org.mockito.ArgumentMatchers.eq(""), org.mockito.ArgumentMatchers.eq(""),
+                    org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.any(Pageable.class));
+        } finally {
+            TimeZone.setDefault(original);
+        }
     }
 }

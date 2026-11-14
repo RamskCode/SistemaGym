@@ -5,6 +5,7 @@ import { obtenerHistorialIngresosRecepcion, type PaginaHistorialIngresos } from 
 import type { AuthContextValue } from '../auth/AuthContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { parseLimaDateTime } from '../utils/limaDateTime'
 
 const PAGE_SIZE = 25
 
@@ -15,7 +16,7 @@ function hoyEnLima() {
 }
 
 function fechaHoraLima(value: string) {
-  const parsed = new Date(`${value}-05:00`)
+  const parsed = parseLimaDateTime(value)
   return Number.isNaN(parsed.getTime()) ? 'Fecha no disponible' : new Intl.DateTimeFormat('es-PE', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Lima',
   }).format(parsed)

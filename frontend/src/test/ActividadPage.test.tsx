@@ -27,7 +27,7 @@ const payload = (events: unknown[] = []) => ({
   membresias: { activas: 4, porPagar: 1, vencidas: 0, canceladas: 0 },
 })
 const entries = [
-  { idIngreso: 1, nombre: 'Ana Socia', tipo: 'SOCIO', fechaHora: '2026-11-08T09:00:00-05:00' },
+  { idIngreso: 1, nombre: 'Ana Socia', tipo: 'SOCIO', fechaHora: '2026-11-08T17:20:00-05:00' },
   { idIngreso: 2, nombre: 'Carlos Visitante', tipo: 'VISITANTE', fechaHora: '2026-11-08T11:00:00-05:00' },
   { idIngreso: 3, nombre: 'Beatriz Socia', tipo: 'SOCIO', fechaHora: '2026-11-07T11:00:00-05:00' },
 ]
@@ -40,8 +40,9 @@ describe('ActividadPage', () => {
     expect(await screen.findByRole('heading', { name: 'Actividad' })).toBeInTheDocument()
     const rows = within(screen.getByRole('table')).getAllByRole('row')
     expect(rows).toHaveLength(4)
-    expect(rows[1]).toHaveTextContent('Carlos Visitante')
-    expect(rows[2]).toHaveTextContent('Ana Socia')
+    expect(rows[1]).toHaveTextContent('Ana Socia')
+    expect(rows[1]).toHaveTextContent(/17:20|5:20 p\. m\./i)
+    expect(rows[2]).toHaveTextContent('Carlos Visitante')
     expect(screen.getByText('Pagos confirmados')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Indicadores: hoy' })).toHaveTextContent('Entradas')
     expect(screen.getByText('Ingresos cobrados').closest('.actividad-metric')?.querySelector('strong'))

@@ -5,13 +5,14 @@ import { obtenerDetalleIngresoCliente, obtenerDetalleReporte, obtenerResumenRepo
 import type { AuthContextValue } from '../auth/AuthContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { parseLimaDateTime } from '../utils/limaDateTime'
 
 function hoyLima() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
 }
 
 function fechaHoraLima(value: string) {
-  const parsed = new Date(value)
+  const parsed = parseLimaDateTime(value)
   return Number.isNaN(parsed.getTime()) ? 'Fecha no disponible' : new Intl.DateTimeFormat('es-PE', {
     dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Lima',
   }).format(parsed)

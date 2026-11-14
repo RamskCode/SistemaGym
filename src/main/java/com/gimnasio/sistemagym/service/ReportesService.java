@@ -56,6 +56,8 @@ public class ReportesService {
         validar(desde, hasta);
         LocalDateTime inicio = inicio(desde);
         LocalDateTime fin = inicio(hasta.plusDays(1));
+        LocalDateTime inicioIngreso = desde.atStartOfDay();
+        LocalDateTime finIngreso = hasta.plusDays(1).atStartOfDay();
         LocalDate hoy = LocalDate.now(LIMA);
         Map<String, PagoAgg> pagosPorDia = new LinkedHashMap<>();
         for (Object[] fila : pagos.reportConfirmedTimeline(inicio, fin)) {
@@ -69,7 +71,7 @@ public class ReportesService {
             sociosPorDia.merge(mes(((Number) fila[0]).intValue(), ((Number) fila[1]).intValue()), ((Number) fila[2]).longValue(), Long::sum);
         }
         Map<String, long[]> ingresosPorDia = new LinkedHashMap<>();
-        for (Object[] fila : ingresos.reportTimeline(inicio, fin)) {
+        for (Object[] fila : ingresos.reportTimeline(inicioIngreso, finIngreso)) {
             String mes = mes(((Number) fila[0]).intValue(), ((Number) fila[1]).intValue());
             long[] item = ingresosPorDia.computeIfAbsent(mes, ignored -> new long[2]);
             int tipo = "SOCIO".equals(fila[2].toString()) ? 0 : 1;
@@ -83,14 +85,14 @@ public class ReportesService {
         java.util.Set<String> personasUnicas = new java.util.HashSet<>();
         java.util.Set<String> personasSocios = new java.util.HashSet<>();
         java.util.Set<String> personasVisitantes = new java.util.HashSet<>();
-        for (Object[] persona : ingresos.reportDistinctPeople(inicio, fin)) {
+        for (Object[] persona : ingresos.reportDistinctPeople(inicioIngreso, finIngreso)) {
             String clavePersona = persona[1] + ":" + persona[2].toString().trim().toUpperCase(java.util.Locale.ROOT);
             personasUnicas.add(clavePersona);
             if ("SOCIO".equals(persona[0].toString())) personasSocios.add(clavePersona);
             else personasVisitantes.add(clavePersona);
         }
         List<com.gimnasio.sistemagym.dto.ReporteResumenRespuesta.ResponsableReporte> responsables =
-                ingresos.reportRegistrars(inicio, fin).stream()
+                ingresos.reportRegistrars(inicioIngreso, finIngreso).stream()
                         .map(fila -> new com.gimnasio.sistemagym.dto.ReporteResumenRespuesta.ResponsableReporte(
                                 ((Number) fila[0]).longValue(), fila[1] + " " + fila[2]))
                         .toList();
@@ -99,7 +101,8 @@ public class ReportesService {
                 pagos.countByEstadoIgnoreCaseAndFechaPagoGreaterThanEqualAndFechaPagoLessThan("CONFIRMADO", inicio, fin),
                 socios.countByFechaRegistroGreaterThanEqualAndFechaRegistroLessThan(inicio, fin),
                 activas, vencidas, proximas,
-                ingresos.reportSocioCount(inicio, fin), ingresos.reportVisitanteCount(inicio, fin),
+                ingresos.reportSocioCount(inicioIngreso, finIngreso),
+                ingresos.reportVisitanteCount(inicioIngreso, finIngreso),
                 personasUnicas.size(), personasSocios.size(), personasVisitantes.size(), responsables,
                 puntosPagos(pagosPorDia), puntos(sociosPorDia), puntosIngresos(ingresosPorDia),
                 planes);
@@ -121,8 +124,8 @@ public class ReportesService {
                 || !java.util.Set.of("", "MEMBRESIA", "PASE_DIARIO").contains(modalidad)) {
             throw new IllegalArgumentException("Filtro de ingresos inválido.");
         }
-        LocalDateTime inicio = inicio(desde);
-        LocalDateTime fin = inicio(hasta.plusDays(1));
+        LocalDateTime inicio = desde.atStartOfDay();
+        LocalDateTime fin = hasta.plusDays(1).atStartOfDay();
         PageRequest page = PageRequest.of(pagina, tamano, Sort.unsorted());
         return ingresos.reportPageFiltered(inicio, fin, buscar.trim().toLowerCase(),
                 modalidad, null, page).map(this::filaIngreso);
@@ -133,7 +136,7 @@ public class ReportesService {
                 .orElseThrow(() -> new com.gimnasio.sistemagym.exception.RecursoNoEncontradoException(
                         "No se encontró el acceso solicitado."));
         if (ingreso.getTipoIngreso() == com.gimnasio.sistemagym.entity.TipoIngreso.SOCIO) {
-            LocalDate fechaAcceso = lima(ingreso.getFechaHora()).toLocalDate();
+            LocalDate fechaAcceso = ingreso.getFechaHora().toLocalDate();
             List<Membresia> posibles = ingreso.getSocio() == null ? List.of()
                     : membresias.findWithPlanBySocioId(ingreso.getSocio().getIdSocio()).stream()
                             .filter(m -> m.getFechaCreacion() != null
@@ -173,12 +176,14 @@ public class ReportesService {
         if (buscar == null || modalidad == null || !java.util.Set.of("", "MEMBRESIA", "PASE_DIARIO").contains(modalidad))
             throw new IllegalArgumentException("Filtro de ingresos inválido.");
         LocalDateTime inicio = inicio(desde), fin = inicio(hasta.plusDays(1));
+        LocalDateTime inicioIngreso = desde.atStartOfDay();
+        LocalDateTime finIngreso = hasta.plusDays(1).atStartOfDay();
         PageRequest page = PageRequest.of(pagina, tamano, Sort.unsorted());
         return switch (tipo.toLowerCase()) {
             case "pagos" -> pagos.reportConfirmedBetween(inicio, fin, page).stream().map(this::filaPago).toList();
             case "socios" -> socios.reportNewBetween(inicio, fin, page).stream().map(this::filaSocio).toList();
             case "membresias" -> membresias.reportBetween(inicio, fin, planId, page).stream().map(this::filaMembresia).toList();
-            case "ingresos" -> ingresos.reportPageFiltered(inicio, fin, buscar.trim().toLowerCase(), modalidad, responsableId, page)
+            case "ingresos" -> ingresos.reportPageFiltered(inicioIngreso, finIngreso, buscar.trim().toLowerCase(), modalidad, responsableId, page)
                     .stream().map(this::filaIngreso).toList();
             default -> throw new IllegalArgumentException("Tipo de reporte inválido.");
         };
@@ -203,7 +208,7 @@ public class ReportesService {
         String responsable = i.getUsuario() == null ? null
                 : i.getUsuario().getNombres() + " " + i.getUsuario().getApellidos();
         return new ReporteFilaRespuesta(i.getIdIngreso(), i.getTipoIngreso().name(), persona,
-                referencia, "REGISTRADO", null, lima(i.getFechaHora()), documento,
+                referencia, "REGISTRADO", null, i.getFechaHora(), documento,
                 modalidad, operacion, responsable);
     }
     private LocalDateTime lima(LocalDateTime date) { return date.atZone(ZoneId.systemDefault()).withZoneSameInstant(LIMA).toLocalDateTime(); }

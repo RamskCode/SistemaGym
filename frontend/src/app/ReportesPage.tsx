@@ -7,6 +7,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { PageTitle } from '../components/PageTitle'
 import { downloadXlsx } from '../utils/xlsxExport'
+import { parseLimaDateTime } from '../utils/limaDateTime'
 import './reportes.css'
 
 const tipos: { id: ReporteTipo; label: string }[] = [
@@ -90,18 +91,35 @@ export function ReportesPage() {
 
   const filteredRows = useMemo(() => rows.filter(row => `${row.persona} ${row.detalle} ${row.estado} ${row.tipo}`.toLocaleLowerCase('es').includes(search.toLocaleLowerCase('es'))), [rows, search])
   const period = `${start} — ${end}`
+  function reportDate(value: string) {
+    return type === 'ingresos' ? parseLimaDateTime(value) : new Date(value)
+  }
+
+  function reportDateLabel(value: string) {
+    const date = reportDate(value)
+    return new Intl.DateTimeFormat('es-PE', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      ...(type === 'ingresos' ? { timeZone: 'America/Lima' } : {}),
+    }).format(date)
+  }
+
   async function exportXlsx() {
     downloadXlsx(`sistemagym-${type}-${start}-${end}.xlsx`, [
       ['SistemaGym'], [`Reporte: ${tipos.find(item => item.id === type)?.label}`], [`Período: ${period}`], [`Página: ${page + 1}`], [`Generado: ${new Date().toLocaleString('es-PE')}`], [],
       ['Tipo', 'Persona / referencia', 'Detalle', 'Estado', 'Monto', 'Fecha'],
-      ...filteredRows.map(row => [row.tipo, row.persona, row.detalle, row.estado, row.monto ?? '', new Date(row.fecha).toLocaleString('es-PE')]),
+      ...filteredRows.map(row => [row.tipo, row.persona, row.detalle, row.estado, row.monto ?? '', type === 'ingresos'
+        ? reportDate(row.fecha).toLocaleString('es-PE', { timeZone: 'America/Lima' })
+        : new Date(row.fecha).toLocaleString('es-PE')]),
     ])
   }
   async function exportPdf() {
     const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
     const pdf = new jsPDF({ orientation: 'landscape' }); pdf.setFontSize(16); pdf.text('SistemaGym · Reportes', 14, 17); pdf.setFontSize(10)
     pdf.text(`${tipos.find(item => item.id === type)?.label} | Período: ${period} | Página ${page + 1} | Generado: ${new Date().toLocaleString('es-PE')}`, 14, 25)
-    autoTable(pdf, { startY: 32, head: [['Tipo', 'Persona', 'Detalle', 'Estado', 'Monto', 'Fecha']], body: filteredRows.map(row => [row.tipo, row.persona, row.detalle, row.estado, row.monto == null ? '—' : currency.format(row.monto), new Date(row.fecha).toLocaleString('es-PE')]) })
+    autoTable(pdf, { startY: 32, head: [['Tipo', 'Persona', 'Detalle', 'Estado', 'Monto', 'Fecha']], body: filteredRows.map(row => [row.tipo, row.persona, row.detalle, row.estado, row.monto == null ? '—' : currency.format(row.monto), type === 'ingresos'
+      ? reportDate(row.fecha).toLocaleString('es-PE', { timeZone: 'America/Lima' })
+      : new Date(row.fecha).toLocaleString('es-PE')]) })
     pdf.save(`sistemagym-${type}-${start}-${end}.pdf`)
   }
 
@@ -150,7 +168,7 @@ export function ReportesPage() {
       <Card className="reportes-table-card" title="Detalle del reporte">
         <p className="reportes-table-description">Consulta los registros del período y exporta la página visible.</p>
         <div className="reportes-table-toolbar"><label>Tipo de reporte<select value={type} onChange={e => { setType(e.target.value as ReporteTipo); setPage(0) }}>{tipos.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><label>Buscar en esta página<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Persona, detalle o estado" /></label><div className="reportes-export"><Button type="button" variant="secondary" onClick={exportPdf}><FileText size={16} /> PDF</Button><Button type="button" variant="secondary" onClick={exportXlsx}><FileSpreadsheet size={16} /> Excel</Button></div></div>
-        <div className="reportes-table-scroll"><table><caption className="reportes-sr-only">Registros de {tipos.find(item => item.id === type)?.label ?? 'reportes'}, página {page + 1}</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Persona / referencia</th><th scope="col">Detalle</th><th scope="col">Estado</th><th scope="col" className="reportes-th-amount">Monto</th><th scope="col">Fecha</th></tr></thead><tbody>{filteredRows.map(row => <tr key={`${row.tipo}-${row.id}`}><td data-label="Tipo">{row.tipo}</td><td data-label="Persona / referencia">{row.persona || '—'}</td><td data-label="Detalle">{row.detalle || '—'}</td><td data-label="Estado"><span className={`reportes-state ${row.estado.toLocaleLowerCase('es').replace(/[^a-z0-9]+/g, '-')}`}>{row.estado || 'Sin estado'}</span></td><td data-label="Monto" className="reportes-amount">{row.monto == null ? '—' : currency.format(row.monto)}</td><td data-label="Fecha">{new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(row.fecha))}</td></tr>)}</tbody></table></div>
+         <div className="reportes-table-scroll"><table><caption className="reportes-sr-only">Registros de {tipos.find(item => item.id === type)?.label ?? 'reportes'}, página {page + 1}</caption><thead><tr><th scope="col">Tipo</th><th scope="col">Persona / referencia</th><th scope="col">Detalle</th><th scope="col">Estado</th><th scope="col" className="reportes-th-amount">Monto</th><th scope="col">Fecha</th></tr></thead><tbody>{filteredRows.map(row => <tr key={`${row.tipo}-${row.id}`}><td data-label="Tipo">{row.tipo}</td><td data-label="Persona / referencia">{row.persona || '—'}</td><td data-label="Detalle">{row.detalle || '—'}</td><td data-label="Estado"><span className={`reportes-state ${row.estado.toLocaleLowerCase('es').replace(/[^a-z0-9]+/g, '-')}`}>{row.estado || 'Sin estado'}</span></td><td data-label="Monto" className="reportes-amount">{row.monto == null ? '—' : currency.format(row.monto)}</td><td data-label="Fecha">{reportDateLabel(row.fecha)}</td></tr>)}</tbody></table></div>
         {filteredRows.length === 0 && <div className="reportes-table-empty"><strong>{search ? 'No hay coincidencias' : 'No hay registros en esta página'}</strong><span>{search ? 'Prueba con otros términos de búsqueda.' : 'No se encontraron registros para el tipo y período seleccionados.'}</span></div>}
         <div className="reportes-pagination"><span>Página {page + 1} · hasta 25 registros</span><Button type="button" variant="secondary" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}>Anterior</Button><Button type="button" variant="secondary" disabled={rows.length < 25} onClick={() => setPage(p => p + 1)}>Siguiente</Button></div>
       </Card>
