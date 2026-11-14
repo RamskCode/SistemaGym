@@ -24,10 +24,11 @@ export type AuthUser = {
   apellidos?: string
   tipoDocumento?: 'DNI' | 'CE' | null
   numeroDocumento?: string | null
+  contrasenaInicial?: boolean
 }
 
 export type PersonalProfile = Pick<AuthUser,
-  'nombres' | 'apellidos' | 'tipoDocumento' | 'numeroDocumento'>
+  'nombres' | 'apellidos' | 'tipoDocumento' | 'numeroDocumento' | 'contrasenaInicial'>
 
 type AuthSession = {
   token: string

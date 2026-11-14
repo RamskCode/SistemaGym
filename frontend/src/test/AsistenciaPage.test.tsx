@@ -50,6 +50,10 @@ function getHandlers(page = 0) {
 
 describe('AsistenciaPage', () => {
   it('loads the read-only customer entry history using Lima today and paginates it', async () => {
+    const limaParts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date())
+    const limaToday = `${limaParts.find((part) => part.type === 'year')?.value}-${limaParts.find((part) => part.type === 'month')?.value}-${limaParts.find((part) => part.type === 'day')?.value}`
     const user = userEvent.setup()
     getHandlers()
     let query = new URLSearchParams()
@@ -68,8 +72,8 @@ describe('AsistenciaPage', () => {
     expect(await screen.findByText('Ana Quispe')).toBeInTheDocument()
     expect(screen.getAllByText('Membresía').length).toBeGreaterThan(1)
     expect(screen.getByText('DNI · ••••1234')).toBeInTheDocument()
-    expect(query.get('desde')).toBe('2026-11-12')
-    expect(query.get('hasta')).toBe('2026-11-12')
+    expect(query.get('desde')).toBe(limaToday)
+    expect(query.get('hasta')).toBe(limaToday)
     expect(screen.queryByRole('button', { name: /editar|eliminar|corregir/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Siguiente' }))
     await waitFor(() => expect(query.get('pagina')).toBe('1'))

@@ -4,7 +4,7 @@ import { setupServer } from 'msw/node'
 export const server = setupServer(
   http.get('/api/mi-cuenta', () => HttpResponse.json({
     nombres: 'Usuario', apellidos: 'Prueba', correo: 'personal@example.test',
-    rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null,
+    rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
   })),
   http.get('/api/setup/status', () => HttpResponse.json({ required: false })),
   http.get('/api/ingresos/pase-diario/habilitado', () => HttpResponse.json(false)),

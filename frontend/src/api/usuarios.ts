@@ -24,6 +24,7 @@ export type CrearUsuarioRequest = {
   tipoDocumento: TipoDocumentoUsuario
   numeroDocumento: string
 }
+export type CredencialesIniciales = { usuario: Usuario; contrasenaInicial: string }
 export type InvitacionCreada = { usuario: Usuario; correoEnviado: boolean; mensaje: string }
 
 export type ActualizarUsuarioRequest = {
@@ -92,26 +93,38 @@ function write(path: `/api/${string}`, auth: AuthenticatedRequestContext, method
   }).then(parseUsuario)
 }
 
-export function crearUsuario(auth: AuthenticatedRequestContext, body: CrearUsuarioRequest): Promise<InvitacionCreada> {
+export function crearUsuario(auth: AuthenticatedRequestContext, body: CrearUsuarioRequest): Promise<CredencialesIniciales> {
   return authenticatedApiRequest<unknown>('/api/usuarios', auth, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...body, nombres: formatPersonName(body.nombres), apellidos: formatPersonName(body.apellidos) }),
     signal: AbortSignal.timeout(WRITE_TIMEOUT_MS),
-  }).then(parseInvitacion)
+  }).then(parseCredencialesIniciales)
 }
 
-function parseInvitacion(value: unknown): InvitacionCreada {
+function parseCredencialesIniciales(value: unknown): CredencialesIniciales {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new ApiError('invalid-response')
   const record = value as Record<string, unknown>
-  if (typeof record.correoEnviado !== 'boolean' || typeof record.mensaje !== 'string') throw new ApiError('invalid-response')
-  return { usuario: parseUsuario(record.usuario), correoEnviado: record.correoEnviado, mensaje: record.mensaje }
+  if (typeof record.contrasenaInicial !== 'string' || record.contrasenaInicial.length < 16) throw new ApiError('invalid-response')
+  return { usuario: parseUsuario(record.usuario), contrasenaInicial: record.contrasenaInicial }
+}
+
+export function restablecerAcceso(auth: AuthenticatedRequestContext, id: number): Promise<CredencialesIniciales> {
+  validarId(id)
+  return authenticatedApiRequest<unknown>(`/api/usuarios/${id}/restablecer-acceso`, auth, {
+    method: 'POST', signal: AbortSignal.timeout(WRITE_TIMEOUT_MS),
+  }).then(parseCredencialesIniciales)
 }
 
 export function reenviarInvitacion(auth: AuthenticatedRequestContext, id: number): Promise<InvitacionCreada> {
   validarId(id)
   return authenticatedApiRequest<unknown>(`/api/usuarios/${id}/invitacion`, auth, {
     method: 'POST', signal: AbortSignal.timeout(WRITE_TIMEOUT_MS),
-  }).then(parseInvitacion)
+  }).then((value) => {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new ApiError('invalid-response')
+    const record = value as Record<string, unknown>
+    if (typeof record.correoEnviado !== 'boolean' || typeof record.mensaje !== 'string') throw new ApiError('invalid-response')
+    return { usuario: parseUsuario(record.usuario), correoEnviado: record.correoEnviado, mensaje: record.mensaje }
+  })
 }
 
 export function actualizarUsuario(auth: AuthenticatedRequestContext, id: number, body: ActualizarUsuarioRequest): Promise<Usuario> {

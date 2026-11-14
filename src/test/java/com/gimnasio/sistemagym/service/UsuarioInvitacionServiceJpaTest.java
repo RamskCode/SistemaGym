@@ -22,6 +22,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ class UsuarioInvitacionServiceJpaTest {
     @Autowired InvitacionUsuarioRepository tokens;
     @Autowired JdbcTemplate jdbc;
     @Autowired CustomUserDetailsService details;
+    @Autowired PasswordEncoder passwordEncoder;
     @MockitoBean InvitacionMailService mail;
     private final List<String> sentTokens = new ArrayList<>();
 
@@ -55,9 +57,17 @@ class UsuarioInvitacionServiceJpaTest {
     }
 
     private Usuario create(String email) {
-        var response = admin.crear(new CrearUsuarioRequest("Ana", "Prueba", email,
-                "initial-password-must-be-ignored", "ENTRENADOR", TipoDocumento.DNI, "12345678"));
-        return users.findById(response.idUsuario()).orElseThrow();
+        Rol role = roles.findByNombreIgnoreCase("ENTRENADOR").orElseThrow();
+        Usuario user = new Usuario();
+        user.setRol(role);
+        user.setNombres("Ana");
+        user.setApellidos("Prueba");
+        user.setCorreo(email);
+        user.setContrasenaHash("pending-hash");
+        user.setEstado("PENDIENTE");
+        user.setTipoDocumento(TipoDocumento.DNI);
+        user.setNumeroDocumento("12345678");
+        return users.saveAndFlush(user);
     }
 
     @Test
@@ -122,6 +132,20 @@ class UsuarioInvitacionServiceJpaTest {
         invitations.sendInvitation(user.getIdUsuario());
         invitations.sendInvitation(user.getIdUsuario());
         assertThrows(ConflictoException.class, () -> invitations.sendInvitation(user.getIdUsuario()));
+    }
+
+    @Test
+    void administradorPuedeDarAccesoInmediatoAUnaCuentaPendientePreexistente() {
+        Usuario pending = create("legacy-pending@example.test");
+        var credentials = admin.restablecerAcceso(pending.getIdUsuario());
+        Usuario activated = users.findById(pending.getIdUsuario()).orElseThrow();
+
+        assertEquals("ACTIVO", activated.getEstado());
+        assertTrue(activated.usaContrasenaInicial());
+        assertTrue(passwordEncoder.matches(
+                credentials.contrasenaInicial(), activated.getContrasenaHash()));
+        assertEquals(activated.getCorreo(),
+                details.loadUserByUsername(activated.getCorreo()).getUsername());
     }
 
     private static String hash(String raw) {

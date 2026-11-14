@@ -23,9 +23,9 @@ describe('API de usuarios', () => {
   })
 
   it('envía POST y PUT con DTOs exactos y soporta omitir documento al actualizar', async () => {
-    server.use(http.post('/api/usuarios', async ({ request }) => { expect(await request.json()).toEqual(create); return HttpResponse.json({ usuario: user, correoEnviado: true, mensaje: 'invitación enviada' }, { status: 201 }) }))
+    server.use(http.post('/api/usuarios', async ({ request }) => { expect(await request.json()).toEqual(create); return HttpResponse.json({ usuario: user, contrasenaInicial: 'G5!rQ8-wB2#pN4_mT7@cX9aL' }, { status: 201 }) }))
     server.use(http.put('/api/usuarios/16', async ({ request }) => { expect(await request.json()).toEqual({ nombres: 'Lucía', apellidos: 'Soto', correo: 'lucia@example.test' }); return HttpResponse.json(user) }))
-    await expect(crearUsuario(auth, create)).resolves.toEqual({ usuario: user, correoEnviado: true, mensaje: 'invitación enviada' })
+    await expect(crearUsuario(auth, create)).resolves.toEqual({ usuario: user, contrasenaInicial: 'G5!rQ8-wB2#pN4_mT7@cX9aL' })
     await expect(actualizarUsuario(auth, 16, { nombres: 'Lucía', apellidos: 'Soto', correo: 'lucia@example.test' })).resolves.toEqual(user)
   })
 

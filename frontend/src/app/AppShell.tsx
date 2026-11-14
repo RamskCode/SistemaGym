@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { ChevronDown, LogOut, Menu, UserRound } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, UserRound, UsersRound } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { Button } from '../components/Button'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { obtenerMiCuenta } from '../api/miCuenta'
 
@@ -13,6 +13,7 @@ export function AppShell() {
   const [profileUnavailable, setProfileUnavailable] = useState(false)
   const auth = useAuth()
   const { logout, user } = auth
+  const navigate = useNavigate()
   const isReception = user?.roles.length === 1 && user.roles[0] === 'RECEPCIONISTA'
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
@@ -42,6 +43,7 @@ export function AppShell() {
           apellidos: profile.apellidos,
           tipoDocumento: profile.tipoDocumento,
           numeroDocumento: profile.numeroDocumento,
+          contrasenaInicial: profile.contrasenaInicial,
         })
         setProfileUnavailable(false)
       }
@@ -143,8 +145,11 @@ export function AppShell() {
                   {profileUnavailable && <small role="status">Perfil temporalmente no disponible</small>}
                 </div>
                 <Link className="account-menu__link" onClick={closeAccountMenu} to="/mi-cuenta">
-                  <UserRound aria-hidden="true" size={17} /> Mi cuenta
+                  <UserRound aria-hidden="true" size={17} /> Mi perfil
                 </Link>
+                <button className="account-menu__logout" onClick={() => { closeAccountMenu(); logout(); navigate('/login', { replace: true }) }} type="button">
+                  <UsersRound aria-hidden="true" size={17} /> Cambiar de cuenta
+                </button>
                 <button className="account-menu__logout" onClick={() => { closeAccountMenu(); logout() }} type="button">
                   <LogOut aria-hidden="true" size={17} /> Cerrar sesión
                 </button>
@@ -154,6 +159,7 @@ export function AppShell() {
         </header>
 
         <main className="workspace">
+          {user?.contrasenaInicial && <p className="initial-password-notice" role="status">Estás utilizando tu contraseña inicial. Puedes cambiarla cuando quieras desde <Link to="/mi-cuenta#seguridad">Mi perfil → Seguridad</Link>.</p>}
           <Outlet />
           <footer className="workspace__footer">
             <span>SistemaGym · WEB</span>

@@ -21,6 +21,7 @@ import com.gimnasio.sistemagym.service.UsuarioInvitacionService;
 import com.gimnasio.sistemagym.controller.ActivacionCuentaController;
 import com.gimnasio.sistemagym.controller.MiCuentaController;
 import com.gimnasio.sistemagym.dto.MiCuentaRespuesta;
+import com.gimnasio.sistemagym.dto.CredencialesInicialesRespuesta;
 import com.gimnasio.sistemagym.service.MiCuentaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,7 +196,11 @@ class UsuarioControllerSecurityTest {
         mockMvc.perform(post("/api/usuarios/21/invitacion")
                         .with(user("coach").roles("ENTRENADOR")))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/usuarios/21/restablecer-acceso")
+                        .with(user("coach").roles("ENTRENADOR")))
+                .andExpect(status().isForbidden());
         verify(invitaciones, never()).sendInvitation(anyLong());
+        verifyNoInteractions(usuarioAdminService);
     }
 
     @Test
@@ -250,13 +255,12 @@ class UsuarioControllerSecurityTest {
     }
 
     @Test
-    void altaAdminDevuelveDtoSinCamposDeContrasena() throws Exception {
+    void altaAdminDevuelveContrasenaInicialUnaSolaVezYNoHash() throws Exception {
         when(usuarioAdminService.crear(any(CrearUsuarioRequest.class))).thenReturn(
-                new UsuarioRespuesta(21L, "Ana", "Prueba", "ana@example.com",
-                        "NUTRICIONISTA", "PENDIENTE", null,
-                        TipoDocumento.CE, "12345"));
-        when(invitaciones.sendInvitation(21L)).thenReturn(
-                new UsuarioInvitacionService.Delivery(true, "Invitación enviada correctamente."));
+                new CredencialesInicialesRespuesta(
+                        new UsuarioRespuesta(21L, "Ana", "Prueba", "ana@example.com",
+                                "NUTRICIONISTA", "ACTIVO", null, TipoDocumento.CE, "12345"),
+                        "R4nd0m-Initial!Credential"));
 
         mockMvc.perform(post("/api/usuarios")
                         .with(user("admin").roles("ADMINISTRADOR"))
@@ -269,12 +273,13 @@ class UsuarioControllerSecurityTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.usuario.idUsuario").value(21))
-                .andExpect(jsonPath("$.correoEnviado").value(true))
-                .andExpect(jsonPath("$.contrasena").doesNotExist())
+                .andExpect(jsonPath("$.usuario.estado").value("ACTIVO"))
+                .andExpect(jsonPath("$.contrasenaInicial").value("R4nd0m-Initial!Credential"))
                 .andExpect(jsonPath("$.contrasenaHash").doesNotExist())
                 .andExpect(jsonPath("$.contrasena_hash").doesNotExist())
                 .andExpect(jsonPath("$.usuario.tipoDocumento").value("CE"))
                 .andExpect(jsonPath("$.usuario.numeroDocumento").value("12345"));
+        verifyNoInteractions(invitaciones);
     }
 
     @Test

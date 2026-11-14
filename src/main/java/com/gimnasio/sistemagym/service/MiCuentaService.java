@@ -97,7 +97,7 @@ public class MiCuentaService {
             throw new IllegalArgumentException("La contraseña nueva debe ser distinta de la actual.");
         }
         usuario.setContrasenaHash(passwordEncoder.encode(solicitud.contrasenaNueva()));
-        usuario.setVersionCredenciales(usuario.getVersionCredenciales() + 1);
+        VersionCredenciales.avanzarTrasCambio(usuario);
         usuarios.saveAndFlush(usuario);
         if (refreshSessions != null) refreshSessions.revocarUsuario(usuario.getIdUsuario());
     }
@@ -113,7 +113,8 @@ public class MiCuentaService {
     private MiCuentaRespuesta respuesta(Usuario usuario) {
         return new MiCuentaRespuesta(usuario.getNombres(), usuario.getApellidos(),
                 usuario.getCorreo(), usuario.getRol().getNombre(),
-                usuario.getTipoDocumento(), usuario.getNumeroDocumento());
+                usuario.getTipoDocumento(), usuario.getNumeroDocumento(),
+                usuario.usaContrasenaInicial());
     }
 
     private static RecursoNoEncontradoException cuentaNoEncontrada() {

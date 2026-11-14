@@ -81,6 +81,7 @@ export function MiCuentaPage() {
         apellidos: result.apellidos,
         tipoDocumento: result.tipoDocumento,
         numeroDocumento: result.numeroDocumento,
+        contrasenaInicial: result.contrasenaInicial,
       })
     } catch (error) {
       if (auth.getSessionVersion() === version) setProfileError(mensaje(error))
@@ -138,6 +139,7 @@ export function MiCuentaPage() {
         apellidos: result.apellidos,
         tipoDocumento: result.tipoDocumento,
         numeroDocumento: result.numeroDocumento,
+        contrasenaInicial: result.contrasenaInicial,
       })
       setProfileStatus('Tus datos se actualizaron correctamente.')
     } catch (error) {
@@ -181,7 +183,7 @@ export function MiCuentaPage() {
   const initials = `${profile?.nombres.trim().charAt(0) ?? ''}${profile?.apellidos.trim().charAt(0) ?? ''}`
 
   return <div className="dashboard mi-cuenta-page">
-    <PageTitle eyebrow="CUENTA PERSONAL" title="Mi cuenta" description="Administra tu información personal y consulta los datos de acceso de tu cuenta." />
+    <PageTitle eyebrow="CUENTA PERSONAL" title="Mi perfil" description="Administra tu información personal y consulta los datos de acceso de tu cuenta." />
     {loading && <p aria-live="polite" className="mi-cuenta-state" role="status">Cargando tu cuenta…</p>}
     {profileError && !profile && <div className="mi-cuenta-feedback mi-cuenta-feedback--error" role="alert"><span>{profileError}</span><Button onClick={() => void loadProfile()} type="button" variant="secondary">Reintentar</Button></div>}
     {profile && draft && <>
@@ -215,7 +217,7 @@ export function MiCuentaPage() {
 
       <div className="mi-cuenta-info-grid">
         <Card className="mi-cuenta-card mi-cuenta-info-card" title="Información de acceso">
-          <div className="mi-cuenta-detail"><span className="mi-cuenta-detail-label"><Mail aria-hidden="true" size={15} /> Correo electrónico</span><strong>{profile.correo}</strong><small>El correo no se puede cambiar desde Mi cuenta.</small></div>
+          <div className="mi-cuenta-detail"><span className="mi-cuenta-detail-label"><Mail aria-hidden="true" size={15} /> Correo electrónico</span><strong>{profile.correo}</strong><small>El correo no se puede cambiar desde Mi perfil.</small></div>
         </Card>
         <Card className="mi-cuenta-card mi-cuenta-info-card" title="Información laboral">
           <div className="mi-cuenta-detail"><span className="mi-cuenta-detail-label"><BriefcaseBusiness aria-hidden="true" size={15} /> Rol asignado</span><strong>{profile.rol}</strong><small>Los permisos se administran según el rol.</small></div>
@@ -223,7 +225,7 @@ export function MiCuentaPage() {
       </div>
 
       <Card className="mi-cuenta-card mi-cuenta-security-card" title="Seguridad" id="seguridad">
-        <div className="mi-cuenta-security-intro"><span aria-hidden="true"><KeyRound size={18} /></span><div><strong>Actualiza tu contraseña</strong><p>Al actualizarla, se cerrará tu sesión y tendrás que iniciar nuevamente. Necesitarás confirmar tu contraseña actual.</p></div></div>
+        <div className="mi-cuenta-security-intro"><span aria-hidden="true"><KeyRound size={18} /></span><div><strong>Cambiar contraseña</strong><p>El cambio es opcional. Al actualizarla, se cerrará tu sesión y tendrás que iniciar nuevamente con tu nueva contraseña.</p></div></div>
         <form className="mi-cuenta-password" noValidate onSubmit={(event) => void savePassword(event)}>
           <PasswordInput autoComplete="current-password" className="mi-cuenta-field" id="mi-cuenta-password-current" label="Contraseña actual" onChange={setPasswordCurrent} value={passwordCurrent} />
           <div className="password-entry">

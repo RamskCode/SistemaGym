@@ -131,6 +131,11 @@ public class Usuario {
         this.versionCredenciales = versionCredenciales;
     }
 
+    /** Legacy credential versions are nonnegative; negative values flag generated initial credentials. */
+    public boolean usaContrasenaInicial() {
+        return versionCredenciales < 0;
+    }
+
     public TipoDocumento getTipoDocumento() {
         return tipoDocumento;
     }

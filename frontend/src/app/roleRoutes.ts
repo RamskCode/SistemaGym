@@ -17,7 +17,7 @@ export const roleRouteDefinitions: readonly RoleRouteDefinition[] = [
   { path: 'revisiones', title: 'Revisiones', roles: ['ADMINISTRADOR'] },
   { path: 'incidencias', title: 'Incidencias', roles: ['ADMINISTRADOR'] },
   { path: 'checklists', title: 'Checklists del gimnasio', roles: ['ADMINISTRADOR'] },
-  { path: 'mi-cuenta', title: 'Mi cuenta', roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA'] },
+  { path: 'mi-cuenta', title: 'Mi perfil', roles: ['ADMINISTRADOR', 'RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA'] },
   { path: 'mi-asistencia', title: 'Mis asistencias', roles: ['ENTRENADOR', 'NUTRICIONISTA'] },
   { path: 'entrenamiento', title: 'Revisión de equipos', roles: ['ENTRENADOR'] },
   { path: 'mis-checklists', title: 'Mis revisiones', roles: ['ENTRENADOR'] },

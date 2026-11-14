@@ -58,7 +58,7 @@ class UsuarioAdminServiceTest {
     }
 
     @Test
-    void creaUsuarioPendienteConRolExistenteYHashAleatorio() throws Exception {
+    void creaUsuarioActivoConCredencialInicialAleatoriaYHashSeguro() throws Exception {
         when(usuarioRepository.existsByCorreoIgnoreCase("nuevo@example.com"))
                 .thenReturn(false);
         when(rolRepository.findByNombreIgnoreCase("NUTRICIONISTA"))
@@ -77,13 +77,16 @@ class UsuarioAdminServiceTest {
         ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarioRepository).saveAndFlush(captor.capture());
         Usuario saved = captor.getValue();
-        assertEquals("PENDIENTE", saved.getEstado());
+        assertEquals("ACTIVO", saved.getEstado());
         assertEquals("nuevo@example.com", saved.getCorreo());
         assertEquals("NUTRICIONISTA", saved.getRol().getNombre());
-        assertNotEquals(TEST_PASSWORD, saved.getContrasenaHash());
-        assertFalse(passwordEncoder.matches(TEST_PASSWORD, saved.getContrasenaHash()));
-        assertEquals(42L, respuesta.idUsuario());
-        assertEquals("NUTRICIONISTA", respuesta.rol());
+        assertNotEquals("nuevo@example.com", respuesta.contrasenaInicial());
+        assertNotEquals("Ana", respuesta.contrasenaInicial());
+        assertNotEquals("12345678", respuesta.contrasenaInicial());
+        assertTrue(passwordEncoder.matches(respuesta.contrasenaInicial(), saved.getContrasenaHash()));
+        assertTrue(saved.usaContrasenaInicial());
+        assertEquals(42L, respuesta.usuario().idUsuario());
+        assertEquals("NUTRICIONISTA", respuesta.usuario().rol());
     }
 
     @Test
@@ -99,11 +102,6 @@ class UsuarioAdminServiceTest {
 
     @Test
     void rechazaRolInexistente() {
-        when(usuarioRepository.existsByCorreoIgnoreCase("nuevo@example.com"))
-                .thenReturn(false);
-        when(rolRepository.findByNombreIgnoreCase("INEXISTENTE"))
-                .thenReturn(Optional.empty());
-
         assertThrows(IllegalArgumentException.class, () -> service.crear(
                 new CrearUsuarioRequest("Ana", "Prueba", "nuevo@example.com",
                         TEST_PASSWORD, "INEXISTENTE", TipoDocumento.DNI, "12345678")));
@@ -130,7 +128,7 @@ class UsuarioAdminServiceTest {
         ArgumentCaptor<Usuario> captor = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarioRepository).saveAndFlush(captor.capture());
         assertEquals("ENTRENADOR", captor.getValue().getRol().getNombre());
-        assertEquals("ENTRENADOR", respuesta.rol());
+        assertEquals("ENTRENADOR", respuesta.usuario().rol());
     }
 
     @Test
@@ -146,8 +144,8 @@ class UsuarioAdminServiceTest {
                 "Ana", "Prueba", "nuevo@example.com", TEST_PASSWORD,
                 "NUTRICIONISTA", TipoDocumento.CE, "123456789012"));
 
-        assertEquals(TipoDocumento.CE, respuesta.tipoDocumento());
-        assertEquals("123456789012", respuesta.numeroDocumento());
+        assertEquals(TipoDocumento.CE, respuesta.usuario().tipoDocumento());
+        assertEquals("123456789012", respuesta.usuario().numeroDocumento());
     }
 
     @Test

@@ -8,6 +8,7 @@ export type MiCuenta = {
   rol: string
   tipoDocumento: TipoDocumentoCuenta | null
   numeroDocumento: string | null
+  contrasenaInicial: boolean
 }
 export type ActualizarMiCuenta = Partial<Pick<MiCuenta,
   'nombres' | 'apellidos' | 'tipoDocumento' | 'numeroDocumento'>>
@@ -19,7 +20,8 @@ function parseProfile(value: unknown): MiCuenta {
   if (typeof profile.nombres !== 'string' || typeof profile.apellidos !== 'string'
       || typeof profile.correo !== 'string' || typeof profile.rol !== 'string'
       || !(profile.tipoDocumento === null || profile.tipoDocumento === 'DNI' || profile.tipoDocumento === 'CE')
-      || !(profile.numeroDocumento === null || typeof profile.numeroDocumento === 'string')) {
+      || !(profile.numeroDocumento === null || typeof profile.numeroDocumento === 'string')
+      || typeof profile.contrasenaInicial !== 'boolean') {
     throw new ApiError('invalid-response')
   }
   return profile as MiCuenta

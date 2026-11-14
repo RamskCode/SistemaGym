@@ -8,5 +8,10 @@ public record MiCuentaRespuesta(
         String correo,
         String rol,
         TipoDocumento tipoDocumento,
-        String numeroDocumento) {
+        String numeroDocumento,
+        boolean contrasenaInicial) {
+    public MiCuentaRespuesta(String nombres, String apellidos, String correo,
+            String rol, TipoDocumento tipoDocumento, String numeroDocumento) {
+        this(nombres, apellidos, correo, rol, tipoDocumento, numeroDocumento, false);
+    }
 }

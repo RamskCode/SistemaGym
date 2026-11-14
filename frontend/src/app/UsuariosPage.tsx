@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-import { Check, Eye, LoaderCircle, Mail, Pencil, RotateCcw, Search, UserPlus, UserX, X } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Mail, Pencil, RotateCcw, Search, UserPlus, UserX, X } from 'lucide-react'
 import { ApiError } from '../api/http'
 import {
   actualizarUsuario,
@@ -8,12 +8,14 @@ import {
   cambiarRolUsuario,
   crearUsuario,
   reenviarInvitacion,
+  restablecerAcceso,
   listarUsuarios,
   type ActualizarUsuarioRequest,
   type CrearUsuarioRequest,
   type RolUsuario,
   type TipoDocumentoUsuario,
   type Usuario,
+  type CredencialesIniciales,
 } from '../api/usuarios'
 import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/Button'
@@ -31,6 +33,7 @@ type Uncertain = { type: 'crear' } | { type: 'editar'; id: number }
   | { type: 'account-action'; userId: number; action: 'rol' | 'activar' | 'desactivar' | 'contrasena'; targetRole?: RolUsuario; targetActive?: boolean }
 const STORAGE_KEY = 'usuarios:escritura-incierta'
 const ROLES: RolUsuario[] = ['ADMINISTRADOR', 'RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA']
+const ROLES_CREABLES: RolUsuario[] = ['RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA']
 const EMPTY: FormValues = { nombres: '', apellidos: '', correo: '', rol: 'ENTRENADOR', tipoDocumento: '', numeroDocumento: '', editarDocumento: false }
 
 function readUncertain(): Uncertain | null {
@@ -62,7 +65,7 @@ function validate(values: FormValues, editing: boolean): { payload?: CrearUsuari
   if (!nombres || nombres.length > 100) return { error: 'Los nombres son obligatorios y no pueden superar 100 caracteres.' }
   if (!apellidos || apellidos.length > 100) return { error: 'Los apellidos son obligatorios y no pueden superar 100 caracteres.' }
   if (!correo || correo.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return { error: 'Ingresa un correo válido de hasta 150 caracteres.' }
-  if (!ROLES.includes(values.rol)) return { error: 'Selecciona uno de los cuatro roles disponibles.' }
+  if (!(editing ? ROLES : ROLES_CREABLES).includes(values.rol)) return { error: 'Selecciona un rol permitido.' }
   if (editing && !values.editarDocumento) return { payload: { nombres, apellidos, correo } }
   if (!values.tipoDocumento && !numeroDocumento) return { error: 'Selecciona un tipo e ingresa el número de documento.' }
   if (!values.tipoDocumento || !numeroDocumento) return { error: 'Tipo y número de documento deben proporcionarse juntos.' }
@@ -139,6 +142,9 @@ export function UsuariosPage() {
   const [passwordVerifiedOutOfBand, setPasswordVerifiedOutOfBand] = useState(false)
   const [roleDraft, setRoleDraft] = useState<RolUsuario>('ENTRENADOR')
   const [confirmDeactivation, setConfirmDeactivation] = useState(false)
+  const [createdCredentials, setCreatedCredentials] = useState<CredencialesIniciales | null>(null)
+  const [passwordVisible, setPasswordVisible] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('')
   const lock = useRef(false)
   const detailCloseRef = useRef<HTMLButtonElement>(null)
   const formCloseRef = useRef<HTMLButtonElement>(null)
@@ -160,7 +166,8 @@ export function UsuariosPage() {
 
   // Any credential remains only in component memory and is discarded when the authenticated identity changes.
   useEffect(() => {
-    setPending(null); setFormOpen(false); setDetail(null)
+    setPending(null); setFormOpen(false); setDetail(null); setCreatedCredentials(null)
+    setPasswordVisible(false); setCopyStatus('')
   }, [auth.user?.correo, auth.user?.issuedAt])
 
   useLayoutEffect(() => {
@@ -271,16 +278,23 @@ export function UsuariosPage() {
     try {
       let savedUser: Usuario
       let invitationMessage = ''
+      let credentialsToDisplay: CredencialesIniciales | null = null
       if (operation.type === 'crear') {
-        const invitation = await crearUsuario(auth, operation.payload)
-        savedUser = invitation.usuario
-        invitationMessage = invitation.mensaje
-        setFeedbackTone(invitation.correoEnviado ? 'success' : 'error')
+        const created = await crearUsuario(auth, operation.payload)
+        savedUser = created.usuario
+        credentialsToDisplay = created
+        invitationMessage = 'La cuenta está activa. Comparte estas credenciales con su titular.'
+        setFeedbackTone('success')
       } else {
         savedUser = await actualizarUsuario(auth, operation.id, operation.payload)
         setFeedbackTone('success')
       }
       if (auth.getSessionVersion() !== sessionVersion) return
+      if (credentialsToDisplay) {
+        setCreatedCredentials(credentialsToDisplay)
+        setPasswordVisible(false)
+        setCopyStatus('')
+      }
       setUsers((current) => operation.type === 'crear'
         ? [...current, savedUser].sort((a, b) => a.idUsuario - b.idUsuario)
         : current.map((user) => user.idUsuario === savedUser.idUsuario ? savedUser : user))
@@ -298,6 +312,39 @@ export function UsuariosPage() {
         setError('No se confirmó el resultado. La operación pudo haberse aplicado. Se bloquean nuevas escrituras; consulta el listado o detalle y verifica el estado real antes de habilitarlas.')
       } else if (auth.getSessionVersion() === sessionVersion) setWriteError(apiError(reason))
     } finally { lock.current = false; if (auth.getSessionVersion() === sessionVersion) setSaving(false) }
+  }
+
+  async function resetAccess(user: Usuario) {
+    if (lock.current || uncertain || !window.confirm(
+      `Generar una nueva contraseña inicial para ${user.nombres} ${user.apellidos}? La contraseña actual dejará de funcionar.`,
+    )) return
+    lock.current = true; setSaving(true); setError(''); setFeedback('')
+    const sessionVersion = auth.getSessionVersion()
+    try {
+      const credentials = await restablecerAcceso(auth, user.idUsuario)
+      if (auth.getSessionVersion() !== sessionVersion) return
+      setUsers((current) => current.map((item) => item.idUsuario === user.idUsuario ? credentials.usuario : item))
+      if (detail?.idUsuario === user.idUsuario) setDetail(credentials.usuario)
+      setCreatedCredentials(credentials)
+      setPasswordVisible(false); setCopyStatus('')
+    } catch (reason) {
+      if (auth.getSessionVersion() === sessionVersion) setError(apiError(reason))
+    } finally {
+      lock.current = false
+      if (auth.getSessionVersion() === sessionVersion) setSaving(false)
+    }
+  }
+
+  async function copyCredentials() {
+    if (!createdCredentials) return
+    try {
+      await navigator.clipboard.writeText(
+        `Nombre: ${createdCredentials.usuario.nombres} ${createdCredentials.usuario.apellidos}\nCorreo: ${createdCredentials.usuario.correo}\nRol: ${roleLabel(createdCredentials.usuario.rol)}\nContraseña inicial: ${createdCredentials.contrasenaInicial}`,
+      )
+      setCopyStatus('Credenciales copiadas. Compártelas únicamente con el titular.')
+    } catch {
+      setCopyStatus('No se pudo copiar automáticamente. Copia los datos manualmente y cierra esta ventana al terminar.')
+    }
   }
 
   async function resendInvitation(user: Usuario) {
@@ -427,7 +474,7 @@ export function UsuariosPage() {
   }
 
   return <div className="dashboard usuarios-page">
-    <PageTitle description="Administra el acceso, los roles y el estado del personal. Las nuevas cuentas reciben una invitación por correo para crear su contraseña." eyebrow="ADMINISTRACIÓN DEL PERSONAL" title="Usuarios y empleados" actions={<Button className="usuarios-create-button" type="button" disabled={Boolean(uncertain) || saving} onClick={(event) => { formTriggerRef.current = event.currentTarget; openCreate() }} icon={<UserPlus size={17} aria-hidden="true"/>}>Nuevo usuario</Button>} />
+    <PageTitle description="Administra el acceso, los roles y el estado del personal. Las cuentas nuevas quedan activas y reciben una contraseña inicial segura." eyebrow="ADMINISTRACIÓN DEL PERSONAL" title="Usuarios y empleados" actions={<Button className="usuarios-create-button" type="button" disabled={Boolean(uncertain) || saving} onClick={(event) => { formTriggerRef.current = event.currentTarget; openCreate() }} icon={<UserPlus size={17} aria-hidden="true"/>}>Nuevo usuario</Button>} />
     {feedback && <p className={`usuarios-feedback usuarios-feedback--${feedbackTone}`} role={feedbackTone === 'error' ? 'alert' : 'status'}>{feedback}</p>}
     {uncertain && <section className="usuarios-uncertain" role="alert"><div><strong>Operación pendiente de verificación</strong><p>{uncertain.type === 'crear' ? 'Alta de usuario sin confirmación.' : uncertain.type === 'editar' ? `Edición del usuario #${uncertain.id} sin confirmación.` : `${uncertain.action} del usuario #${uncertain.userId} sin confirmación.`} No se reintentará automáticamente; las escrituras permanecen bloqueadas.</p>{uncertain.type === 'account-action' && uncertain.action === 'contrasena' ? <><p>El perfil no expone ni permite verificar contraseñas. Contacta al titular por un canal seguro y solicita que pruebe iniciar sesión con la contraseña que recibió. No compartas contraseñas por esta interfaz.</p>{verificationLoaded && <label className="usuarios-check usuarios-out-of-band"><input type="checkbox" checked={passwordVerifiedOutOfBand} onChange={(event) => setPasswordVerifiedOutOfBand(event.target.checked)}/>Confirmo que el titular verificó el acceso por un canal independiente.</label>}</> : <p>Actualiza el listado/detalle, compara el estado real y confirma explícitamente la verificación.</p>}{uncertain.type === 'crear' && <label className="usuarios-verify-email">Correo utilizado para el alta<input type="email" aria-label="Correo para verificar alta incierta" autoComplete="off" value={verificationEmail} onChange={(event) => setVerificationEmail(event.target.value)}/></label>}</div><div className="usuarios-uncertain-actions"><Button type="button" variant="secondary" disabled={loading} onClick={() => void refreshForVerification()}>Consultar usuario</Button>{verificationLoaded && (uncertain.type !== 'account-action' || uncertain.action !== 'contrasena' || passwordVerifiedOutOfBand) && <Button type="button" disabled={loading} onClick={acknowledgeVerification}>Confirmo; habilitar operaciones</Button>}</div></section>}
     <Card className="usuarios-card" title="Directorio del personal" action={<span className="usuarios-total">{users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</span>}>
@@ -464,8 +511,8 @@ export function UsuariosPage() {
         </section>}
         {!editing && <label className="usuarios-form-field usuarios-form-field--wide"><span>Correo electrónico <b>*</b></span><input aria-label="Correo" type="email" required maxLength={150} autoComplete="email" value={values.correo} onChange={(event) => setValues({ ...values, correo: event.target.value })}/></label>}
         {!editing && <>
-          <p className="usuarios-invitation-note"><Mail size={18} aria-hidden="true"/><span><strong>Invitación por correo</strong><small>Enviaremos un enlace para que la persona cree su contraseña.</small></span></p>
-          <label className="usuarios-form-field"><span>Rol <b>*</b></span><select aria-label="Rol del usuario" required value={values.rol} onChange={(event) => setValues({ ...values, rol: event.target.value as RolUsuario })}>{ROLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label>
+           <p className="usuarios-invitation-note"><KeyRound size={18} aria-hidden="true"/><span><strong>Acceso inmediato</strong><small>Se generará una contraseña aleatoria segura. Podrás verla una sola vez al confirmar.</small></span></p>
+           <label className="usuarios-form-field"><span>Rol <b>*</b></span><select aria-label="Rol del usuario" required value={values.rol} onChange={(event) => setValues({ ...values, rol: event.target.value as RolUsuario })}>{ROLES_CREABLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label>
         </>}
         {editing && <section className="usuarios-form-section usuarios-form-section--document" aria-labelledby="usuarios-edit-document-title"><h3 id="usuarios-edit-document-title">Documento de identidad</h3>
           <label className="usuarios-check"><input type="checkbox" checked={values.editarDocumento} onChange={(event) => setValues((old) => ({ ...old, editarDocumento: event.target.checked, tipoDocumento: event.target.checked ? editing.tipoDocumento ?? '' : '', numeroDocumento: event.target.checked ? editing.numeroDocumento ?? '' : '' }))}/>Actualizar documento de identidad</label>
@@ -482,10 +529,25 @@ export function UsuariosPage() {
       <div className="usuarios-detail-heading"><div><h2 id="usuarios-detail-title">Información del empleado</h2><p>{detail.nombres} {detail.apellidos}</p></div><span className={`usuarios-state usuarios-state--${detail.estado.toLowerCase()}`}><span aria-hidden="true" className="usuarios-state__dot"/>{stateLabel(detail.estado)}</span></div>
       <section className="usuarios-detail-section" aria-labelledby="usuarios-personal-title"><h3 id="usuarios-personal-title">Información personal</h3><dl className="usuarios-detail"><div><dt>Nombre completo</dt><dd>{detail.nombres} {detail.apellidos}</dd></div><div><dt>Documento de identidad</dt><dd>{detail.tipoDocumento && detail.numeroDocumento ? `${detail.tipoDocumento} · ${detail.numeroDocumento}` : 'Sin documento registrado'}</dd></div></dl></section>
       <section className="usuarios-detail-section" aria-labelledby="usuarios-access-title"><h3 id="usuarios-access-title">Datos de acceso</h3><dl className="usuarios-detail"><div><dt>Correo electrónico</dt><dd>{detail.correo}</dd></div><div><dt>Rol</dt><dd>{roleLabel(detail.rol)}</dd></div><div><dt>Fecha de registro</dt><dd>{formatCreatedAt(detail.fechaCreacion)}</dd></div></dl></section>
-      <section className="usuarios-account-actions" aria-label="Administrar rol del empleado"><h3>Rol del empleado</h3><div className="usuarios-role-change"><label>Rol<select aria-label="Nuevo rol" value={roleDraft} onChange={(event) => setRoleDraft(event.target.value as RolUsuario)}>{ROLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label><Button type="button" variant="secondary" disabled={roleDraft === detail.rol || Boolean(uncertain) || saving} onClick={() => beginRoleChange(detail, roleDraft)}>Cambiar rol</Button></div></section>
-    </section></div>}
+       <section className="usuarios-account-actions" aria-label="Administrar rol del empleado"><h3>Rol del empleado</h3><div className="usuarios-role-change"><label>Rol<select aria-label="Nuevo rol" value={roleDraft} onChange={(event) => setRoleDraft(event.target.value as RolUsuario)}>{ROLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</select></label><Button type="button" variant="secondary" disabled={roleDraft === detail.rol || Boolean(uncertain) || saving} onClick={() => beginRoleChange(detail, roleDraft)}>Cambiar rol</Button></div></section>
+       {detail.estado !== 'INACTIVO' && <section className="usuarios-account-actions" aria-label="Administrar acceso"><h3>Acceso a la cuenta</h3><p>Genera una nueva contraseña inicial de un solo uso. La contraseña vigente dejará de funcionar inmediatamente.</p><Button type="button" variant="secondary" disabled={Boolean(uncertain) || saving} onClick={() => void resetAccess(detail)} icon={<KeyRound size={15} aria-hidden="true"/>}>Restablecer acceso</Button></section>}
+     </section></div>}
 
-    
+     {createdCredentials && <div className="usuarios-backdrop usuarios-backdrop--credentials"><section className="usuarios-dialog usuarios-credentials-dialog" role="dialog" aria-modal="true" aria-labelledby="usuarios-credentials-title" onKeyDown={trapDialogFocus}>
+       <p className="usuarios-dialog__eyebrow">ACCESO GENERADO</p>
+       <h2 id="usuarios-credentials-title">Credenciales iniciales</h2>
+       <p>Guárdalas ahora y compártelas únicamente con su titular. La contraseña no volverá a mostrarse.</p>
+       <dl className="usuarios-detail">
+         <div><dt>Nombre</dt><dd>{createdCredentials.usuario.nombres} {createdCredentials.usuario.apellidos}</dd></div>
+         <div><dt>Correo electrónico</dt><dd>{createdCredentials.usuario.correo}</dd></div>
+         <div><dt>Rol</dt><dd>{roleLabel(createdCredentials.usuario.rol)}</dd></div>
+       </dl>
+       <label className="usuarios-generated-password"><span>Contraseña inicial</span><span className="usuarios-generated-password__control"><input aria-label="Contraseña inicial generada" readOnly type={passwordVisible ? 'text' : 'password'} value={createdCredentials.contrasenaInicial}/><button type="button" aria-label={passwordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'} onClick={() => setPasswordVisible((visible) => !visible)}>{passwordVisible ? <EyeOff size={17}/> : <Eye size={17}/>}</button></span></label>
+       {copyStatus && <p className="usuarios-copy-status" role="status">{copyStatus}</p>}
+       <div className="usuarios-actions usuarios-credentials-actions"><Button type="button" variant="secondary" onClick={() => void copyCredentials()} icon={<Copy size={15} aria-hidden="true"/>}>Copiar credenciales</Button><Button type="button" onClick={() => { setCreatedCredentials(null); setPasswordVisible(false); setCopyStatus('') }}>Entendido</Button></div>
+     </section></div>}
+
+
     {pending && <div className="usuarios-backdrop" onClick={() => { if (!saving) cancelPending() }}><section className="usuarios-dialog" role="dialog" aria-modal="true" aria-labelledby="usuarios-confirm-title" onKeyDown={trapDialogFocus} onClick={(event) => event.stopPropagation()}>
       {pending.type === 'crear' || pending.type === 'editar' ? <><h2 id="usuarios-confirm-title">Confirmar {pending.type === 'crear' ? 'alta' : 'edición'} de usuario</h2><p>Confirma los datos que se enviarán. La contraseña inicial no se muestra ni se incluye en esta revisión.</p><dl className="usuarios-detail"><div><dt>Nombres</dt><dd>{pending.payload.nombres}</dd></div><div><dt>Apellidos</dt><dd>{pending.payload.apellidos}</dd></div><div><dt>Correo</dt><dd>{pending.payload.correo}</dd></div>{pending.type === 'crear' && <div><dt>Rol</dt><dd>{pending.payload.rol}</dd></div>}<div><dt>Documento</dt><dd>{'tipoDocumento' in pending.payload ? pending.payload.tipoDocumento ? maskedDocument(pending.payload.tipoDocumento, pending.payload.numeroDocumento ?? null) : 'Sin documento / conservar documento existente según campos enviados' : 'Documento existente sin cambios'}</dd></div></dl></>
         : pending.type === 'rol' ? <><h2 id="usuarios-confirm-title">Confirmar cambio de rol</h2><p>Usuario afectado: <strong>{pending.usuario.nombres} {pending.usuario.apellidos}</strong> · {pending.usuario.correo}</p><dl className="usuarios-detail"><div><dt>Rol actual</dt><dd>{pending.usuario.rol}</dd></div><div><dt>Nuevo rol</dt><dd>{pending.nuevoRol}</dd></div></dl><p className="usuarios-warning">El cambio modifica los permisos efectivos del usuario en las siguientes solicitudes. El backend protegerá al último administrador activo. Si cambias tu propio rol, se cerrará tu sesión local para que vuelvas a ingresar con permisos actualizados.</p></>

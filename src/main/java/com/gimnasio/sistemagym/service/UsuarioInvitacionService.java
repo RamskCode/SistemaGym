@@ -96,7 +96,7 @@ public class UsuarioInvitacionService {
                 || !"PENDIENTE".equals(user.getEstado())) throw invalidToken();
         user.setContrasenaHash(encoder.encode(rawPassword));
         user.setEstado("ACTIVO");
-        user.setVersionCredenciales(user.getVersionCredenciales() + 1);
+        VersionCredenciales.avanzarTrasCambio(user);
         users.saveAndFlush(user);
         invitation.setFechaUso(now);
         invitations.invalidateOpen(user.getIdUsuario(), now);

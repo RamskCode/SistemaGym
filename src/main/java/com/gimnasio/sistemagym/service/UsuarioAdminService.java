@@ -3,6 +3,7 @@ package com.gimnasio.sistemagym.service;
 import com.gimnasio.sistemagym.dto.ActualizarUsuarioRequest;
 import com.gimnasio.sistemagym.dto.CambiarContrasenaUsuarioRequest;
 import com.gimnasio.sistemagym.dto.CrearUsuarioRequest;
+import com.gimnasio.sistemagym.dto.CredencialesInicialesRespuesta;
 import com.gimnasio.sistemagym.dto.UsuarioRespuesta;
 import com.gimnasio.sistemagym.entity.Rol;
 import com.gimnasio.sistemagym.entity.TipoDocumento;
@@ -32,6 +33,8 @@ public class UsuarioAdminService {
     private static final String INACTIVO = "INACTIVO";
     private static final java.util.Set<String> ROLES_PERMITIDOS = java.util.Set.of(
             "ADMINISTRADOR", "RECEPCIONISTA", "ENTRENADOR", "NUTRICIONISTA");
+    private static final java.util.Set<String> ROLES_CREABLES = java.util.Set.of(
+            "RECEPCIONISTA", "ENTRENADOR", "NUTRICIONISTA");
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
@@ -99,7 +102,7 @@ public class UsuarioAdminService {
     }
 
     @Transactional
-    public UsuarioRespuesta crear(CrearUsuarioRequest solicitud) {
+    public CredencialesInicialesRespuesta crear(CrearUsuarioRequest solicitud) {
         validarRolSolicitud(solicitud.rol());
 
         String correo = normalizarCorreo(solicitud.correo());
@@ -119,20 +122,44 @@ public class UsuarioAdminService {
         usuario.setNombres(solicitud.nombres().trim());
         usuario.setApellidos(solicitud.apellidos().trim());
         usuario.setCorreo(correo);
-        // Never provide an administrator-selected initial password. This random
-        // hash is unusable as a credential while the account is pending.
-        usuario.setContrasenaHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+        String contrasenaInicial = ContrasenaInicialSegura.generar(passwordPolicy);
+        usuario.setContrasenaHash(passwordEncoder.encode(contrasenaInicial));
+        VersionCredenciales.marcarContrasenaInicial(usuario);
         usuario.setRol(rol);
-        usuario.setEstado("PENDIENTE");
+        usuario.setEstado(ACTIVO);
         aplicarDocumento(usuario, documento);
 
         try {
-            return aRespuesta(usuarioRepository.saveAndFlush(usuario));
+            return new CredencialesInicialesRespuesta(
+                    aRespuesta(usuarioRepository.saveAndFlush(usuario)), contrasenaInicial);
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictoException(
                     "No se pudo crear el usuario porque alguno de sus datos ya existe "
                             + "o no cumple las restricciones.");
         }
+    }
+
+    @Transactional
+    public CredencialesInicialesRespuesta restablecerAcceso(Long id) {
+        validarId(id);
+        Usuario usuario = buscarBloqueado(id);
+        if ("INACTIVO".equalsIgnoreCase(usuario.getEstado())) {
+            throw new ConflictoException("Activa la cuenta antes de restablecer su acceso.");
+        }
+        if (!ACTIVO.equalsIgnoreCase(usuario.getEstado())
+                && !"PENDIENTE".equalsIgnoreCase(usuario.getEstado())) {
+            throw new ConflictoException("El estado de la cuenta no permite restablecer el acceso.");
+        }
+        String contrasenaInicial = ContrasenaInicialSegura.generar(passwordPolicy);
+        usuario.setContrasenaHash(passwordEncoder.encode(contrasenaInicial));
+        VersionCredenciales.marcarContrasenaInicial(usuario);
+        usuario.setEstado(ACTIVO);
+        if (invitaciones != null) {
+            invitaciones.invalidateOpen(id, java.time.LocalDateTime.now());
+        }
+        Usuario guardado = usuarioRepository.saveAndFlush(usuario);
+        if (refreshSessions != null) refreshSessions.revocarUsuario(id);
+        return new CredencialesInicialesRespuesta(aRespuesta(guardado), contrasenaInicial);
     }
 
     @Transactional
@@ -232,15 +259,12 @@ public class UsuarioAdminService {
         passwordPolicy.validate(solicitud.contrasena());
         Usuario usuario = buscarBloqueado(id);
         usuario.setContrasenaHash(passwordEncoder.encode(solicitud.contrasena()));
-        usuario.setVersionCredenciales(usuario.getVersionCredenciales() + 1);
+        VersionCredenciales.avanzarTrasCambio(usuario);
         usuarioRepository.saveAndFlush(usuario);
         if (refreshSessions != null) refreshSessions.revocarUsuario(usuario.getIdUsuario());
     }
 
     private Rol obtenerRolParaCreacion(String nombreRol) {
-        if (nombreRol.trim().equalsIgnoreCase(ROL_ADMINISTRADOR)) {
-            return bloquearRolAdministrador();
-        }
         return obtenerRol(nombreRol);
     }
 
@@ -345,6 +369,10 @@ public class UsuarioAdminService {
     private void validarRolSolicitud(String nombreRol) {
         if (nombreRol == null || nombreRol.isBlank()) {
             throw new IllegalArgumentException("El rol es obligatorio.");
+        }
+        if (!ROLES_CREABLES.contains(nombreRol.trim().toUpperCase(Locale.ROOT))) {
+            throw new IllegalArgumentException(
+                    "Solo se pueden crear cuentas RECEPCIONISTA, ENTRENADOR o NUTRICIONISTA.");
         }
     }
 

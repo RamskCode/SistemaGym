@@ -83,7 +83,7 @@ public class PasswordRecoveryService {
         }
         Usuario user = token.getUsuario();
         user.setContrasenaHash(encoder.encode(newPassword));
-        user.setVersionCredenciales(user.getVersionCredenciales() + 1);
+        VersionCredenciales.avanzarTrasCambio(user);
         users.save(user);
         if (refreshSessions != null) refreshSessions.revocarUsuario(user.getIdUsuario());
         token.setFechaUso(now);

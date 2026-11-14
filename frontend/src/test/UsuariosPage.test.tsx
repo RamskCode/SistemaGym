@@ -2,7 +2,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider, useAuth, type AuthContextValue } from '../auth/AuthContext'
 import { UsuariosPage } from '../app/UsuariosPage'
 import { server } from './server'
@@ -21,7 +21,7 @@ async function login() {
   await act(async () => { await auth.login({ correo: 'admin@example.test', contrasena: 'test-password' }) })
 }
 function users(data: unknown[] = [employee]) { server.use(http.get('/api/usuarios', () => HttpResponse.json(data))) }
-afterEach(() => window.sessionStorage.removeItem('usuarios:escritura-incierta'))
+afterEach(() => { vi.restoreAllMocks(); window.sessionStorage.removeItem('usuarios:escritura-incierta') })
 
 describe('UsuariosPage', () => {
   it('lists, searches and filters locally without server pagination; masks documents', async () => {
@@ -73,14 +73,14 @@ describe('UsuariosPage', () => {
     expect(screen.queryByLabelText('Contraseña inicial')).not.toBeInTheDocument()
   })
 
-  it('requires a valid document and creates a pending account with an invitation after confirmation', async () => {
+  it('creates an active account and shows its generated credential once in a protected modal', async () => {
     const user = userEvent.setup()
     let postCount = 0
     users([])
     server.use(http.post('/api/usuarios', async ({ request }) => {
       postCount += 1
       expect(await request.json()).toEqual({ nombres: 'Mario', apellidos: 'Rojas', correo: 'mario@example.test', rol: 'RECEPCIONISTA', tipoDocumento: 'DNI', numeroDocumento: '12345678' })
-      return HttpResponse.json({ usuario: { ...employee, idUsuario: 21, nombres: 'Mario', apellidos: 'Rojas', correo: 'mario@example.test', rol: 'RECEPCIONISTA', estado: 'PENDIENTE' }, correoEnviado: true, mensaje: 'Invitación enviada correctamente.' }, { status: 201 })
+      return HttpResponse.json({ usuario: { ...employee, idUsuario: 21, nombres: 'Mario', apellidos: 'Rojas', correo: 'mario@example.test', rol: 'RECEPCIONISTA', estado: 'ACTIVO' }, contrasenaInicial: 'G5!rQ8-wB2#pN4_mT7@cX9aL' }, { status: 201 })
     }))
     renderPage(); await login()
     await screen.findByText('Todavía no hay usuarios registrados.')
@@ -101,9 +101,23 @@ describe('UsuariosPage', () => {
     expect(window.localStorage.length).toBe(0)
     expect(window.sessionStorage.getItem('usuarios:escritura-incierta')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Confirmar y guardar' }))
-    expect(await screen.findByText('Invitación enviada correctamente.')).toBeInTheDocument()
+    const credentials = await screen.findByRole('dialog', { name: 'Credenciales iniciales' })
+    expect(credentials).toHaveTextContent('Mario Rojas')
+    expect(credentials).toHaveTextContent('mario@example.test')
+    expect(credentials).toHaveTextContent('Recepcionista')
+    const secret = within(credentials).getByLabelText('Contraseña inicial generada')
+    expect(secret).toHaveAttribute('type', 'password')
+    expect(secret).toHaveValue('G5!rQ8-wB2#pN4_mT7@cX9aL')
+    await user.click(within(credentials).getByRole('button', { name: 'Mostrar contraseña' }))
+    expect(secret).toHaveAttribute('type', 'text')
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    await user.click(within(credentials).getByRole('button', { name: 'Copiar credenciales' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce())
+    expect(writeText.mock.calls[0][0]).toContain('Contraseña inicial: G5!rQ8-wB2#pN4_mT7@cX9aL')
     expect(postCount).toBe(1)
-    expect(screen.queryByLabelText('Contraseña inicial')).not.toBeInTheDocument()
+    await user.click(within(credentials).getByRole('button', { name: 'Entendido' }))
+    expect(screen.queryByLabelText('Contraseña inicial generada')).not.toBeInTheDocument()
   })
 
   it('edits allowed fields, omits document unless opted in, and does not expose role/password controls', async () => {
@@ -173,8 +187,8 @@ describe('UsuariosPage', () => {
     expect(await screen.findByRole('button', { name: 'Enviando…' })).toBeDisabled()
     await user.click(screen.getByRole('button', { name: 'Enviando…' }))
     expect(posts).toBe(1)
-    finish(HttpResponse.json({ usuario: { ...employee, idUsuario: 31, nombres: 'Alba', apellidos: 'León', correo: 'alba@example.test', estado: 'PENDIENTE' }, correoEnviado: true, mensaje: 'Invitación enviada correctamente.' }, { status: 201 }))
-    expect(await screen.findByText('Invitación enviada correctamente.')).toBeInTheDocument()
+    finish(HttpResponse.json({ usuario: { ...employee, idUsuario: 31, nombres: 'Alba', apellidos: 'León', correo: 'alba@example.test', estado: 'ACTIVO' }, contrasenaInicial: 'G5!rQ8-wB2#pN4_mT7@cX9aL' }, { status: 201 }))
+    expect(await screen.findByRole('dialog', { name: 'Credenciales iniciales' })).toBeInTheDocument()
     expect(posts).toBe(1)
   })
 
@@ -303,6 +317,30 @@ describe('UsuariosPage', () => {
     await user.click(within(row).getByRole('button', { name: 'Reenviar invitación' }))
     expect(await screen.findByText('Invitación enviada correctamente.')).toBeInTheDocument()
     expect(resends).toBe(1)
+  })
+
+  it('allows an administrator to reset a pending account and shows the new secret only once', async () => {
+    const user = userEvent.setup()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    users([{ ...employee, estado: 'PENDIENTE' }])
+    server.use(
+      http.get('/api/usuarios/16', () => HttpResponse.json({ ...employee, estado: 'PENDIENTE' })),
+      http.post('/api/usuarios/16/restablecer-acceso', () => HttpResponse.json({
+        usuario: { ...employee, estado: 'ACTIVO' }, contrasenaInicial: 'R4nd0m-Initial!Credential',
+      })),
+    )
+    renderPage(); await login()
+    const row = await screen.findByRole('row', { name: /Lucía/ })
+    await user.click(within(row).getByRole('button', { name: 'Detalle' }))
+    const detail = await screen.findByRole('dialog', { name: 'Información del empleado' })
+    await user.click(within(detail).getByRole('button', { name: 'Restablecer acceso' }))
+    expect(confirm).toHaveBeenCalledOnce()
+    const credentials = await screen.findByRole('dialog', { name: 'Credenciales iniciales' })
+    expect(credentials).toHaveTextContent('Lucía Soto')
+    expect(within(credentials).getByLabelText('Contraseña inicial generada')).toHaveValue('R4nd0m-Initial!Credential')
+    expect(await screen.findByRole('row', { name: /Lucía/ })).toHaveTextContent('Activo')
+    await user.click(within(credentials).getByRole('button', { name: 'Entendido' }))
+    expect(screen.queryByLabelText('Contraseña inicial generada')).not.toBeInTheDocument()
   })
 
   it('does not offer direct password setting in the employee details', async () => {

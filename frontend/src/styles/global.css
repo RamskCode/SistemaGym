@@ -140,6 +140,8 @@ input[type="number"]::-webkit-outer-spin-button { margin: 0; -webkit-appearance:
 .table-wrap { max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
 
 .workspace { width: min(100%, 1600px); margin: 0 auto; padding: 35px 38px 20px; }
+.initial-password-notice { margin: 0 0 18px; padding: 11px 14px; border: 1px solid #e7d7ad; border-radius: 9px; background: #fffaf0; color: #624916; font-size: 13px; line-height: 1.5; }
+.initial-password-notice a { color: #245d2d; font-weight: 650; text-underline-offset: 2px; }
 .dashboard { display: grid; gap: 22px; }
 .dashboard-state, .dashboard-empty { margin: 0; padding: 22px 14px; color: #687487; font-size: 12px; line-height: 1.6; text-align: center; }
 .dashboard-state { grid-column: 1 / -1; }

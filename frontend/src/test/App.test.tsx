@@ -105,12 +105,12 @@ describe('role-aware protected navigation', () => {
       http.post('/api/auth/refresh', () => HttpResponse.json(sessionResponse('ADMINISTRADOR'))),
       http.get('/api/mi-cuenta', () => HttpResponse.json({
         nombres: 'Admin', apellidos: 'Prueba', correo: credentials.correo,
-        rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null,
+        rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
       })),
     )
     renderAt('/mi-cuenta')
 
-    expect(await screen.findByRole('heading', { name: 'Mi cuenta' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument()
     expect(auth.isAuthenticated).toBe(true)
     expect(screen.queryByRole('heading', { name: 'Resumen general' })).not.toBeInTheDocument()
   })
@@ -483,12 +483,12 @@ describe('role-aware protected navigation', () => {
     const user = userEvent.setup()
     server.use(http.get('/api/mi-cuenta', () => HttpResponse.json({
       nombres: 'Personal', apellidos: 'Prueba', correo: credentials.correo,
-      rol: role, tipoDocumento: null, numeroDocumento: null,
+      rol: role, tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
     })))
     renderAt('/')
     await signIn(role)
     await navigateTo('/mi-cuenta')
-    expect(await screen.findByRole('heading', { name: 'Mi cuenta' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Abrir opciones de cuenta/ }))
     await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
@@ -500,7 +500,7 @@ describe('role-aware protected navigation', () => {
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
 
     expect(await screen.findByRole('heading', { name: homeHeading })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Mi cuenta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Mi perfil' })).not.toBeInTheDocument()
   })
 
   it('allows a recepcionista to open the real socios route inside the protected shell', async () => {
@@ -578,11 +578,11 @@ describe('role-aware protected navigation', () => {
     '%s can open their own account from its protected route', async (role) => {
       server.use(http.get('/api/mi-cuenta', () => HttpResponse.json({
         nombres: 'Cuenta', apellidos: 'Personal', correo: credentials.correo,
-        rol: role, tipoDocumento: null, numeroDocumento: null,
+        rol: role, tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
       })))
       renderAt('/mi-cuenta')
       await signIn(role)
-      expect(await screen.findByRole('heading', { name: 'Mi cuenta' })).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument()
       expect(screen.getAllByText(role, { exact: true })).toHaveLength(3)
       expect(screen.queryByDisplayValue(role)).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Configuración' })).not.toBeInTheDocument()
@@ -593,7 +593,7 @@ describe('role-aware protected navigation', () => {
     const user = userEvent.setup()
     server.use(http.get('/api/mi-cuenta', () => HttpResponse.json({
       nombres: 'Cuenta', apellidos: 'Personal', correo: credentials.correo,
-      rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null,
+      rol: 'ADMINISTRADOR', tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
     })))
     renderAt()
     await signIn('ADMINISTRADOR')
@@ -602,19 +602,35 @@ describe('role-aware protected navigation', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
     const menu = screen.getByLabelText('Opciones de cuenta')
     expect(within(menu).getAllByText(credentials.correo)).toHaveLength(1)
-    expect(within(menu).getByRole('link', { name: 'Mi cuenta' })).toHaveAttribute('href', '/mi-cuenta')
+    expect(within(menu).getByRole('link', { name: 'Mi perfil' })).toHaveAttribute('href', '/mi-cuenta')
+    expect(within(menu).getByRole('button', { name: 'Cambiar de cuenta' })).toBeInTheDocument()
     expect(within(menu).queryByRole('link', { name: 'Seguridad' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
     await user.keyboard('{Escape}')
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(trigger).toHaveFocus()
+    await user.click(trigger)
+    await user.click(screen.getByRole('button', { name: 'Cambiar de cuenta' }))
+    expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+  })
+
+  it('shows the non-blocking initial-password reminder only to the authenticated account', async () => {
+    server.use(http.get('/api/mi-cuenta', () => HttpResponse.json({
+      nombres: 'Cuenta', apellidos: 'Inicial', correo: credentials.correo,
+      rol: 'RECEPCIONISTA', tipoDocumento: null, numeroDocumento: null, contrasenaInicial: true,
+    })))
+    renderAt('/')
+    await signIn('RECEPCIONISTA')
+    const notice = await screen.findByText(/Estás utilizando tu contraseña inicial/)
+    expect(notice).toHaveTextContent('Estás utilizando tu contraseña inicial.')
+    expect(within(notice).getByRole('link', { name: 'Mi perfil → Seguridad' })).toHaveAttribute('href', '/mi-cuenta#seguridad')
   })
 
   it.each(['ADMINISTRADOR', 'RECEPCIONISTA', 'ENTRENADOR', 'NUTRICIONISTA'] as const)(
     'shows the authenticated account and %s role in the header', async (role) => {
       server.use(http.get('/api/mi-cuenta', () => HttpResponse.json({
         nombres: 'Ada', apellidos: 'Lovelace', correo: credentials.correo,
-        rol: role, tipoDocumento: null, numeroDocumento: null,
+        rol: role, tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
       })))
       renderAt()
       await signIn(role)

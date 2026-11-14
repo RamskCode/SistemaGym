@@ -6,6 +6,7 @@ import com.gimnasio.sistemagym.dto.CambiarRolUsuarioRequest;
 import com.gimnasio.sistemagym.dto.CrearUsuarioRequest;
 import com.gimnasio.sistemagym.dto.UsuarioRespuesta;
 import com.gimnasio.sistemagym.dto.InvitacionCreadaRespuesta;
+import com.gimnasio.sistemagym.dto.CredencialesInicialesRespuesta;
 import com.gimnasio.sistemagym.service.UsuarioAdminService;
 import com.gimnasio.sistemagym.service.UsuarioInvitacionService;
 import jakarta.validation.Valid;
@@ -46,12 +47,14 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<InvitacionCreadaRespuesta> crear(
+    public ResponseEntity<CredencialesInicialesRespuesta> crear(
             @Valid @RequestBody CrearUsuarioRequest solicitud) {
-        UsuarioRespuesta user = usuarioAdminService.crear(solicitud);
-        UsuarioInvitacionService.Delivery delivery = invitaciones.sendInvitation(user.idUsuario());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new InvitacionCreadaRespuesta(
-                user, delivery.sent(), delivery.message()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioAdminService.crear(solicitud));
+    }
+
+    @PostMapping("/{id}/restablecer-acceso")
+    public CredencialesInicialesRespuesta restablecerAcceso(@PathVariable Long id) {
+        return usuarioAdminService.restablecerAcceso(id);
     }
 
     @PostMapping("/{id}/invitacion")

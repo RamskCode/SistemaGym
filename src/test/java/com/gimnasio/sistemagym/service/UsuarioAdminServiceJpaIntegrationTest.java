@@ -16,6 +16,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -26,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @DataJpaTest(showSql = false, properties = {
         "spring.datasource.url=jdbc:h2:mem:sistemagym-users-test;MODE=MySQL;DB_CLOSE_DELAY=-1",
@@ -47,6 +50,9 @@ class UsuarioAdminServiceJpaIntegrationTest {
 
     @Autowired
     private RolRepository rolRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private Rol rolAdministrador;
     private Rol rolNutricionista;
@@ -147,6 +153,35 @@ class UsuarioAdminServiceJpaIntegrationTest {
                 .orElseThrow();
         assertEquals(null, recuperado.getTipoDocumento());
         assertEquals(null, recuperado.getNumeroDocumento());
+    }
+
+    @Test
+    void creaYRestableceCredencialesInicialesSinGuardarNiRevelarUnHash() {
+        var created = service.crear(new CrearUsuarioRequest(
+                "Nueva", "Nutricionista", "nuevo-nutri@example.invalid",
+                "ADMIN-provided-password-is-ignored", "NUTRICIONISTA",
+                TipoDocumento.CE, "987654321"));
+        Usuario saved = usuarioRepository.findByIdUsuario(created.usuario().idUsuario())
+                .orElseThrow();
+        assertEquals("ACTIVO", saved.getEstado());
+        assertTrue(saved.usaContrasenaInicial());
+        assertTrue(passwordEncoder.matches(created.contrasenaInicial(), saved.getContrasenaHash()));
+        assertNotEquals("ADMIN-provided-password-is-ignored", created.contrasenaInicial());
+
+        var reset = service.restablecerAcceso(saved.getIdUsuario());
+        Usuario afterReset = usuarioRepository.findByIdUsuario(saved.getIdUsuario()).orElseThrow();
+        assertEquals("ACTIVO", afterReset.getEstado());
+        assertNotEquals(created.contrasenaInicial(), reset.contrasenaInicial());
+        assertFalse(passwordEncoder.matches(created.contrasenaInicial(), afterReset.getContrasenaHash()));
+        assertTrue(passwordEncoder.matches(reset.contrasenaInicial(), afterReset.getContrasenaHash()));
+        assertTrue(afterReset.usaContrasenaInicial());
+    }
+
+    @Test
+    void soloPermiteCrearLosTresRolesDePersonal() {
+        assertThrows(IllegalArgumentException.class, () -> service.crear(
+                new CrearUsuarioRequest("No", "Admin", "admin-extra@example.invalid",
+                        null, "ADMINISTRADOR", TipoDocumento.CE, "987654322")));
     }
 
     @Test

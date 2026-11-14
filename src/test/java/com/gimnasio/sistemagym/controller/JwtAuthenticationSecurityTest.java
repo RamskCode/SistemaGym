@@ -40,7 +40,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
 
-@WebMvcTest({AuthController.class, SocioController.class})
+@WebMvcTest(properties = "app.cors.allowed-origins=https://frontend.example.test",
+        controllers = {AuthController.class, SocioController.class})
 @Import({SecurityConfig.class, PasswordConfig.class, JwtProperties.class,
         JwtTokenService.class, JwtAuthenticationFilter.class,
         JwtAuthenticationEntryPoint.class})

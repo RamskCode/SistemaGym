@@ -11,7 +11,7 @@ const auth: AuthenticatedRequestContext = {
 }
 const profile = {
   nombres: 'Ana', apellidos: 'Prueba', correo: 'ana@example.test', rol: 'ENTRENADOR',
-  tipoDocumento: null, numeroDocumento: null,
+  tipoDocumento: null, numeroDocumento: null, contrasenaInicial: false,
 }
 
 describe('API Mi cuenta', () => {

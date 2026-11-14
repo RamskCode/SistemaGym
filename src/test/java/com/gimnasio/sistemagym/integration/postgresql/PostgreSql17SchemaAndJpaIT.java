@@ -211,6 +211,83 @@ class PostgreSql17SchemaAndJpaIT {
     }
 
     @Test
+    void administradorCreaAccesoInicialInmediatoYElCambioRevocaLaContrasenaAnterior()
+            throws Exception {
+        String adminToken = login("ADMINISTRADOR");
+        String email = "portafolio-recepcionista@example.test";
+        var created = mockMvc.perform(post("/api/usuarios")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType("application/json")
+                        .content("""
+                                {"nombres":"Portafolio","apellidos":"Recepcionista",
+                                 "correo":"portafolio-recepcionista@example.test",
+                                 "rol":"RECEPCIONISTA","tipoDocumento":"CE",
+                                 "numeroDocumento":"99887766"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String creationJson = created.getResponse().getContentAsString();
+        String initialPassword = jsonString(creationJson, "contrasenaInicial");
+        assertTrue(initialPassword.length() >= 20);
+        assertNotEquals(email, initialPassword);
+        assertNotEquals("Portafolio", initialPassword);
+        String storedHash = jdbcTemplate.queryForObject(
+                "SELECT contrasena_hash FROM usuarios WHERE correo = ?", String.class, email);
+        assertTrue(new BCryptPasswordEncoder().matches(initialPassword, storedHash));
+
+        String employeeToken = login(email, initialPassword);
+        mockMvc.perform(get("/api/mi-cuenta")
+                        .header("Authorization", "Bearer " + employeeToken))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.contrasenaInicial").value(true));
+        mockMvc.perform(get("/api/socios")
+                        .header("Authorization", "Bearer " + employeeToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/usuarios")
+                        .header("Authorization", "Bearer " + employeeToken))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/usuarios")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(result -> Assertions.assertFalse(
+                        result.getResponse().getContentAsString().contains(initialPassword)));
+        assertTrue(jdbcTemplate.queryForObject(
+                "SELECT version_credenciales < 0 FROM usuarios WHERE correo = ?",
+                Boolean.class, email));
+
+        String nextPassword = "ChangedStrong!2048";
+        mockMvc.perform(patch("/api/mi-cuenta/contrasena")
+                        .header("Authorization", "Bearer " + employeeToken)
+                        .contentType("application/json")
+                        .content("{\"contrasenaActual\":\"" + initialPassword
+                                + "\",\"contrasenaNueva\":\"" + nextPassword + "\"}"))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/auth/login").contentType("application/json")
+                        .content(loginBody(email, initialPassword)))
+                .andExpect(status().isUnauthorized());
+        String refreshedEmployeeToken = login(email, nextPassword);
+        mockMvc.perform(get("/api/mi-cuenta")
+                        .header("Authorization", "Bearer " + refreshedEmployeeToken))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.contrasenaInicial").value(false));
+
+        for (String role : List.of("ENTRENADOR", "NUTRICIONISTA")) {
+            String suffix = role.toLowerCase(java.util.Locale.ROOT);
+            mockMvc.perform(post("/api/usuarios")
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType("application/json")
+                            .content("{\"nombres\":\"Portfolio\",\"apellidos\":\"" + role
+                                    + "\",\"correo\":\"portafolio-" + suffix
+                                    + "@example.test\",\"rol\":\"" + role
+                                    + "\",\"tipoDocumento\":\"CE\",\"numeroDocumento\":\""
+                                    + (role.equals("ENTRENADOR") ? "99887767" : "99887768") + "\"}"))
+                    .andExpect(status().isCreated());
+        }
+    }
+
+    @Test
     void advisoryLockPostgresSerializaLaGeneracionConcurrenteDeCodigos() {
         ExecutorService executor = Executors.newFixedThreadPool(4);
         TransactionTemplate transaction = new TransactionTemplate(transactionManager);
@@ -473,10 +550,15 @@ class PostgreSql17SchemaAndJpaIT {
     }
 
     private String login(String role) throws Exception {
+        return login("postgres-it-" + role.toLowerCase(java.util.Locale.ROOT)
+                + "@example.test", TEST_PASSWORD);
+    }
+
+    private String login(String email, String password) throws Exception {
         var result = mockMvc.perform(post("/api/auth/login")
                         .header("Origin", FRONTEND_ORIGIN)
                         .contentType("application/json")
-                        .content(loginBody(role)))
+                        .content(loginBody(email, password)))
                 .andExpect(status().isOk())
                 .andReturn();
         java.util.regex.Matcher token = java.util.regex.Pattern
@@ -488,8 +570,20 @@ class PostgreSql17SchemaAndJpaIT {
     }
 
     private String loginBody(String role) {
-        return "{\"correo\":\"postgres-it-" + role.toLowerCase(java.util.Locale.ROOT)
-                + "@example.test\",\"contrasena\":\"" + TEST_PASSWORD + "\"}";
+        return loginBody("postgres-it-" + role.toLowerCase(java.util.Locale.ROOT)
+                + "@example.test", TEST_PASSWORD);
+    }
+
+    private String loginBody(String email, String password) {
+        return "{\"correo\":\"" + email + "\",\"contrasena\":\"" + password + "\"}";
+    }
+
+    private String jsonString(String json, String key) {
+        java.util.regex.Matcher value = java.util.regex.Pattern
+                .compile("\"" + java.util.regex.Pattern.quote(key) + "\":\"([^\"]+)\"")
+                .matcher(json);
+        assertTrue(value.find(), "Response must include " + key);
+        return value.group(1);
     }
 
     private String cookieValue(List<String> headers, String name) {

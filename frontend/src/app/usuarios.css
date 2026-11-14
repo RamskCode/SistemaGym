@@ -153,6 +153,15 @@
 .usuarios-out-of-band { margin-top: 11px; color: #624916; }
 .usuarios-backdrop--nested { z-index: 82; }
 .usuarios-dialog > .usuarios-actions { margin-top: 18px; }
+.usuarios-backdrop--credentials { z-index: 90; }
+.usuarios-credentials-dialog { width: min(100%, 560px); }
+.usuarios-generated-password { display: grid; gap: 7px; margin: 15px 0; color: #344235; font-size: var(--type-label, 13px); font-weight: 650; }
+.usuarios-generated-password__control { display: flex; min-width: 0; gap: 7px; }
+.usuarios-generated-password__control input { width: 100%; min-width: 0; min-height: 44px; padding: 9px 11px; border: 1px solid #bdc9be; border-radius: 8px; background: #f8faf8; color: #202720; font: 600 15px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.usuarios-generated-password__control button { display: grid; width: 44px; min-width: 44px; min-height: 44px; place-items: center; border: 1px solid #bdc9be; border-radius: 8px; background: #fff; color: #344235; cursor: pointer; }
+.usuarios-generated-password__control button:focus-visible { outline: 3px solid rgb(8 125 32 / 35%); outline-offset: 2px; }
+.usuarios-copy-status { margin: 0; color: #245e2c !important; font-size: var(--type-label, 13px) !important; }
+.usuarios-credentials-actions { justify-content: flex-end; }
 
 @media (max-width: 960px) {
   .usuarios-toolbar { grid-template-columns: minmax(200px, 1fr) minmax(160px, .8fr) minmax(170px, .8fr); }

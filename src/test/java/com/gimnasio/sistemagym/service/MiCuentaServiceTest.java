@@ -60,6 +60,14 @@ class MiCuentaServiceTest {
     }
 
     @Test
+    void soloElPerfilPropioPuedeConsultarSiUsaUnaContrasenaInicial() {
+        current.setVersionCredenciales(-1);
+        assertTrue(service.consultar("ana@example.test").contrasenaInicial());
+        current.setVersionCredenciales(0);
+        assertFalse(service.consultar("ana@example.test").contrasenaInicial());
+    }
+
+    @Test
     void actualizaDatosPropiosSinTocarCorreoRolEstadoNiHash() {
         String hash = current.getContrasenaHash();
         ActualizarMiCuentaRequest request = new ActualizarMiCuentaRequest();
@@ -104,6 +112,7 @@ class MiCuentaServiceTest {
                 new CambiarMiContrasenaRequest(CURRENT, nextPassword));
         assertTrue(encoder.matches(nextPassword, current.getContrasenaHash()));
         assertEquals(version + 1, current.getVersionCredenciales());
+        assertFalse(current.usaContrasenaInicial());
         assertNotEquals(nextPassword, current.getContrasenaHash());
         verify(usuarios).saveAndFlush(current);
         verify(refreshSessions).revocarUsuario(23L);

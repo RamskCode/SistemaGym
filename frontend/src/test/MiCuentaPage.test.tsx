@@ -11,6 +11,7 @@ let auth: AuthContextValue
 const baseProfile = {
   nombres: 'Ana', apellidos: 'Prueba', correo: 'ana@example.test', rol: 'RECEPCIONISTA',
   tipoDocumento: 'DNI' as const, numeroDocumento: '12345678',
+  contrasenaInicial: false,
 }
 
 function token(role: AuthRole = 'RECEPCIONISTA') {
