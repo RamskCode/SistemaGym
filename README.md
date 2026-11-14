@@ -4,7 +4,7 @@ Sistema web para la gestión de gimnasios, desarrollado con **Java, Spring Boot,
 
 **Acceso:** https://sistema-gym-virid.vercel.app
 - **Usuario:** admin@sistemagym.com
-- **Contraseña:** admin123
+- **Contraseña:** admin123@
 
 ### Funcionalidades
 
