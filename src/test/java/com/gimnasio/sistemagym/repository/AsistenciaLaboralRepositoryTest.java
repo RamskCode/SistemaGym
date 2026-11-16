@@ -111,27 +111,61 @@ class AsistenciaLaboralRepositoryTest {
         var pageable = PageRequest.of(0, 10,
                 Sort.by(Sort.Order.desc("fechaEntradaUtc"),
                         Sort.Order.desc("idAsistencia")));
-        var pagina = asistenciaRepository.consultarHistorial(
+        var pagina = asistenciaRepository.findAll(AsistenciaLaboralSpecifications.conFiltros(
                 empleado.getIdUsuario(), LocalDate.of(2026, 11, 4),
-                LocalDate.of(2026, 11, 4), null, pageable);
+                LocalDate.of(2026, 11, 4), null), pageable);
         AsistenciaLaboral anulada = guardarAsistencia(entrada);
         anulada.setEstado(EstadoAsistenciaLaboral.ANULADA);
         asistenciaRepository.saveAndFlush(anulada);
 
         assertEquals(2, pagina.getTotalElements());
         assertEquals(segunda.getIdAsistencia(), pagina.getContent().getFirst().getIdAsistencia());
-        assertEquals(empleado.getIdUsuario(), pagina.getContent().getFirst().getIdEmpleado());
-        assertEquals("Usuario", pagina.getContent().getFirst().getNombresEmpleado());
-        assertEquals("Prueba", pagina.getContent().getFirst().getApellidosEmpleado());
-        assertEquals("RECEPCIONISTA", pagina.getContent().getFirst().getRolEmpleado());
-        assertEquals(0, asistenciaRepository.consultarHistorial(
+        assertEquals(empleado.getIdUsuario(),
+                pagina.getContent().getFirst().getUsuario().getIdUsuario());
+        assertEquals("Usuario", pagina.getContent().getFirst().getUsuario().getNombres());
+        assertEquals("Prueba", pagina.getContent().getFirst().getUsuario().getApellidos());
+        assertEquals("RECEPCIONISTA",
+                pagina.getContent().getFirst().getUsuario().getRol().getNombre());
+        assertEquals(0, asistenciaRepository.findAll(AsistenciaLaboralSpecifications.conFiltros(
                 empleado.getIdUsuario(), LocalDate.of(2026, 11, 5),
-                LocalDate.of(2026, 11, 5), null, pageable).getTotalElements());
-        assertEquals(3, asistenciaRepository.consultarHistorial(
-                null, null, null, null, pageable).getTotalElements());
-        assertEquals(1, asistenciaRepository.consultarHistorial(
+                LocalDate.of(2026, 11, 5), null), pageable).getTotalElements());
+        assertEquals(3, asistenciaRepository.findAll(AsistenciaLaboralSpecifications.conFiltros(
+                null, null, null, null), pageable).getTotalElements());
+        assertEquals(1, asistenciaRepository.findAll(AsistenciaLaboralSpecifications.conFiltros(
                 empleado.getIdUsuario(), null, null,
-                EstadoAsistenciaLaboral.ANULADA, pageable).getTotalElements());
+                EstadoAsistenciaLaboral.ANULADA), pageable).getTotalElements());
+    }
+
+    @Test
+    void filtrosOpcionalesCombinadosYFechaIgualMantienenPaginacion() {
+        Instant entrada = Instant.parse("2026-11-15T10:00:00Z");
+        AsistenciaLaboral primera = guardarAsistencia(entrada);
+        AsistenciaLaboral segunda = guardarAsistencia(entrada.plusSeconds(60));
+        AsistenciaLaboral anulada = guardarAsistencia(entrada.plusSeconds(120));
+        anulada.setEstado(EstadoAsistenciaLaboral.ANULADA);
+        asistenciaRepository.saveAndFlush(anulada);
+
+        var specification = AsistenciaLaboralSpecifications.conFiltros(
+                empleado.getIdUsuario(), LocalDate.of(2026, 11, 15),
+                LocalDate.of(2026, 11, 15), EstadoAsistenciaLaboral.ACTIVA);
+        var sort = Sort.by(Sort.Order.desc("fechaEntradaUtc"),
+                Sort.Order.desc("idAsistencia"));
+        var primeraPagina = asistenciaRepository.findAll(
+                specification, PageRequest.of(0, 1, sort));
+        var segundaPagina = asistenciaRepository.findAll(
+                specification, PageRequest.of(1, 1, sort));
+
+        assertEquals(2, primeraPagina.getTotalElements());
+        assertEquals(2, primeraPagina.getTotalPages());
+        assertEquals(segunda.getIdAsistencia(),
+                primeraPagina.getContent().getFirst().getIdAsistencia());
+        assertEquals(primera.getIdAsistencia(),
+                segundaPagina.getContent().getFirst().getIdAsistencia());
+        assertEquals(1, asistenciaRepository.findAll(
+                AsistenciaLaboralSpecifications.conFiltros(
+                        empleado.getIdUsuario(), LocalDate.of(2026, 11, 15),
+                        LocalDate.of(2026, 11, 15), EstadoAsistenciaLaboral.ANULADA),
+                PageRequest.of(0, 10)).getTotalElements());
     }
 
     @Test
@@ -183,7 +217,7 @@ class AsistenciaLaboralRepositoryTest {
 
         var solapamientos = asistenciaRepository.findSolapamientosSesionAbierta(
                 empleado.getIdUsuario(), LocalDateTime.parse("2026-11-05T04:45:00"),
-                EstadoAsistenciaLaboral.ACTIVA, null);
+                EstadoAsistenciaLaboral.ACTIVA);
 
         assertEquals(1, solapamientos.size());
         assertEquals(activa.getIdAsistencia(), solapamientos.getFirst().getIdAsistencia());

@@ -9,13 +9,22 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import com.gimnasio.sistemagym.repository.EmpleadoConHistorialConsulta;
 
-public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLaboral, Long> {
+public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLaboral, Long>,
+        JpaSpecificationExecutor<AsistenciaLaboral> {
+
+    @Override
+    @EntityGraph(attributePaths = {"usuario", "usuario.rol"})
+    Page<AsistenciaLaboral> findAll(
+            Specification<AsistenciaLaboral> specification, Pageable pageable);
 
     @Query("select distinct empleado.idUsuario as idEmpleado, "
             + "empleado.nombres as nombres, empleado.apellidos as apellidos, "
@@ -71,32 +80,6 @@ public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLab
     Optional<AsistenciaLaboral> findLockedByIdAsistencia(
             @Param("idAsistencia") Long idAsistencia);
 
-    @Query(value = "select a.idAsistencia as idAsistencia, "
-            + "a.usuario.idUsuario as idEmpleado, "
-            + "a.usuario.nombres as nombresEmpleado, "
-            + "a.usuario.apellidos as apellidosEmpleado, "
-            + "a.usuario.rol.nombre as rolEmpleado, "
-            + "a.fechaEntradaUtc as fechaEntradaUtc, "
-            + "a.fechaSalidaUtc as fechaSalidaUtc, "
-            + "a.fechaLaboral as fechaLaboral, "
-            + "a.estado as estado "
-            + "from AsistenciaLaboral a "
-            + "where (:idEmpleado is null or a.usuario.idUsuario = :idEmpleado) "
-            + "and (:fechaDesde is null or a.fechaLaboral >= :fechaDesde) "
-            + "and (:fechaHasta is null or a.fechaLaboral <= :fechaHasta) "
-            + "and (:estado is null or a.estado = :estado)",
-            countQuery = "select count(a) from AsistenciaLaboral a "
-                    + "where (:idEmpleado is null or a.usuario.idUsuario = :idEmpleado) "
-                    + "and (:fechaDesde is null or a.fechaLaboral >= :fechaDesde) "
-                    + "and (:fechaHasta is null or a.fechaLaboral <= :fechaHasta) "
-                    + "and (:estado is null or a.estado = :estado)")
-    Page<AsistenciaLaboralConsulta> consultarHistorial(
-            @Param("idEmpleado") Long idEmpleado,
-            @Param("fechaDesde") LocalDate fechaDesde,
-            @Param("fechaHasta") LocalDate fechaHasta,
-            @Param("estado") EstadoAsistenciaLaboral estado,
-            Pageable pageable);
-
     List<AsistenciaLaboral> findByUsuario_IdUsuarioAndEstadoOrderByFechaEntradaUtcDescIdAsistenciaDesc(
             Long idUsuario, EstadoAsistenciaLaboral estado);
 
@@ -112,9 +95,19 @@ public interface AsistenciaLaboralRepository extends JpaRepository<AsistenciaLab
     @Query("select a from AsistenciaLaboral a "
             + "where a.usuario.idUsuario = :idUsuario "
             + "and a.estado = :estado "
-            + "and (:idExcluir is null or a.idAsistencia <> :idExcluir) "
             + "and (a.fechaSalidaUtc is null or a.fechaSalidaUtc > :inicio)")
     List<AsistenciaLaboral> findSolapamientosSesionAbierta(
+            @Param("idUsuario") Long idUsuario,
+            @Param("inicio") java.time.LocalDateTime inicio,
+            @Param("estado") EstadoAsistenciaLaboral estado);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from AsistenciaLaboral a "
+            + "where a.usuario.idUsuario = :idUsuario "
+            + "and a.estado = :estado "
+            + "and a.idAsistencia <> :idExcluir "
+            + "and (a.fechaSalidaUtc is null or a.fechaSalidaUtc > :inicio)")
+    List<AsistenciaLaboral> findSolapamientosSesionAbiertaExcluyendo(
             @Param("idUsuario") Long idUsuario,
             @Param("inicio") java.time.LocalDateTime inicio,
             @Param("estado") EstadoAsistenciaLaboral estado,

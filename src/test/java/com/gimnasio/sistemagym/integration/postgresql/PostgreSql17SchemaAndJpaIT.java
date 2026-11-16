@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import com.gimnasio.sistemagym.entity.Socio;
 import com.gimnasio.sistemagym.repository.SocioRepository;
@@ -208,6 +209,51 @@ class PostgreSql17SchemaAndJpaIT {
                         .cookie(new Cookie("SG_REFRESH", rotatedRefresh),
                                 new Cookie("SG_CSRF", rotatedCsrf)))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void historialRecepcionistaPostgresAceptaParametrosOpcionalesNulosYFechasIguales()
+            throws Exception {
+        Long empleadoId = jdbcTemplate.queryForObject("""
+                SELECT u.id_usuario FROM usuarios u JOIN roles r ON r.id_rol = u.id_rol
+                WHERE r.nombre = 'RECEPCIONISTA' ORDER BY u.id_usuario LIMIT 1
+                """, Long.class);
+        jdbcTemplate.update("""
+                INSERT INTO asistencias_laborales
+                    (id_usuario, fecha_entrada_utc, fecha_salida_utc, fecha_laboral,
+                     estado, id_registrado_entrada, id_registrado_salida)
+                VALUES (?, TIMESTAMP '2026-11-15 10:00:00',
+                        TIMESTAMP '2026-11-15 11:00:00', DATE '2026-11-15',
+                        'ACTIVA', ?, ?)
+                """, empleadoId, empleadoId, empleadoId);
+
+        String token = login("RECEPCIONISTA");
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista")
+                        .header("Authorization", "Bearer " + token)
+                        .param("fechaDesde", "2026-11-15")
+                        .param("fechaHasta", "2026-11-15"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.contenido[0].fechaLaboral").value("2026-11-15"));
+
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista")
+                        .header("Authorization", "Bearer " + token)
+                        .param("idEmpleado", empleadoId.toString())
+                        .param("fechaDesde", "2026-11-15")
+                        .param("fechaHasta", "2026-11-15")
+                        .param("estado", "ACTIVA")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+
+        mockMvc.perform(get("/api/asistencias-laborales/consulta-recepcionista")
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").isNumber());
     }
 
     @Test

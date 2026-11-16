@@ -15,6 +15,7 @@ import com.gimnasio.sistemagym.dto.EmpleadoConHistorialRespuesta;
 import com.gimnasio.sistemagym.exception.ConflictoException;
 import com.gimnasio.sistemagym.exception.RecursoNoEncontradoException;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralRepository;
+import com.gimnasio.sistemagym.repository.AsistenciaLaboralSpecifications;
 import com.gimnasio.sistemagym.repository.PersonalSeleccionableConsulta;
 import com.gimnasio.sistemagym.repository.EmpleadoConHistorialConsulta;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralDetalleConsulta;
@@ -88,7 +89,7 @@ public class AsistenciaLaboralService {
         Instant instante = ahoraUtcConPrecisionMicrosegundos();
         LocalDateTime entradaUtc = LocalDateTime.ofInstant(instante, ZoneOffset.UTC);
         if (!asistenciaRepository.findSolapamientosSesionAbierta(
-                idEmpleado, entradaUtc, EstadoAsistenciaLaboral.ACTIVA, null)
+                idEmpleado, entradaUtc, EstadoAsistenciaLaboral.ACTIVA)
                 .isEmpty()) {
             throw new ConflictoException(
                     "La entrada se solapa con otra asistencia del empleado.");
@@ -505,9 +506,12 @@ public class AsistenciaLaboralService {
         PageRequest pageable = PageRequest.of(pagina, tamano,
                 Sort.by(Sort.Order.desc("fechaEntradaUtc"),
                         Sort.Order.desc("idAsistencia")));
-        return asistenciaRepository.consultarHistorial(
-                        idEmpleado, fechaDesde, fechaHasta, estado, pageable)
-                .map(AsistenciaLaboralRespuesta::desde);
+        return asistenciaRepository.findAll(
+                        AsistenciaLaboralSpecifications.conFiltros(
+                                idEmpleado, fechaDesde, fechaHasta, estado),
+                        pageable)
+                .map(asistencia -> AsistenciaLaboralRespuesta.desde(
+                        asistencia, asistencia.getUsuario().getIdUsuario()));
     }
 
     private void validarAdministrador(String correoAutenticado) {
@@ -574,7 +578,7 @@ public class AsistenciaLaboralService {
         Long idEmpleado = asistencia.getUsuario().getIdUsuario();
         Long idAsistencia = asistencia.getIdAsistencia();
         boolean haySolapamiento = salida == null
-                ? !asistenciaRepository.findSolapamientosSesionAbierta(idEmpleado, entrada,
+                ? !asistenciaRepository.findSolapamientosSesionAbiertaExcluyendo(idEmpleado, entrada,
                         EstadoAsistenciaLaboral.ACTIVA, idAsistencia).isEmpty()
                 : !asistenciaRepository.findSolapamientos(idEmpleado, entrada, salida,
                         idAsistencia, EstadoAsistenciaLaboral.ACTIVA).isEmpty();

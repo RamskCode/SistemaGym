@@ -8,6 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import com.gimnasio.sistemagym.repository.AsistenciaLaboralRepository;
+import com.gimnasio.sistemagym.repository.AsistenciaLaboralSpecifications;
 import org.springframework.data.domain.PageRequest;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -105,13 +106,15 @@ class AsistenciaLaboralMySql84IT extends MySql84IntegrationTestSupport {
     void historialPaginadoIncluyeNombreAunqueElRolNoSeaSeleccionable() {
         insertarAsistenciaAbierta();
 
-        var resultado = asistenciaLaboralRepository.consultarHistorial(
-                idEmpleado, null, null, null, PageRequest.of(0, 20));
+        var resultado = asistenciaLaboralRepository.findAll(
+                AsistenciaLaboralSpecifications.conFiltros(idEmpleado, null, null, null),
+                PageRequest.of(0, 20));
 
         assertEquals(1, resultado.getTotalElements());
-        assertEquals("Empleado", resultado.getContent().getFirst().getNombresEmpleado());
-        assertEquals("Prueba", resultado.getContent().getFirst().getApellidosEmpleado());
-        assertEquals("ASISTENCIA_PERSIST_IT", resultado.getContent().getFirst().getRolEmpleado());
+        assertEquals("Empleado", resultado.getContent().getFirst().getUsuario().getNombres());
+        assertEquals("Prueba", resultado.getContent().getFirst().getUsuario().getApellidos());
+        assertEquals("ASISTENCIA_PERSIST_IT",
+                resultado.getContent().getFirst().getUsuario().getRol().getNombre());
         var empleadosConHistorial = asistenciaLaboralRepository.listarEmpleadosConHistorial();
         assertEquals(1, empleadosConHistorial.size());
         assertEquals(idEmpleado, empleadosConHistorial.getFirst().getIdEmpleado());
